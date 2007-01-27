@@ -7,9 +7,12 @@ import Data.List
 import Data.Maybe
 
 import qualified Data.Derive.Eq
+import qualified Data.Derive.BinaryDefer
 
 
-derivers = [("Eq",Data.Derive.Eq.derive)]
+derivers = [("Eq",Data.Derive.Eq.derive)
+           ,("BinaryDefer",Data.Derive.BinaryDefer.derive)
+           ]
 
 getDeriver :: String -> (DataDef -> [String])
 getDeriver x = fromMaybe (error $ "Do not know how to derive " ++ x) (lookup x derivers)
