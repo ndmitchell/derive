@@ -8,10 +8,12 @@ import Data.Maybe
 
 import qualified Data.Derive.Eq
 import qualified Data.Derive.BinaryDefer
+import qualified Data.Derive.Binary
 
 
 derivers = [("Eq",Data.Derive.Eq.derive)
            ,("BinaryDefer",Data.Derive.BinaryDefer.derive)
+           ,("Binary",Data.Derive.Binary.derive)
            ]
 
 getDeriver :: String -> (DataDef -> [String])
