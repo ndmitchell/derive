@@ -1,5 +1,5 @@
 
-module Data.Derive.Driver(derive, derives) where
+module Data.Derive.Driver(derive, derives, derivable) where
 
 import Data.Generics
 import Data.Derive
@@ -10,6 +10,9 @@ import qualified Data.Derive.Eq
 import qualified Data.Derive.BinaryDefer
 import qualified Data.Derive.Binary
 
+
+derivable :: [String]
+derivable = map fst derivers
 
 derivers = [("Eq",Data.Derive.Eq.derive)
            ,("BinaryDefer",Data.Derive.BinaryDefer.derive)
