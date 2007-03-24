@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fglasgow-exts #-}
 
 module Data.Derive.Driver
        (derive, derives, derivable,
