@@ -19,7 +19,7 @@ derive dat@(DataDef name arity ctors) =
         put [(_, ctor)] = [put2 "" ctor]
         put xs = [put2 ("putWord" ++ bitWidth ++ " " ++ show a) b | (a,b) <- xs]
         
-        put2 prefix (CtorDef name arity)
+        put2 prefix (CtorDef name arity _)
             | arity == 0 = "    put " ++ name ++ " = " ++ (if null prefix then "return ()" else prefix)
             | otherwise  = "    put (" ++ name ++ concatMap (' ':) typ ++ ") = " ++ prefix ++
                           concatMap (" >> put " ++) typ
@@ -31,7 +31,7 @@ derive dat@(DataDef name arity ctors) =
                  "        case tag_ of" :
                  ["            " ++ show a ++ " -> " ++ get2 b | (a,b) <- xs]
 
-        get2 (CtorDef name arity)
+        get2 (CtorDef name arity _)
             | arity == 0 = "return " ++ name
             | otherwise  = concatMap (\x -> "get >>= \\" ++ x ++ " -> ") typ ++
                            "return (" ++ name ++ concatMap (' ':) typ ++ ")"

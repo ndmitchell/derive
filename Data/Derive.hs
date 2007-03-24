@@ -3,6 +3,7 @@
 module Data.Derive(
     -- the data type
     DataDef(..), CtorDef(..),
+    Type(..), TypeCon(..),
     -- the basic deriver
     deriveOne, deriveMany,
     -- helpers
@@ -12,18 +13,36 @@ module Data.Derive(
 import Data.Generics
 import Data.List
 import Data.Maybe
+import Data.Char
 
 
 data DataDef = DataDef {dataName :: String, dataFree :: Int, dataCtors :: [CtorDef]}
+	deriving (Eq, Ord)
 
-data CtorDef = CtorDef {ctorName :: String, ctorArity :: Int}
+data CtorDef = CtorDef {ctorName :: String, ctorArity :: Int, ctorTypes :: [Type]}
+	deriving (Eq, Ord)
+
+data Type     = Type  {typeCon :: TypeCon, typeArgs :: [Type] }
+	deriving (Eq, Ord)
+
+data TypeCon = TypeCon String
+             | TypeArg  Int -- argument of a DataDef
+	deriving (Eq, Ord)
 
 instance Show DataDef where
     show (DataDef name arity ctors) = name ++ " #" ++ show arity ++ (if null ctors then "" else " = ") ++ c
         where c = concat $ intersperse " | " $ map show ctors
 
 instance Show CtorDef where
-    show (CtorDef name arity) = name ++ " #" ++ show arity
+    show (CtorDef name arity ts) = name ++ " #" ++ show arity ++ " : " ++ show ts
+
+instance Show Type where
+    show (Type con [])   = show con
+    show (Type con args) = "(" ++ show con ++ concatMap ((" "++) . show) args ++ ")"
+
+instance Show TypeCon where
+    show (TypeCon n) = n
+    show (TypeArg i) = [chr (ord 'a' + i)]
 
 
 
@@ -54,8 +73,20 @@ deriveInternal x = if not $ isAlgType dtyp then (Nothing,[]) else (Just res, con
         dtyp = dataTypeOf x
         (ctrs,follow) = unzip $ map ctr $ dataTypeConstrs dtyp
         
+        toType :: DataBox -> Type
+        toType (DataBox a) = repToType (typeOf a)
+        repToType :: TypeRep -> Type
+        repToType tr = let (f,as) = splitTyConApp tr
+                       in Type (conToType f) (map repToType as)
+        conToType :: TyCon -> TypeCon
+        conToType tc
+         | Just a <- lookup tc args  =  TypeArg a
+         | otherwise                 =  TypeCon (tyConString tc)
+            where
+                args = zip (map typeRepTyCon typeChildren) [0..]
+        
         ctr :: Constr -> (CtorDef, [DataBox])
-        ctr con = (CtorDef (showConstr con) (length childs), childs)
+        ctr con = (CtorDef (showConstr con) (length childs) (map toType childs), childs)
             where
                 name = showConstr con
                 childs = gmapQ DataBox $ fromConstr con `asTypeOf` x

@@ -14,6 +14,6 @@ derive dat@(DataDef name arity ctors) =
     where
         r:es = map f ctors
         
-        f (CtorDef name arity)= "\\ ~(" ++ name ++ concatMap (' ':) typs ++ ") -> unit " ++
-                                name ++ concatMap (" << " ++) typs
+        f (CtorDef name arity _)= "\\ ~(" ++ name ++ concatMap (' ':) typs ++ ") -> unit " ++
+                                  name ++ concatMap (" << " ++) typs
             where typs = map (:[]) $ take arity ['a'..]

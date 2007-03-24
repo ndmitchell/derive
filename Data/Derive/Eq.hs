@@ -8,7 +8,7 @@ derive :: DataDef -> [String]
 derive dat@(DataDef name arity ctors) =
         instanceHead "Eq" dat : map (("    " ++) . f) ctors ++ ["    _ == _ = False"]
     where
-        f (CtorDef name arity)
+        f (CtorDef name arity _)
             | arity == 0 = name ++ " == " ++ name ++ " = True"
             | otherwise = lhs 'a' ++ " == " ++ lhs 'b' ++ " = " ++ concat (intersperse " && " $ map rhs [1..arity])
             where

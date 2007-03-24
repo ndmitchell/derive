@@ -27,3 +27,11 @@ data Drinks = Beer Bool{-ale?-}
             | Wine
             | Whisky
     deriving (Typeable, Data, Show, Eq)
+
+-- | A list with late failure
+data FailList e a = Nil | Fail e | Const a (FailList e a)
+    deriving (Typeable, Data, Show, Eq)
+
+-- | State monad
+data State s a = StateT (s -> (s, a))
+    deriving (Typeable, Data)
