@@ -4,18 +4,27 @@
 -- threading issues such that all one needs to do is:
 --
 -- > data Foo = Foo deriving (Data, Typeable)
--- > main = derive "Eq" (undefined :: Foo)
+-- > main = derive eq (undefined :: Foo)
 module Data.Derive.Driver
        (derive, derives, derivable,
         -- $arg
-        A(..), B(..), C(..), D(..), E(..)
+        A(..), B(..), C(..), D(..), E(..),
+        -- * Convienience re-exports
+        Derivation, -- abstract!
+        module Data.Derive.Eq,
+        module Data.Derive.Functor,
+        module Data.Derive.Binary,
+        module Data.Derive.BinaryDefer
        ) where
 
 import Data.Generics
 import Data.Derive
 import Data.List
 import Data.Maybe
-import Data.Derive.AllDerivers
+import Data.Derive.Eq
+import Data.Derive.Functor
+import Data.Derive.Binary
+import Data.Derive.BinaryDefer
 
 -- | Derive an instance of some class.  This uses the Scrap Your
 -- Boilerplate infrastructure to extract the data type definition; to
@@ -24,14 +33,14 @@ import Data.Derive.AllDerivers
 -- first argument is the class name.  @derive@ only derives instances
 -- for the type of the argument; to derive instances for an entire
 -- dependency group of data types, use 'derives'.
-derive :: (Data a, Typeable a) => String -> a -> IO ()
-derive s x = putStr $ unlines $ getDeriver s $ fromMaybe (error "Cannot derive for this type") (deriveOne x)
+derive :: (Data a, Typeable a) => Derivation -> a -> IO ()
+derive (Derivation f) x = putStr $ unlines $ f $ fromMaybe (error "Cannot derive for this type") (deriveOne x)
 
 -- | @derives@ derives instances of some class for an entire
 -- dependency group of data types.  In every other respect it is
 -- exactly like 'derive'.
-derives :: (Data a, Typeable a) => String -> a -> IO ()
-derives s x = putStr $ unlines $ concat $ intersperse [""] $ map (getDeriver s) $ deriveMany x
+derives :: (Data a, Typeable a) => Derivation -> a -> IO ()
+derives (Derivation f) x = putStr $ unlines $ concat $ intersperse [""] $ map f $ deriveMany x
 
 -- $arg
 --
