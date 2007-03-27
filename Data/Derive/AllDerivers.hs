@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fglasgow-exts #-}
--- | This modules contains the common table of derivers; it is
+-- | This module contains the common table of derivers; it is
 -- imported by all the driver modules.
 module Data.Derive.AllDerivers
        (derivable, getDeriver) where
