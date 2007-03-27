@@ -26,6 +26,9 @@ import Data.Derive.Functor
 import Data.Derive.Binary
 import Data.Derive.BinaryDefer
 
+-- | A default set of standard derivations.
+derivable = [ eq, functor, binary, binarydefer ]
+
 -- | Derive an instance of some class.  This uses the Scrap Your
 -- Boilerplate infrastructure to extract the data type definition; to
 -- resolve overloading the second argument to @derive@ is a phantom
