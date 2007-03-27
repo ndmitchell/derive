@@ -1,9 +1,12 @@
 
-module Data.Derive.Functor(derive) where
+module Data.Derive.Functor(functor) where
 
 import Data.Derive
 import Data.List
 import qualified Data.Set as Set
+
+functor :: Derivation
+functor = Derivation derive
 
 derive :: DataDef -> [String]
 derive dat@(DataDef name arity ctors)

@@ -1,11 +1,11 @@
 
-module Data.Derive.Eq(derive) where
+module Data.Derive.Eq(eq) where
 
 import Data.Derive
 import Data.List
 
-derive :: DataDef -> [String]
-derive dat@(DataDef name arity ctors) =
+eq :: Derivation
+eq = Derivation $ \dat@(DataDef name arity ctors) ->
         instanceHead "Eq" dat : map (("    " ++) . f) ctors ++ ["    _ == _ = False"]
     where
         f (CtorDef name arity _)

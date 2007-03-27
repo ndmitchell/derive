@@ -1,8 +1,11 @@
 
-module Data.Derive.BinaryDefer(derive) where
+module Data.Derive.BinaryDefer(binarydefer) where
 
 import Data.Derive
 import Data.List
+
+binarydefer :: Derivation
+binarydefer = Derivation derive
 
 derive :: DataDef -> [String]
 derive dat@(DataDef name arity ctors) =
