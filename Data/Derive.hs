@@ -7,6 +7,7 @@ module Data.Derive(
     -- * The data types
     DataDef(..), CtorDef(..),
     Type(..), TypeCon(..),
+    Derivation(..),
     -- * The basic (SYB) extractors
     deriveOne, deriveMany,
     -- * Helper functions
@@ -141,3 +142,6 @@ instanceHead cls (DataDef name arity _) =
         " where"
     where
         typs = map (:[]) $ take arity ['a'..]
+
+-- | The type of deriveable classes.
+newtype Derivation = Derivation (DataDef -> [String])
