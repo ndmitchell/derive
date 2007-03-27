@@ -103,7 +103,7 @@ deriveInternal x = if not $ isAlgType dtyp then (Nothing,[]) else (Just res, con
 
         dtyp = dataTypeOf x
         (ctrs,follow) = unzip $ map ctr $ dataTypeConstrs dtyp
-        
+
         toType :: DataBox -> Type
         toType (DataBox a) = repToType (typeOf a)
         repToType :: TypeRep -> Type
@@ -115,7 +115,7 @@ deriveInternal x = if not $ isAlgType dtyp then (Nothing,[]) else (Just res, con
          | otherwise                 =  TypeCon (tyConString tc)
             where
                 args = zip (map typeRepTyCon typeChildren) [0..]
-        
+
         ctr :: Constr -> (CtorDef, [DataBox])
         ctr con = (CtorDef (showConstr con) (length childs) (map toType childs), childs)
             where
