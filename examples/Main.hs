@@ -1,4 +1,5 @@
 import Example
+import Data.Derive.StdDerivations
 import Data.Derive.Driver
 
 main = do f (undefined :: Foo)

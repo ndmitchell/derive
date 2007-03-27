@@ -3,31 +3,22 @@
 -- only module imported by user code; it takes care of all data
 -- threading issues such that all one needs to do is:
 --
--- > data Foo = Foo deriving (Data, Typeable)
--- > main = derive eq (undefined :: Foo)
+-- @
+--   data Foo = Foo deriving (Data, Typeable)
+--   main = derive 'Data.Derive.StdDerivations.eq' (undefined :: Foo)
+-- @
 module Data.Derive.Driver
-       (derive, derives, derivable,
+       (derive, derives,
         -- $arg
         A(..), B(..), C(..), D(..), E(..),
         -- * Convienience re-exports
         Derivation, -- abstract!
-        module Data.Derive.Eq,
-        module Data.Derive.Functor,
-        module Data.Derive.Binary,
-        module Data.Derive.BinaryDefer
        ) where
 
 import Data.Generics
 import Data.Derive
 import Data.List
 import Data.Maybe
-import Data.Derive.Eq
-import Data.Derive.Functor
-import Data.Derive.Binary
-import Data.Derive.BinaryDefer
-
--- | A default set of standard derivations.
-derivable = [ eq, functor, binary, binarydefer ]
 
 -- | Derive an instance of some class.  This uses the Scrap Your
 -- Boilerplate infrastructure to extract the data type definition; to
