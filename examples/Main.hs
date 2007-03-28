@@ -1,6 +1,6 @@
 import Example
 import Data.Derive.StdDerivations
-import Data.Derive.Driver
+import Data.Derive.SYB
 
 main = do f (undefined :: Foo)
           f (undefined :: Color)
