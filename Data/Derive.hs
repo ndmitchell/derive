@@ -93,5 +93,5 @@ instanceHead cls (DataDef name arity _) =
 -- | The type of deriveable classes.
 data Derivation = Derivation {
       derivationDeriver :: DataDef -> [Dec], -- ^ The derivation function proper
-      derivationName    :: String,           -- ^ The name of the derivation
+      derivationName    :: String            -- ^ The name of the derivation
     }
