@@ -16,6 +16,8 @@ import Data.List
 import Data.Maybe
 import Data.Char
 
+import Language.Haskell.TH.Syntax(Dec)
+
 -- | The type of (algebraic) data declarations.
 data DataDef = DataDef {
       dataName :: String,    -- ^ The name of the data type
@@ -89,4 +91,7 @@ instanceHead cls (DataDef name arity _) =
         typs = map (:[]) $ take arity ['a'..]
 
 -- | The type of deriveable classes.
-newtype Derivation = Derivation (DataDef -> [String])
+data Derivation = Derivation {
+      derivationDeriver :: DataDef -> [Dec], -- ^ The derivation function proper
+      derivationName    :: String,           -- ^ The name of the derivation
+    }
