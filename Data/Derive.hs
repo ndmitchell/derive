@@ -2,19 +2,16 @@
 
 -- | The core module of the Data.Derive system.  This module contains
 -- the data types used for communication between the extractors and
--- the derivors, and the (only currently existing) extractor.
+-- the derivors.
 module Data.Derive(
     -- * The data types
     DataDef(..), CtorDef(..),
     Type(..), TypeCon(..),
     Derivation(..),
-    -- * The basic (SYB) extractors
-    deriveOne, deriveMany,
     -- * Helper functions
     instanceHead
     ) where
 
-import Data.Generics
 import Data.List
 import Data.Maybe
 import Data.Char
@@ -70,58 +67,6 @@ instance Show Type where
 instance Show TypeCon where
     show (TypeCon n) = n
     show (TypeArg i) = [chr (ord 'a' + i)]
-
--- | Extract a 'DataDef' value from a type using the SYB framework.  A
--- phantom type argument is required to specifiy the type.  Returns
--- 'Nothing' if the passed type is not algebraic.
-deriveOne :: (Typeable a, Data a) => a -> Maybe DataDef
-deriveOne = fst . deriveInternal
-
--- | Extract 'DataDef's for each algebraic type referenced (directly
--- or otherwise) from the phantom type argument.
-deriveMany :: (Typeable a, Data a) => a -> [DataDef]
-deriveMany x = nubBy (\a b -> dataName a == dataName b) $ f [] [DataBox x]
-    where
-        f _ [] = []
-        f seen (DataBox t:odo) | tt `elem` seen = f seen odo
-                       | otherwise = maybeToList now ++ f (tt:seen) (rest++odo)
-            where
-                (now,rest) = deriveInternal t
-                tt = typeOf t
-
--- | An existential box representing a type which supports SYB
--- operations.
-data DataBox = forall a . (Typeable a, Data a) => DataBox a
-
--- | Given a phantom type, extract the 'DataDef' itself and boxes
--- representing all /directly/ referenced types.  Used to implement
--- 'deriveOne' and 'deriveMany'.
-deriveInternal :: (Typeable a, Data a) => a -> (Maybe DataDef, [DataBox])
-deriveInternal x = if not $ isAlgType dtyp then (Nothing,[]) else (Just res, concat follow)
-    where
-        res = DataDef (tyConString typeName) (length typeChildren) ctrs
-        (typeName,typeChildren) = splitTyConApp (typeOf x)
-
-        dtyp = dataTypeOf x
-        (ctrs,follow) = unzip $ map ctr $ dataTypeConstrs dtyp
-
-        toType :: DataBox -> Type
-        toType (DataBox a) = repToType (typeOf a)
-        repToType :: TypeRep -> Type
-        repToType tr = let (f,as) = splitTyConApp tr
-                       in Type (conToType f) (map repToType as)
-        conToType :: TyCon -> TypeCon
-        conToType tc
-         | Just a <- lookup tc args  =  TypeArg a
-         | otherwise                 =  TypeCon (tyConString tc)
-            where
-                args = zip (map typeRepTyCon typeChildren) [0..]
-
-        ctr :: Constr -> (CtorDef, [DataBox])
-        ctr con = (CtorDef (showConstr con) (length childs) (map toType childs), childs)
-            where
-                name = showConstr con
-                childs = gmapQ DataBox $ fromConstr con `asTypeOf` x
 
 -- HELPERS
 
