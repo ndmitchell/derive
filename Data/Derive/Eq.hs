@@ -6,16 +6,14 @@ import Data.List
 import Language.Haskell.TH
 
 eq = Derivation eq' "Eq"
-eq' dat@(DataDef _ _ ctors) = simple_instance ''Eq dat [FunD '(==) (cases ++ [end])]
+eq' dat = simple_instance ''Eq dat [FunD '(==) body]
     where
-        cases = map (\ctor -> rule (ctorName ctor) (ctorArity ctor)) ctors
-        end = defclause 2 false
+        body = map rule (dataCtors dat) ++ [defclause 2 false]
 
-rule (CtorDef nam arity _) = clause pats (if arity == 0 then ConE 'True else body)
+rule ctor = clause (map (lK (ctorName ctor) . na) "ab")
+                   (and' (zipWith (==:) (na 'a') (na 'b')))
     where
-        na c = map (vr . (c:) . show) [1..arity]
-        pats = map (lK nam . na c) "ab"
-        body = foldr1 (&&:) (zipWith (==:) (na 'a') (na 'b'))
+        na c = map (vr . (c:) . show) [1 .. ctorArity ctor]
 
 -- | A simple clause, without where or guards
 clause pats body = Clause pats (NormalB body) []
@@ -44,6 +42,11 @@ false = l0 "False"
 
 (==:) = l2 "=="
 (&&:) = l2 "&&"
+
+-- utility
+-- and chain
+and' [] = true
+and' ls = foldr1 (&&:) ls
 
 -- | Build an instance of a class for a data type, using the heuristic
 -- that the type is itself required on all type arguments.
