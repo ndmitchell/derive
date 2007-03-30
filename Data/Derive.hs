@@ -1,22 +1,17 @@
-{-# OPTIONS_GHC -fglasgow-exts #-}
+{-# OPTIONS_GHC -fglasgow-exts -fno-monomorphism-restriction #-}
 
 -- | The core module of the Data.Derive system.  This module contains
 -- the data types used for communication between the extractors and
 -- the derivors.
-module Data.Derive(
-    -- * The data types
-    DataDef(..), CtorDef(..),
-    Type(..), TypeCon(..),
-    Derivation(..),
-    -- * Helper functions
-    instanceHead
-    ) where
+module Data.Derive where
 
 import Data.List
 import Data.Maybe
 import Data.Char
 
-import Language.Haskell.TH.Syntax(Dec)
+import Language.Haskell.TH.Syntax
+
+-- * The main data types used by Derive
 
 -- | The type of (algebraic) data declarations.
 data DataDef = DataDef {
@@ -28,10 +23,10 @@ data DataDef = DataDef {
 
 -- | The type of individual data constructors.
 data CtorDef = CtorDef {
-      ctorName :: String, -- ^ The constructor's name.
-      ctorArity :: Int,   -- ^ Number of arguments required by this
-                          -- constructor.
-      ctorTypes :: [Type] -- ^ The types of the required arguments.
+      ctorName :: String,  -- ^ The constructor's name.
+      ctorArity :: Int,    -- ^ Number of arguments required by this
+                           -- constructor.
+      ctorTypes :: [RType] -- ^ The types of the required arguments.
     } deriving (Eq, Ord)
 
 -- | A referencing type.  An object of this type refers to some other
@@ -42,7 +37,7 @@ data CtorDef = CtorDef {
 -- type constructor followed by a list of zero or more arbitrary type
 -- arguments.  The structure of the type guaranteed that the
 -- applications are in canononical form.
-data Type     = Type  {typeCon :: TypeCon, typeArgs :: [Type] }
+data RType    = RType {typeCon :: TypeCon, typeArgs :: [RType] }
 	deriving (Eq, Ord)
 
 -- | A referencing type which is not itself an application.
@@ -62,36 +57,70 @@ instance Show DataDef where
 instance Show CtorDef where
     show (CtorDef name arity ts) = name ++ " #" ++ show arity ++ " : " ++ show ts
 
-instance Show Type where
-    show (Type con [])   = show con
-    show (Type con args) = "(" ++ show con ++ concatMap ((" "++) . show) args ++ ")"
+instance Show RType where
+    show (RType con [])   = show con
+    show (RType con args) = "(" ++ show con ++ concatMap ((" "++) . show) args ++ ")"
 
 instance Show TypeCon where
     show (TypeCon n) = n
     show (TypeArg i) = [chr (ord 'a' + i)]
 
--- HELPERS
-
--- | Construct a string representing an instance head for a class with
--- the property that it is required of all type arguments.
-instanceHead :: String -> DataDef -> String
-instanceHead cls (DataDef name arity _) =
-        "instance " ++
-        ['(' | arity > 1] ++
-            concat (intersperse ", " [cls ++ " " ++ x | x <- typs]) ++
-        [')' | arity > 1] ++
-        (if arity > 0 then " => " else "") ++
-        cls ++ " " ++
-        ['(' | arity > 0] ++
-            name ++
-            concatMap (' ':) typs ++
-        [')' | arity > 0] ++
-        " where"
-    where
-        typs = map (:[]) $ take arity ['a'..]
-
--- | The type of deriveable classes.
+-- | The type of ways to derive classes.
 data Derivation = Derivation {
       derivationDeriver :: DataDef -> [Dec], -- ^ The derivation function proper
       derivationName    :: String            -- ^ The name of the derivation
     }
+
+-- * Template Haskell helper functions
+--
+-- These small short-named functions are intended to make the
+-- construction of abstranct syntax trees less tedious.
+
+-- | A simple clause, without where or guards.
+sclause pats body = Clause pats (NormalB body) []
+
+-- | A default clause with N arguments.
+defclause num = sclause (replicate num WildP)
+
+-- | The class used to overload lifting operations.  To reduce code
+-- duplication, we overload the wrapped constructors (and everything
+-- else, but that's irrelevant) to work both in patterns and
+-- expressions.
+class Valcon a where
+      -- | Build an application node, with a name for a head and a
+      -- provided list of arguments.
+      lK :: String -> [a] -> a
+      -- | Reference a named variable.
+      vr :: String -> a
+instance Valcon Exp where
+      lK nm@(x:_) | isLower x = foldl AppE (VarE (mkName nm))
+      lK nm = foldl AppE (ConE (mkName nm))
+      vr = VarE . mkName
+instance Valcon Pat where
+      lK = ConP . mkName
+      vr = VarP . mkName
+
+-- * Lift a constructor over a fixed number of arguments.
+
+l0 s     = lK s []
+l1 s a   = lK s [a]
+l2 s a b = lK s [a,b]
+
+-- * Pre-lifted versions of common operations
+true = l0 "True"
+false = l0 "False"
+
+(==:) = l2 "=="
+(&&:) = l2 "&&"
+
+-- | Build a chain of and-expressions.
+and' [] = true
+and' ls = foldr1 (&&:) ls
+
+-- | Build an instance of a class for a data type, using the heuristic
+-- that the type is itself required on all type arguments.
+simple_instance cls (DataDef name arity _) defs = [InstanceD ctx hed defs]
+    where
+        vars = map (VarT . mkName . ('t':) . show) [1..arity]
+        hed = ConT cls `AppT` (foldl1 AppT (ConT (mkName name) : vars))
+        ctx = map (ConT cls `AppT`) vars
