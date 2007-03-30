@@ -3,6 +3,7 @@ module Data.Derive.Eq(eq) where
 
 import Data.Derive
 import Data.List
+import Data.Char
 import Language.Haskell.TH
 
 eq = Derivation eq' "Eq"
@@ -10,16 +11,16 @@ eq' dat = simple_instance ''Eq dat [FunD '(==) body]
     where
         body = map rule (dataCtors dat) ++ [defclause 2 false]
 
-rule ctor = clause (map (lK (ctorName ctor) . na) "ab")
-                   (and' (zipWith (==:) (na 'a') (na 'b')))
+rule ctor = sclause (map (lK (ctorName ctor) . na) "ab")
+                    (and' (zipWith (==:) (na 'a') (na 'b')))
     where
         na c = map (vr . (c:) . show) [1 .. ctorArity ctor]
 
 -- | A simple clause, without where or guards
-clause pats body = Clause pats (NormalB body) []
+sclause pats body = Clause pats (NormalB body) []
 
 -- | A default clause with N arguments
-defclause num = clause (replicate num WildP)
+defclause num = sclause (replicate num WildP)
 
 class Valcon a where
       lK :: String -> [a] -> a
