@@ -127,3 +127,9 @@ simple_instance cls (DataDef name arity _) defs = [InstanceD ctx hed defs]
 
 -- | Build a fundecl with a string name
 funN nam claus = FunD (mkName nam) claus
+
+-- | Make a list of variables, one for each argument to a constructor
+ctv ctor c = map (vr . (c:) . show) [1 .. ctorArity ctor]
+
+-- | Make a simple pattern to bind a constructor
+ctp ctor c = lK (ctorName ctor) (ctv ctor c)
