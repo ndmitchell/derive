@@ -2,12 +2,10 @@
 module Data.Derive.Eq(eq) where
 
 import Data.Derive
-import Data.List
-import Data.Char
 import Language.Haskell.TH
 
 eq = Derivation eq' "Eq"
-eq' dat = simple_instance ''Eq dat [FunD '(==) body]
+eq' dat = simple_instance "Eq" dat [funN "==" body]
     where
         body = map rule (dataCtors dat) ++ [defclause 2 false]
 

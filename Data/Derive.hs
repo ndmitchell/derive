@@ -122,5 +122,8 @@ and' ls = foldr1 (&&:) ls
 simple_instance cls (DataDef name arity _) defs = [InstanceD ctx hed defs]
     where
         vars = map (VarT . mkName . ('t':) . show) [1..arity]
-        hed = ConT cls `AppT` (foldl1 AppT (ConT (mkName name) : vars))
-        ctx = map (ConT cls `AppT`) vars
+        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName name) : vars))
+        ctx = map (ConT (mkName cls) `AppT`) vars
+
+-- | Build a fundecl with a string name
+funN nam claus = FunD (mkName nam) claus
