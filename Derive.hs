@@ -7,6 +7,8 @@ import System.Directory
 import System.Exit
 import System.Cmd
 import System.FilePath
+import System.Random
+import System.IO
 import Control.Monad
 import Data.Maybe
 import Data.List
@@ -123,17 +125,35 @@ mainFile flags file = do
         devs = ["'\\n':derive (getDerivation \"" ++ cls ++ "\") (undefined :: " ++ unwords (ctor:ars) ++ ")"
                | (ctor,arity,cls) <- reqs, let ars = map (:[]) $ take arity ['A'..] ]
     
-        hscode = "{-# OPTIONS_GHC -fglasgow-exts #-}\n" ++
-                 "module " ++ modname ++ " where\n" ++
-                 "import Data.Generics\n" ++
-                 "import Data.Derive.SYB\n" ++
-                 "import Data.Derive.StdDerivations\n" ++
-                 datas ++ "\n" ++
-                 "main = writeFile \"Temp.txt\" $ unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
+        hscode x = "{-# OPTIONS_GHC -fglasgow-exts #-}\n" ++
+                   "module " ++ modname ++ " where\n" ++
+                   "import Data.Generics\n" ++
+                   "import System.Environment\n" ++
+                   "import Data.Derive.SYB\n" ++
+                   "import Data.Derive.StdDerivations\n" ++
+                   datas ++ "\n" ++
+                   "main = writeFile \"" ++ x ++ "\" $\n" ++
+                   "    unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
 
-    writeFile tmpfile hscode
-    system $ "ghc -e " ++ modname ++ ".main Temp.hs"
-    res <- readFile "Temp.txt"
+    tmpdir <- getTemporaryDirectory
+    b <- doesDirectoryExist tmpdir
+    tmpdir <- return $ if b then tmpdir else ""
+    (hsfile, hshndl) <- openTempFileLocal tmpdir "Temp.hs"
+    (txfile, txhndl) <- openTempFileLocal tmpdir "Temp.txt"
+    hClose txhndl
+    
+    hPutStr hshndl $ hscode txfile
+    hClose hshndl
+    
+    system $ "ghc -e " ++ modname ++ ".main " ++ hsfile
+
+    txhndl <- openFile txfile ReadMode
+    res <- hGetContents txhndl
+    length res `seq` return ()
+    hClose txhndl
+    
+    removeFile hsfile
+    removeFile txfile
 
     flags <- return $ fileflags ++ flags
     if Append `elem` flags then do
@@ -238,3 +258,14 @@ hashString = show . abs . foldl f 0 . filter (not . isSpace)
     where
         f :: Int32 -> Char -> Int32
         f x y = x * 31 + fromIntegral (ord y)
+
+
+openTempFileLocal :: FilePath -> String -> IO (FilePath, Handle)
+openTempFileLocal dir template = do
+    i <- randomRIO (1000::Int,9999)
+    let (file,ext) = splitExtension template
+        s = dir </> (file ++ show i) <.> ext
+    b <- doesFileExist s
+    if b then openTempFileLocal dir template else do
+        h <- openFile s ReadWriteMode
+        return (s, h)
