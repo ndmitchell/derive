@@ -1,7 +1,7 @@
 -- TH.Ppr contains a prettyprinter for the
 -- Template Haskell datatypes
 
-module Language.Haskell.TH.Ppr where
+module Data.Derive.FixedPpr where
     -- All of the exports from this module should
     -- be "public" functions.  The main module TH
     -- re-exports them all.
@@ -9,7 +9,7 @@ module Language.Haskell.TH.Ppr where
 import Text.PrettyPrint.HughesPJ (render)
 import Language.Haskell.TH.PprLib
 import Language.Haskell.TH.Syntax
-import Data.Char ( toLower )
+import Data.Char ( toLower, isAlpha )
 
 nestDepth :: Int
 nestDepth = 4
@@ -31,7 +31,7 @@ isPrefixName = classify . show
     where
         classify xs = case break (=='.') xs of
                             (_,(_:xs')) -> classify xs'
-                            ((x:xs),[]) -> isAlpha x
+                            ((x:xs),[]) -> isAlpha x || x == '_'
 
 pprName' :: Bool -> Name -> Doc
 pprName' True nm  | isPrefixName nm = text (show nm)
@@ -54,7 +54,7 @@ instance Ppr a => Ppr [a] where
 
 ------------------------------
 instance Ppr Name where
-    ppr v = pprName v -- text (show v)
+    ppr v = pprName' True v -- text (show v)
 
 ------------------------------
 instance Ppr Info where
@@ -91,6 +91,10 @@ pprFixity v (Fixity i d) = ppr_fix d <+> int i <+> ppr v
 instance Ppr Exp where
     ppr = pprExp noPrec
 
+pprExpInfix :: Exp -> Doc
+pprExpInfix (VarE v) = pprName' False v
+pprExpInfix (ConE c) = pprName' False c
+
 pprExp :: Precedence -> Exp -> Doc
 pprExp _ (VarE v)     = ppr v
 pprExp _ (ConE c)     = ppr c
@@ -99,10 +103,10 @@ pprExp i (AppE e1 e2) = parensIf (i >= appPrec) $ pprExp opPrec e1
                                               <+> pprExp appPrec e2
 pprExp i (InfixE (Just e1) op (Just e2))
  = parensIf (i >= opPrec) $ pprExp opPrec e1
-                        <+> ppr op
+                        <+> pprExpInfix op
                         <+> pprExp opPrec e2
 pprExp _ (InfixE me1 op me2) = parens $ pprMaybeExp noPrec me1
-                                    <+> ppr op
+                                    <+> pprExpInfix op
                                     <+> pprMaybeExp noPrec me2
 pprExp i (LamE ps e) = parensIf (i > noPrec) $ char '\\' <> hsep (map ppr ps)
                                            <+> text "->" <+> ppr e
@@ -186,8 +190,8 @@ pprPat i (ConP s ps)  = parensIf (i > noPrec) $ ppr s
                                             <+> sep (map (pprPat appPrec) ps)
 pprPat i (InfixP p1 n p2)
                       = parensIf (i > noPrec)
-                      $ pprPat opPrec p1 <+> ppr n <+> pprPat opPrec p2
-pprPat i (TildeP p)   = parensIf (i > noPrec) $ pprPat appPrec p
+                      $ pprPat opPrec p1 <+> pprName' False n <+> pprPat opPrec p2
+pprPat i (TildeP p)   = parensIf (i > noPrec) $ text "~" <> pprPat appPrec p
 pprPat i (AsP v p)    = parensIf (i > noPrec) $ ppr v <> text "@"
                                                       <> pprPat appPrec p
 pprPat _ WildP        = text "_"
@@ -267,7 +271,7 @@ instance Ppr Con where
     ppr (NormalC c sts) = ppr c <+> sep (map pprStrictType sts)
     ppr (RecC c vsts)
         = ppr c <+> braces (sep (punctuate comma $ map pprVarStrictType vsts))
-    ppr (InfixC st1 c st2) = pprStrictType st1 <+> ppr c <+> pprStrictType st2
+    ppr (InfixC st1 c st2) = pprStrictType st1 <+> pprName' False c <+> pprStrictType st2
     ppr (ForallC ns ctxt con) = text "forall" <+> hsep (map ppr ns)
                             <+> char '.' <+> pprCxt ctxt <+> ppr con
 
