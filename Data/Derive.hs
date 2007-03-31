@@ -99,8 +99,8 @@ class Valcon a where
       -- | Listing
       lst :: [a] -> a
 instance Valcon Exp where
-      lK nm@(x:_) | isLower x = foldl AppE (VarE (mkName nm))
-      lK nm = foldl AppE (ConE (mkName nm))
+      lK nm@(x:_) | isUpper x || x == ':' = foldl AppE (ConE (mkName nm))
+      lK nm = foldl AppE (VarE (mkName nm))
       vr = VarE . mkName
       raw_lit = LitE
       tup = TupE
