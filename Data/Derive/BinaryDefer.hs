@@ -2,21 +2,14 @@
 module Data.Derive.BinaryDefer(binarydefer) where
 
 import Data.Derive
-import Data.List
+import Language.Haskell.TH.Syntax
 
 binarydefer :: Derivation
-binarydefer = Derivation derive
+binarydefer = Derivation derive "BinaryDefer"
 
-derive :: DataDef -> [String]
-derive dat@(DataDef name arity ctors) =
-        instanceHead "BinaryDefer" dat :
-        "    bothDefer = defer" :
-        ("        [" ++ r) :
-        map ("        ," ++) es ++
-        ["        ]"]
+derive dat = simple_instance "BinaryDefer" dat [funN "bothDefer" [ body ] ]
     where
-        r:es = map f ctors
-        
-        f (CtorDef name arity _)= "\\ ~(" ++ name ++ concatMap (' ':) typs ++ ") -> unit " ++
-                                  name ++ concatMap (" << " ++) typs
-            where typs = map (:[]) $ take arity ['a'..]
+        body = sclause [] (l1 "defer" (lst [ f ct | ct <- dataCtors dat ]))
+
+        f ctor = LamE [TildeP (ctp ctor 'v')] $
+                 foldl (l2 "<<") (l1 "unit" (ctc ctor)) (ctv ctor 'v')
