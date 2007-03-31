@@ -20,6 +20,9 @@ import Data.Derive
 import Data.List
 import Data.Maybe
 
+import Language.Haskell.TH
+
+
 -- | Derive an instance of some class.  This uses the Scrap Your
 -- Boilerplate infrastructure to extract the data type definition; to
 -- resolve overloading the second argument to @derive@ is a phantom
@@ -28,13 +31,13 @@ import Data.Maybe
 -- for the type of the argument; to derive instances for an entire
 -- dependency group of data types, use 'derives'.
 derive :: (Data a, Typeable a) => Derivation -> a -> IO ()
-derive (Derivation f) x = putStr $ unlines $ f $ fromMaybe (error "Cannot derive for this type") (deriveOne x)
+derive (Derivation f _) x = putStr $ show $ ppr $ f $ fromMaybe (error "Cannot derive for this type") (deriveOne x)
 
 -- | @derives@ derives instances of some class for an entire
 -- dependency group of data types.  In every other respect it is
 -- exactly like 'derive'.
 derives :: (Data a, Typeable a) => Derivation -> a -> IO ()
-derives (Derivation f) x = putStr $ unlines $ concat $ intersperse [""] $ map f $ deriveMany x
+derives (Derivation f _) x = putStr $ concatMap (show . ppr . f) $ deriveMany x
 
 -- | Extract a 'DataDef' value from a type using the SYB framework.  A
 -- phantom type argument is required to specifiy the type.  Returns
@@ -70,11 +73,11 @@ deriveInternal x = if not $ isAlgType dtyp then (Nothing,[]) else (Just res, con
         dtyp = dataTypeOf x
         (ctrs,follow) = unzip $ map ctr $ dataTypeConstrs dtyp
 
-        toType :: DataBox -> Type
+        toType :: DataBox -> RType
         toType (DataBox a) = repToType (typeOf a)
-        repToType :: TypeRep -> Type
+        repToType :: TypeRep -> RType
         repToType tr = let (f,as) = splitTyConApp tr
-                       in Type (conToType f) (map repToType as)
+                       in RType (conToType f) (map repToType as)
         conToType :: TyCon -> TypeCon
         conToType tc
          | Just a <- lookup tc args  =  TypeArg a
