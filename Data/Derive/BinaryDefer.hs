@@ -1,11 +1,11 @@
 
-module Data.Derive.BinaryDefer(binarydefer) where
+module Data.Derive.BinaryDefer(makeBinaryDefer) where
 
 import Data.Derive
 import Language.Haskell.TH.Syntax
 
-binarydefer :: Derivation
-binarydefer = Derivation derive "BinaryDefer"
+makeBinaryDefer :: Derivation
+makeBinaryDefer = Derivation derive "BinaryDefer"
 
 derive dat = simple_instance "BinaryDefer" dat [funN "bothDefer" [ body ] ]
     where

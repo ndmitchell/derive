@@ -18,7 +18,7 @@ import Data.Derive.Binary
 import Data.Derive.BinaryDefer
 
 -- | A default set of standard derivations.
-derivable = [ eq, binary, binarydefer ]
+derivable = [ makeEq, makeBinary, makeBinaryDefer ]
 
 
 getDerivation :: String -> Derivation

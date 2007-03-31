@@ -1,11 +1,11 @@
 
-module Data.Derive.Binary(binary) where
+module Data.Derive.Binary(makeBinary) where
 
 import Data.Derive
 import Data.List
 
-binary :: Derivation
-binary = Derivation derive "Binary"
+makeBinary :: Derivation
+makeBinary = Derivation derive "Binary"
 
 derive dat@(DataDef name arity ctors) =
         simple_instance "Binary" dat [funN "put" pbody, funN "get" gbody]
