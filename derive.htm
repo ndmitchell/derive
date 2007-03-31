@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+        <title>Data.Derive: A User Manual</title>
+        <style type="text/css">
+pre {
+    border: 2px solid gray;
+    padding: 1px;
+    padding-left: 5px;
+    margin-left: 10px;
+    background-color: #eee;
+}
+
+pre.define {
+    background-color: #ffb;
+    border-color: #cc0;
+}
+
+body {
+    font-family: sans-serif;
+}
+
+h1, h2, h3 {
+    font-family: serif;
+}
+
+h1 {
+    color: rgb(23,54,93);
+    border-bottom: 1px solid rgb(79,129,189);
+    padding-bottom: 2px;
+    font-variant: small-caps;
+    text-align: center;
+}
+
+a {
+    color: rgb(54,95,145);
+}
+
+h2 {
+    color: rgb(54,95,145);
+}
+
+h3 {
+    color: rgb(79,129,189);
+}
+        </style>
+    </head>
+    <body>
+
+<h1>Data.Derive: A User Manual</h1>
+
+<p style="text-align:right;margin-bottom:25px;">
+    by <a href="http://www.cs.york.ac.uk/~ndm/">Neil Mitchell</a> &amp; Stefan O'Rear
+</p>
+
+<p>
+    Data.Derive is a library and a tool for deriving instances for Haskell programs. It is designed to work with custom derivations, SYB and Template Haskell mechanisms. We see this as a competitor to <a href="http://repetae.net/~john/computer/haskell/DrIFT/">DrIFT</a>.
+</p>
+<p>
+    This document proceeds as follows:
+</p>
+<ol>
+    <li>Obtaining and Installing Data.Derive</li>
+    <li>Supported Derivations</li>
+    <li>Using the Derive Program</li>
+    <li>Using Template Haskell Derivations</li>
+    <li>Using the Derive library</li>
+    <li>Writing a New Derivation</li>
+</ol>
+
+<h3>Acknowledgements</h3>
+
+<p>
+    Thanks to everyone who has submitted patches and given assistance.
+</p>
+
+
+<h2>Obtaining and Installing Data.Derive</h2>
+
+<p>
+	Data.Derive is available using <a href="http://darcs.net/">darcs</a>:
+</p>
+<pre>
+darcs get --partial <a href="http://www.cs.york.ac.uk/fp/darcs/derive">http://www.cs.york.ac.uk/fp/darcs/derive</a>
+</pre>
+<p>
+	Install the program using the standard sequence of Cabal magic.
+</p>
+
+
+<h2>Supported Derivations</h2>
+
+<p>
+	Data.Derive is not limited to any prebuild set of derivations, but out of the box, we provide:
+</p>
+<ul>
+	<li><b>Eq</b> - as defined by the Haskell report.</li>
+	<li><b>Binary</b> - from the Data.Binary library.</li>
+</ul>
+
+
+<h2>Using the Derive program</h2>
+
+<p>
+	Let's imagine we've defined a data type:
+</p>
+<pre>
+data Color = RGB Int Int Int
+           | CMYK Int Int Int Int
+           deriving (Eq, Show)
+</pre>
+<p>
+	Now we wish to extend this to derive <tt>Binary</tt> and change to defining <tt>Eq</tt> using our library. To do this we simply add to the <tt>deriving</tt> clause.
+</p>
+<pre>
+data Color = RGB Int Int Int
+           | CMYK Int Int Int Int
+           deriving (Show {-! Eq, Binary !-})
+</pre>
+<p>
+	Now running <tt>derive</tt> on the program containing this code will generate appropriate instances. How do you combine these instances back into the code? There are various mechanisms supported.
+</p>
+
+<h3>Appending to the module</h3>
+
+<p>
+	One way is to append the text to the bottom of the module, this can be done by passing the <tt>--append</tt> flag. If this is done, Derive will generate the required instances and place them at the bottom of the file, along with a checksum. Do not modify these instances.
+</p>
+
+<h3>Using CPP</h3>
+
+<p>
+	One way is to use CPP. Ensure your compiler is set up for compiling with the C Pre Processor. For example:
+</p>
+<pre>
+{-# OPTIONS_GHC -cpp #-}
+{-# OPTIONS_DERIVE --output=file.h #-}
+
+module ModuleName where
+
+#include "file.h"
+</pre>
+
+<h3>Side-by-side Modules</h3>
+
+<p>
+	If you had Colour.Type, and wished to place the Binary instance in Colour.Binary, this can be done with:
+</p>
+<pre>
+{-# OPTIONS_DERIVE --output=Binary.hs --module=Colour.Binary --import #-}
+</pre>
+<p>
+	Here you ask for the output to go to a particular file, give a specific module name and import this module. This will only work if the data structure is exported non-abstractly.
+</p>
+
+<h2>Using Template Haskell Derivations</h2>
+<h2>Using the Derive library</h2>
+<h2>Writing a New Derivation</h2>
+
+
+    </body>
+</html>
