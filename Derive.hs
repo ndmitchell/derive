@@ -20,7 +20,7 @@ WHAT TO DERIVE:
 To derive something we must write:
 
 data Foo = Foo
-    deriving (Eq, Ord {-! Fuctor, Binary !-} )
+    deriving (Eq, Ord {-! Functor, Binary !-} )
 
 Or if we don't want to derive other stuff:
 
