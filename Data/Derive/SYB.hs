@@ -30,14 +30,14 @@ import Language.Haskell.TH
 -- first argument is the class name.  @derive@ only derives instances
 -- for the type of the argument; to derive instances for an entire
 -- dependency group of data types, use 'derives'.
-derive :: (Data a, Typeable a) => Derivation -> a -> IO ()
-derive (Derivation f _) = putStr . show . ppr . f . fromMaybe (error "Cannot derive for this type") . deriveOne
+derive :: (Data a, Typeable a) => Derivation -> a -> String
+derive (Derivation f _) = show . ppr . f . fromMaybe (error "Cannot derive for this type") . deriveOne
 
 -- | @derives@ derives instances of some class for an entire
 -- dependency group of data types.  In every other respect it is
 -- exactly like 'derive'.
-derives :: (Data a, Typeable a) => Derivation -> a -> IO ()
-derives (Derivation f _) = putStr . concatMap (show . ppr . f) . deriveMany
+derives :: (Data a, Typeable a) => Derivation -> a -> String
+derives (Derivation f _) = concatMap (show . ppr . f) . deriveMany
 
 -- | Extract a 'DataDef' value from a type using the SYB framework.  A
 -- phantom type argument is required to specifiy the type.  Returns
