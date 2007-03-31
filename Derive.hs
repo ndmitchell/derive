@@ -132,7 +132,7 @@ mainFile flags file = do
                    "import Data.Derive.SYB\n" ++
                    "import Data.Derive.StdDerivations\n" ++
                    datas ++ "\n" ++
-                   "main = writeFile \"" ++ x ++ "\" $\n" ++
+                   "main = writeFile " ++ show x ++ " $\n" ++
                    "    unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
 
     tmpdir <- getTemporaryDirectory
@@ -160,7 +160,7 @@ mainFile flags file = do
         src <- readFile file
         let (src2,b) = dropAppend src
         when b $ putStrLn "Warning, Checksum does not match, please edit the file manually"
-        writeFile file $ src2 ++ appendMsg ++ hashString res ++ "\n" ++ res
+        writeFile file $ src2 ++ (if null res then "" else appendMsg ++ hashString res ++ "\n" ++ res)
      else do
         let modline = concat $ take 1 ["module " ++ x ++ " where\n" | Module x <- flags]
             impline = if Import `elem` flags then "import " ++ modname ++ "\n" else ""
@@ -216,6 +216,7 @@ parseFile file = do
         joinLines [] = []
         
         checkData x | keyword `elem` ["data","newtype"] = [f x]
+                    | keyword `elem` ["type","import"] = [(x,[])]
                     | otherwise = []
             where
                 keyword = takeWhile (not . isSpace) x
