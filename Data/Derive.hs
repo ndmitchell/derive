@@ -92,13 +92,42 @@ class Valcon a where
       lK :: String -> [a] -> a
       -- | Reference a named variable.
       vr :: String -> a
+      -- | Lift a TH 'Lit'
+      raw_lit :: Lit -> a
+      -- | Tupling
+      tup :: [a] -> a
+      -- | Listing
+      lst :: [a] -> a
 instance Valcon Exp where
       lK nm@(x:_) | isLower x = foldl AppE (VarE (mkName nm))
       lK nm = foldl AppE (ConE (mkName nm))
       vr = VarE . mkName
+      raw_lit = LitE
+      tup = TupE
+      lst = ListE
 instance Valcon Pat where
       lK = ConP . mkName
       vr = VarP . mkName
+      raw_lit = LitP
+      tup = TupP
+      lst = ListP
+
+-- | This class is used to overload literal construction based on the
+-- type of the literal.
+class LitC a where
+      lit :: Valcon p => a -> p
+instance LitC Integer where
+      lit = raw_lit . IntegerL
+instance LitC Char where
+      lit = raw_lit . CharL
+instance LitC a => LitC [a] where
+      lit = lst . map lit
+instance (LitC a, LitC b) => LitC (a,b) where
+      lit (x,y) = tup [lit x, lit y]
+instance (LitC a, LitC b, LitC c) => LitC (a,b,c) where
+      lit (x,y,z) = tup [lit x, lit y, lit z]
+instance LitC () where
+      lit () = tup []
 
 -- * Lift a constructor over a fixed number of arguments.
 
@@ -110,12 +139,25 @@ l2 s a b = lK s [a,b]
 true = l0 "True"
 false = l0 "False"
 
+return' = l1 "return"
+
 (==:) = l2 "=="
 (&&:) = l2 "&&"
+(>>=:) = l2 ">>="
+(>>:) = l2 ">>"
+ap' = l2 "ap"
+
+case' exp alts = CaseE exp [ Match x (NormalB y) [] | (x,y) <- alts ]
+(->:) nm bdy = LamE [vr nm] bdy
 
 -- | Build a chain of and-expressions.
-and' [] = true
-and' ls = foldr1 (&&:) ls
+and' = foldr (&&:) true
+
+-- | Build a chain of monadic actions.
+sequ' = foldr (>>:) (return' (lit ()))
+
+-- | K-way liftM
+liftmk hd args = foldl ap' (return' hd) args
 
 -- | Build an instance of a class for a data type, using the heuristic
 -- that the type is itself required on all type arguments.
@@ -133,3 +175,7 @@ ctv ctor c = map (vr . (c:) . show) [1 .. ctorArity ctor]
 
 -- | Make a simple pattern to bind a constructor
 ctp ctor c = lK (ctorName ctor) (ctv ctor c)
+
+-- | Reference the constructor itself
+ctc = l0 . ctorName
+
