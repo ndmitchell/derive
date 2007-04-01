@@ -81,6 +81,11 @@ sclause pats body = Clause pats (NormalB body) []
 defclause :: Int -> Exp -> Clause
 defclause num = sclause (replicate num WildP)
 
+-- | A simple Val clause
+sval :: Pat -> Exp -> Dec
+sval pat body = ValD pat (NormalB body) []
+
+
 -- | The class used to overload lifting operations.  To reduce code
 -- duplication, we overload the wrapped constructors (and everything
 -- else, but that's irrelevant) to work both in patterns and
