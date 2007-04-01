@@ -138,16 +138,22 @@ l1 s a   = lK s [a]
 l2 s a b = lK s [a,b]
 
 -- * Pre-lifted versions of common operations
-true, false :: Valcon a => a
+true, false, nil :: Valcon a => a
 true = l0 "True"
 false = l0 "False"
+nil = l0 "[]"
 
-return' :: Exp -> Exp
+cons :: Exp -> Exp -> Exp
+cons = l2 ":"
+
+box, return' :: Exp -> Exp
+box x = cons x nil
 return' = l1 "return"
 
-(==:), (&&:), (>>=:), (>>:), ap' :: Exp -> Exp -> Exp
+(==:), (&&:), (++:), (>>=:), (>>:), ap' :: Exp -> Exp -> Exp
 (==:) = l2 "=="
 (&&:) = l2 "&&"
+(++:) = l2 "++"
 (>>=:) = l2 ">>="
 (>>:) = l2 ">>"
 ap' = l2 "ap"
@@ -160,6 +166,10 @@ case' exp alts = CaseE exp [ Match x (NormalB y) [] | (x,y) <- alts ]
 -- | Build a chain of and-expressions.
 and' :: [Exp] -> Exp
 and' = foldr (&&:) true
+
+-- | Build a chain of concat-expressions.
+concat' :: [Exp] -> Exp
+concat' = foldr (++:) nil
 
 -- | Build a chain of monadic actions.
 sequ' :: [Exp] -> Exp
