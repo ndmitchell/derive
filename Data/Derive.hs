@@ -148,7 +148,7 @@ true = l0 "True"
 false = l0 "False"
 nil = l0 "[]"
 
-cons :: Exp -> Exp -> Exp
+cons :: Valcon a => a -> a -> a
 cons = l2 ":"
 
 box, return' :: Exp -> Exp
