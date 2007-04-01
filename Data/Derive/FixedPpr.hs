@@ -26,8 +26,17 @@ parensIf False d = d
 
 ------------------------------
 
+-- Show name with `` and () stripped, so that behaviour is the same
+-- with fixed and broken syntax-libs
+showNameRaw :: Name -> String
+showNameRaw = clean . show
+    where
+        clean ('(':xs) = init xs
+        clean ('`':xs) = init xs
+        clean xs = xs
+
 isPrefixName :: Name -> Bool
-isPrefixName = classify . show
+isPrefixName = classify . showNameRaw
     where
         classify xs = case break (=='.') xs of
                             (_,(_:xs')) -> classify xs'
@@ -35,10 +44,10 @@ isPrefixName = classify . show
                             _ -> False -- operators ending with .
 
 pprName' :: Bool -> Name -> Doc
-pprName' True nm  | isPrefixName nm = text (show nm)
-                  | otherwise       = text ("(" ++ show nm ++ ")")
-pprName' False nm | isPrefixName nm = text ("`" ++ show nm ++ "`")
-                  | otherwise       = text (show nm)
+pprName' True nm  | isPrefixName nm = text (showNameRaw nm)
+                  | otherwise       = text ("(" ++ showNameRaw nm ++ ")")
+pprName' False nm | isPrefixName nm = text ("`" ++ showNameRaw nm ++ "`")
+                  | otherwise       = text (showNameRaw nm)
 
 ------------------------------
 
