@@ -32,6 +32,7 @@ isPrefixName = classify . show
         classify xs = case break (=='.') xs of
                             (_,(_:xs')) -> classify xs'
                             ((x:xs),[]) -> isAlpha x || x == '_'
+                            _ -> False -- operators ending with .
 
 pprName' :: Bool -> Name -> Doc
 pprName' True nm  | isPrefixName nm = text (show nm)
