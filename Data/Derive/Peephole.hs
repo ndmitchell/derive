@@ -55,6 +55,7 @@ instance Peephole Exp where
         LamE x y -> f (LamE x (p y))
         LetE x y -> f (LetE (p x) (p y))
         CaseE x y -> f (CaseE (p x) (p y))
+        TupE x -> f (TupE (map p x))
         x -> f x
         where
             p x = peephole x
