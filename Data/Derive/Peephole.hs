@@ -73,7 +73,17 @@ replaceVar name rep orig = fExp orig
             ConE _ -> x
             LitE _ -> x
             AppE x y -> AppE (fExp x) (fExp y)
+            CaseE x y -> CaseE (fExp x) (map fMatch y)
             _ -> error $ "replaceVar: " ++ show x
+
+        fMatch o@(Match pat (NormalB bod) []) =
+            if name `elem` patFree pat then o else Match pat (NormalB (fExp bod)) []
+
+
+        patFree x = case x of
+            LitP _ -> []
+            _ -> error $ "patFree: " ++ show x
+
 
 
 -- based on the rewrite combinator in Play
@@ -87,6 +97,9 @@ peep (AppE (AppE x y) z)
     | x ~= "++" && y ~= "[]" = z
     | x ~= "++" && z ~= "[]" = y
     | x ~= "." && z ~= "id" = y
+
+peep (AppE bind (AppE ret (TupE [])))
+    | bind ~= ">>" && ret ~= "return" = l0 "id"
 
 peep (LamE [] x) = x
 
@@ -112,8 +125,11 @@ peep (AppE f (LamE x (AppE (AppE cons y) nil)))
     | f ~= "concatMap" && cons ~= ":" && nil ~= "[]"
     = peep $ AppE (l0 "map") (peep $ LamE x y)
 
+peep (CaseE (LitE x) (Match (LitP y) (NormalB z) [] : _))
+    | x == y = z
+
 -- allow easy flip to tracing mode
-peep x | True = trace (show x) x
+peep x | False = trace (show x) x
 peep x = x
 
 
@@ -123,4 +139,5 @@ _ ~= _ = False
 
 
 simple (VarE _) = True
+simple (LitE _) = True
 simple _ = False
