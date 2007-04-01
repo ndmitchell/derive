@@ -2,6 +2,7 @@
 module Data.Derive.Play(makePlay) where
 
 import Data.Derive
+import Data.Derive.Peephole
 import Data.List
 import Data.Derive.FixedPpr
 import Control.Monad.State
@@ -27,7 +28,7 @@ typeToContainer _ _ = None
 
 
 
-derive dat@(DataDef name arity ctors) =
+derive dat@(DataDef name arity ctors) = peephole $
         simple_instance "Play" dat [funN "getChildren" gbody] -- , funN "replaceChildren" rbody]
     where
         contain = map (typeToContainer name) . ctorTypes
