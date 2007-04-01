@@ -2,6 +2,7 @@
 module Data.Derive.Peephole(Peephole, peephole) where
 
 import Language.Haskell.TH.Syntax
+import Data.Derive
 import Debug.Trace
 
 
@@ -60,10 +61,25 @@ instance Peephole Exp where
             f x = peep x
 
 
+
+-- find a given string, and replace it with a particular expression
+-- must succeed, so crashes readily (deliberately!)
+replaceVar :: Name -> Exp -> Exp -> Exp
+replaceVar name rep orig = fExp orig
+    where
+        fExp x = case x of
+            VarE y | y == name -> rep
+                   | otherwise -> x
+            ConE _ -> x
+            LitE _ -> x
+            AppE x y -> AppE (fExp x) (fExp y)
+            _ -> error $ "replaceVar: " ++ show x
+
+
 -- based on the rewrite combinator in Play
 peep :: Exp -> Exp
-peep (AppE f x)
-    | f ~= "id" = x
+peep (AppE x y)
+    | x ~= "id" = y
 
 peep (AppE (AppE x y) z)
     | x ~= "const" = y
@@ -72,13 +88,39 @@ peep (AppE (AppE x y) z)
     | x ~= "++" && z ~= "[]" = y
     | x ~= "." && z ~= "id" = y
 
+peep (LamE [] x) = x
+
+peep (LamE [VarP x] (VarE y))
+    | x == y = l0 "id"
+
+peep (LamE [ConP comma [VarP x, VarP y]] (VarE z))
+    | show comma == "," && x == z = l0 "fst"
+    | show comma == "," && y == z = l0 "snd"
+
+peep (AppE (LamE (VarP x:xs) y) z)
+    | simple z
+    = peephole $ LamE xs (replaceVar x z y)
+
 peep (AppE (AppE bind (AppE ret x)) y)
     | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
 
+peep (AppE append (AppE (AppE cons x) nil))
+    | append ~= "++" && cons ~= ":" && nil ~= "[]"
+    = peep $ AppE (l0 ":") x
+
+peep (AppE f (LamE x (AppE (AppE cons y) nil)))
+    | f ~= "concatMap" && cons ~= ":" && nil ~= "[]"
+    = peep $ AppE (l0 "map") (peep $ LamE x y)
+
 -- allow easy flip to tracing mode
-peep x | False = trace (show x) x
+peep x | True = trace (show x) x
 peep x = x
 
 
 (VarE f) ~= x = show f == x
+(ConE f) ~= x = show f == x
 _ ~= _ = False
+
+
+simple (VarE _) = True
+simple _ = False
