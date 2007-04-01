@@ -122,7 +122,7 @@ mainFile flags file = do
     (fileflags,modname,datas,reqs) <- parseFile file
     let tmpfile = "Temp.hs"
     
-        devs = ["'\\n':derive (getDerivation \"" ++ cls ++ "\") (undefined :: " ++ unwords (ctor:ars) ++ ")"
+        devs = ["'\\n':derive make" ++ cls ++ " (undefined :: " ++ unwords (ctor:ars) ++ ")"
                | (ctor,arity,cls) <- reqs, let ars = map (:[]) $ take arity ['A'..] ]
     
         hscode x = "{-# OPTIONS_GHC -fglasgow-exts #-}\n" ++
@@ -130,7 +130,7 @@ mainFile flags file = do
                    "import Data.Generics\n" ++
                    "import System.Environment\n" ++
                    "import Data.Derive.SYB\n" ++
-                   "import Data.Derive.StdDerivations\n" ++
+                   concat [ "import Data.Derive." ++ cls ++ "\n" | (_ctor, _arity, cls) <- reqs ] ++
                    datas ++ "\n" ++
                    "main = writeFile " ++ show x ++ " $\n" ++
                    "    unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
