@@ -156,9 +156,34 @@ module ModuleName where
 </p>
 
 <h2>Using Template Haskell Derivations</h2>
+
+<p>
+	One of Derive's major advantages over DrIFT is support for the <a href="http://www.haskell.org/th/">Template Haskell</a> (henceforth abbreviated "TH") system.  This allows Derive to be invoked automatically during the compilation process, and (because it occurs with full access to the renamer tables) transparently supports deriving across module boundaries.  The main disadvantage of TH-based deriving is that it is only portable to compilers that support TH; currently that is GHC only.
+</p>
+
+<p>
+	To use the TH deriving system, with the same example as before:
+</p>
+
+<pre>
+import Data.Derive.TH
+import Data.Derive.Eq
+import Data.Derive.Binary
+
+data Color = RGB Int Int Int
+           | CMYK Int Int Int Int
+           deriving (Show)
+
+$( derive makeEq ''Color )
+$( derive makeBinary ''Color )
+</pre>
+
+<p>
+	Note two things.  First, we need to import the derivations.  By convention, a derivation for a class <tt>FooBar</tt> is located in module <tt>Data.Derive.FooBar</tt> (nota bene: this need not be in package "derive") and is exported with the name <tt>makeFooBar</tt>.  Secondly, we need to tell the compiler to insert the instance using the TH <em>splice</em> construct, <tt>$( ... )</tt> (the spaces are optional).  The splice causes the compiler to run the function <tt>derive</tt> (exported from <tt>Data.Derive.TH</tt>), passing arguments <tt>makeFooBar</tt> and <tt>''Color</tt>.  The second argument deserves more explanation; it is a quoted symbol, somewhat like a quoted symbol in Lisp and with deliberately similar syntax.  (Two apostrophes are used to specify that this name is to be resolved as a type constructor; just <tt>'Color</tt> would look for a <strong>data</strog> constructor named <tt>Color</tt>.)
+</p>
+
 <h2>Using the Derive library</h2>
 <h2>Writing a New Derivation</h2>
-
 
     </body>
 </html>
