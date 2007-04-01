@@ -21,13 +21,8 @@ import Data.Maybe
 import Language.Haskell.TH.Syntax
 import Data.Derive.FixedPpr
 
--- | Derive an instance of some class.  This uses the Scrap Your
--- Boilerplate infrastructure to extract the data type definition; to
--- resolve overloading the second argument to @derive@ is a phantom
--- value of the type you wish the instance to be derived for.  The
--- first argument is the class name.  @derive@ only derives instances
--- for the type of the argument; to derive instances for an entire
--- dependency group of data types, use 'derives'.
+-- | Derive an instance of some class. @derive@ only derives instances
+-- for the type of the argument.
 derive :: Derivation -> Name -> Q [Dec]
 derive (Derivation f _) = fmap f . deriveOne
 
