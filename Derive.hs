@@ -135,9 +135,11 @@ mainFile flags file = do
                    "main = writeFile " ++ show x ++ " $\n" ++
                    "    unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
 
+    -- note: Wrong on Hugs on Windows
     tmpdir <- getTemporaryDirectory
     b <- doesDirectoryExist tmpdir
     tmpdir <- return $ if b then tmpdir else ""
+    
     (hsfile, hshndl) <- openTempFileLocal tmpdir "Temp.hs"
     (txfile, txhndl) <- openTempFileLocal tmpdir "Temp.txt"
     hClose txhndl
@@ -261,6 +263,7 @@ hashString = show . abs . foldl f 0 . filter (not . isSpace)
         f x y = x * 31 + fromIntegral (ord y)
 
 
+-- Note: openTempFile is not available on Hugs, which sucks
 openTempFileLocal :: FilePath -> String -> IO (FilePath, Handle)
 openTempFileLocal dir template = do
     i <- randomRIO (1000::Int,9999)
