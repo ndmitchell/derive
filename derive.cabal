@@ -8,9 +8,15 @@ Synopsis: A program and library to derive instances for Haskell data types
 Category: Development
 Exposed-Modules:
 	Data.Derive
-	Data.Derive.SYB
-	Data.Derive.StdDerivations
+	Data.Derive.FixedPpr
 
+	Data.Derive.SYB
+	Data.Derive.TH
+
+	Data.Derive.Binary
+	Data.Derive.BinaryDefer
+	Data.Derive.Eq
+	Data.Derive.Play
 
 Executable: derive
 Main-Is: Derive.hs
