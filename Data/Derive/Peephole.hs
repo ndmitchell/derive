@@ -72,6 +72,9 @@ peep (AppE (AppE x y) z)
     | x ~= "++" && z ~= "[]" = y
     | x ~= "." && z ~= "id" = y
 
+peep (AppE (AppE bind (AppE ret x)) y)
+    | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
+
 -- allow easy flip to tracing mode
 peep x | False = trace (show x) x
 peep x = x

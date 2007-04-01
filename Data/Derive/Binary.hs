@@ -2,12 +2,13 @@
 module Data.Derive.Binary(makeBinary) where
 
 import Data.Derive
+import Data.Derive.Peephole
 import Data.List
 
 makeBinary :: Derivation
 makeBinary = Derivation derive "Binary"
 
-derive dat@(DataDef name arity ctors) =
+derive dat@(DataDef name arity ctors) = peephole $
         simple_instance "Binary" dat [funN "put" pbody, funN "get" gbody]
     where
         pbody = [ sclause [ctp ctor 'x'] (put_case nm ctor) | (nm,ctor) <- items ]
