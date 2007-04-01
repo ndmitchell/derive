@@ -15,14 +15,17 @@ makePlay = Derivation derive "Play"
 
 
 data Container = None | Target
-               | Container String [Container]
+               | List Container | Tuple [Container]
                  deriving (Eq, Show)
 
 
 typeToContainer :: String -> RType -> Container
-typeToContainer active (RType (TypeCon x) xs)
+typeToContainer active t@(RType (TypeCon x) xs)
     | x == active = Target
-    | otherwise = if all (== None) ys then None else Container x ys
+    | otherwise = if all (== None) ys then None
+                  else if x == "[]" then List (head ys)
+                  else if all (== ',') x then Tuple ys
+                  else error $ "Play derivation on unknown type: " ++ show t
         where ys = map (typeToContainer active) xs
 typeToContainer _ _ = None
 
@@ -32,7 +35,7 @@ derive dat@(DataDef name arity ctors) = peephole $
         simple_instance "Play" dat [funN "getChildren" gbody] -- , funN "replaceChildren" rbody]
     where
         contain = map (typeToContainer name) . ctorTypes
-        var = vr . ('x':) . show
+        var x = vr $ 'x' : show x
         match ctor = sclause [ctp ctor 'x']
     
         gbody = [match ctor (gitem $ contain ctor) | ctor <- ctors]
@@ -41,20 +44,11 @@ derive dat@(DataDef name arity ctors) = peephole $
         gitem conts = concat' [AppE (f c) (var i) | (i,c) <- zip [1..] conts]
             where
                 f None = l1 "const" nil
-                f Target = l0 "id"
-                f (Container "[]" [x]) = l1 "map" (f x)
-                f (Container "," [x,None]) = l2 "." (l0 "fst") (f x)
-                f (Container "," [None,x]) = l2 "." (l0 "snd") (f x)
-                f (Container "," [x,y]) = LamE [l2 "," (vr "t1") (vr "t2")]
-                                          (AppE (f x) (vr "t1") ++: AppE (f y) (vr "t2"))
-                
-                -- = l2 "concatMap" [Right $ var i]
-                --f i (Container "[]" [x]) = [Right $ var i]
-                --f i (Container "," [None,Target]) = [Right $ l2 "map" (l0 "snd") (var i)]
-                
-                f x = error $ "Play.gitem, unhandled case: " ++ show x
-                
-                
+                f Target = LamE [var 1] (box (var 1))
+                f (List x) = l1 "concatMap" (f x)
+                f (Tuple xs) = LamE [lK (replicate (length xs - 1) ',') (map var ns)]
+                                    (concat' [AppE (f x) (var n) | (n,x) <- zip ns xs])
+                    where ns = [1..length xs]
 
 {-                
                 -- return Left for an item, Right for a list
