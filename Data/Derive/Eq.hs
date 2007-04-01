@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fth #-}
 module Data.Derive.Eq(makeEq) where
 
 import Data.Derive
