@@ -4,6 +4,7 @@ module Data.Derive.Play(makePlay) where
 import Data.Derive
 import Data.Derive.Peephole
 import Data.List
+import Data.Maybe
 import Data.Derive.FixedPpr
 import Control.Monad.State
 import Language.Haskell.TH.Syntax
@@ -57,19 +58,21 @@ derive dat@(DataDef name arity ctors) = peephole $
 
         rbody = [Clause [vr "x"] (NormalB bod) (r:k:map lst lsts)]
             where
-                lsts :: [(Int,Container)]
-                lsts = zip [1..] $ nub [x | List x <- concatMap (concatMap everything . contain) ctors]
+                lsts :: [(Container,Int)]
+                lsts = zip (nub [x | List x <- concatMap (concatMap everything . contain) ctors]) [1..]
                 
-                lst (i,x) = funN ("lst" ++ show i)
+                lst (x,i) = funN ("lst" ++ show i)
                     [sclause [nil, vr "xs"] $ tup [nil, vr "xs"]
-                    ,sclause [l2 ":" (vr "c") (vr "cs"), vr "xs"] $
-                        LetE [sval (tup [vr "a", vr "b"]) (AppE (ritem x) (vr "c"))
+                    ,sclause [cons (vr "c") (vr "cs"), vr "xs"] $
+                        LetE [sval (tup [vr "a", vr "b"]) (AppE (ritem lsts x) (vr "c"))
                              ,sval (tup [vr "q", vr "u"]) (l2 ("lst" ++ show i) (vr "cs") (vr "b"))
                              ]
                              (tup [cons (vr "a") (vr "q"), vr "u"])
                     ]
             
-                bod = case' (vr "x") [(ctp ctor 'x', tup [gitem (contain ctor), vr "todo"]) | ctor <- ctors]
+                bod = case' (vr "x") [(ctp ctor 'x',
+                    tup [gitem cs, l2 "." (l0 "fst") $ rs (ctorName ctor) (map (ritem lsts) cs)]
+                    ) | ctor <- ctors, let cs = contain ctor]
                 
                 r = funN "r" [sclause [vr "c", vr "xs"] $ tup [vr "c", vr "xs"]]
                 k = funN "k" [sclause [vr "f", vr "g", vr "xs"] $
@@ -79,8 +82,16 @@ derive dat@(DataDef name arity ctors) = peephole $
                              (tup [AppE (vr "a") (vr "c"), vr "d"])
                         ]
 
-        ritem :: Container -> Exp
-        ritem _ = l0 "todo"
+        ritem :: [(Container,Int)] -> Container -> Exp
+        ritem lsts None = LamE [vr "c",vr "xs"] (tup [vr "c",vr "xs"])
+        ritem lsts Target = LamE [vr "c",cons (vr "x") (vr "xs")] (tup [vr "x",vr "xs"])
+        ritem lsts (List x) = l0 $ "lst" ++ show (fromJust $ lookup x lsts)
+        
+        ritem lsts _ = l0 "todo"
+
+
+        rs c xs = foldl f (l1 "r" (l0 c)) xs
+            where f x y = AppE (AppE (vr "k") x) y
 
 
         
