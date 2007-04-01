@@ -4,7 +4,6 @@
 module Data.Derive where
 
 import Data.List
-import Data.Maybe
 import Data.Char
 
 import Language.Haskell.TH.Syntax

@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fglasgow-exts #-}
 -- | The main TH driver module.  It is intended that this need be the
 -- only module imported by user code; it takes care of all data
 -- threading issues such that all one needs to do is:
@@ -16,7 +15,6 @@ module Data.Derive.TH
 
 import Data.Derive
 import Data.List
-import Data.Maybe
 
 import Language.Haskell.TH.Syntax
 import Data.Derive.FixedPpr
