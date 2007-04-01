@@ -30,9 +30,14 @@ typeToContainer active t@(RType (TypeCon x) xs)
 typeToContainer _ _ = None
 
 
+everything :: Container -> [Container]
+everything o@(List x) = o : everything x
+everything o@(Tuple x) = o : concatMap everything x
+everything o = [o]
+
 
 derive dat@(DataDef name arity ctors) = peephole $
-        simple_instance "Play" dat [funN "getChildren" gbody] -- , funN "replaceChildren" rbody]
+        simple_instance "Play" dat [funN "getChildren" gbody, funN "replaceChildren" rbody]
     where
         contain = map (typeToContainer name) . ctorTypes
         var x = vr $ 'x' : show x
@@ -46,9 +51,45 @@ derive dat@(DataDef name arity ctors) = peephole $
                 f None = l1 "const" nil
                 f Target = LamE [var 1] (box (var 1))
                 f (List x) = l1 "concatMap" (f x)
-                f (Tuple xs) = LamE [lK (replicate (length xs - 1) ',') (map var ns)]
+                f (Tuple xs) = LamE [tup (map var ns)]
                                     (concat' [AppE (f x) (var n) | (n,x) <- zip ns xs])
                     where ns = [1..length xs]
+
+        rbody = [Clause [vr "x"] (NormalB bod) (r:k:map lst lsts)]
+            where
+                lsts :: [(Int,Container)]
+                lsts = zip [1..] $ nub [x | List x <- concatMap (concatMap everything . contain) ctors]
+                
+                lst (i,x) = funN ("lst" ++ show i)
+                    [sclause [nil, vr "xs"] $ tup [nil, vr "xs"]
+                    ,sclause [l2 ":" (vr "c") (vr "cs"), vr "xs"] $
+                        LetE [sval (tup [vr "a", vr "b"]) (AppE (ritem x) (vr "c"))
+                             ,sval (tup [vr "q", vr "u"]) (l2 ("lst" ++ show i) (vr "cs") (vr "b"))
+                             ]
+                             (tup [cons (vr "a") (vr "q"), vr "u"])
+                    ]
+            
+                bod = case' (vr "x") [(ctp ctor 'x', tup [gitem (contain ctor), vr "todo"]) | ctor <- ctors]
+                
+                r = funN "r" [sclause [vr "c", vr "xs"] $ tup [vr "c", vr "xs"]]
+                k = funN "k" [sclause [vr "f", vr "g", vr "xs"] $
+                        LetE [sval (tup [vr "a", vr "b"]) (AppE (vr "f") (vr "xs"))
+                             ,sval (tup [vr "c", vr "d"]) (AppE (vr "g") (vr "b"))
+                             ]
+                             (tup [AppE (vr "a") (vr "c"), vr "d"])
+                        ]
+
+        ritem :: Container -> Exp
+        ritem _ = l0 "todo"
+
+
+        
+
+        --ritem :: Ctor -> (Exp, [Decl])
+        --ritem conts = 
+
+
+
 
 {-                
                 -- return Left for an item, Right for a list
