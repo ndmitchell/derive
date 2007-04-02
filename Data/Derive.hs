@@ -103,8 +103,10 @@ class Valcon a where
       -- | Listing
       lst :: [a] -> a
 instance Valcon Exp where
-      lK nm@(x:_) | isUpper x || x == ':' = foldl AppE (ConE (mkName nm))
-      lK nm = foldl AppE (VarE (mkName nm))
+      lK nm@(x:_) args | isUpper x || x == ':' = foldl AppE (ConE (mkName nm)) args
+      lK nm@(x:_) [a,b] | isOper x = InfixE (Just a) (VarE (mkName nm)) (Just b)
+         where isOper c = isSymbol c || isPunctuation c
+      lK nm       args = foldl AppE (VarE (mkName nm)) args
       vr = VarE . mkName
       raw_lit = LitE
       tup = TupE
