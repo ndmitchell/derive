@@ -15,6 +15,7 @@ module Data.Derive.TH
 
 import Data.Derive
 import Data.List
+import Control.Monad (liftM)
 
 import Language.Haskell.TH.Syntax
 import Data.Derive.FixedPpr
@@ -22,7 +23,7 @@ import Data.Derive.FixedPpr
 -- | Derive an instance of some class. @derive@ only derives instances
 -- for the type of the argument.
 derive :: Derivation -> Name -> Q [Dec]
-derive (Derivation f _) = fmap f . deriveOne
+derive (Derivation f _) = liftM f . deriveOne
 
 -- | Derive for a type and print the code to standard output.  This is
 -- a internal hook for the use of the Derive executable.
@@ -33,7 +34,7 @@ _derive_print_instance (Derivation f _) nm =
 -- | Extract a 'DataDef' value from a type using the TH 'reify'
 -- framework.
 deriveOne :: Name -> Q DataDef
-deriveOne x = fmap extract (reify x)
+deriveOne x = liftM extract (reify x)
 
 extract (TyConI decl) = extract' decl
 extract _ = error $ "Data.Derive.TH.deriveInternal: not a type!"
