@@ -2,7 +2,7 @@
 module Data.Derive.Binary(makeBinary) where
 
 import Data.Derive
-import Data.Derive.Peephole
+import Language.Haskell.TH.Peephole
 import Data.List
 
 makeBinary :: Derivation

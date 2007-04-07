@@ -18,7 +18,7 @@ import Data.List
 import Control.Monad (liftM)
 
 import Language.Haskell.TH.Syntax
-import Data.Derive.FixedPpr
+import Language.Haskell.TH.FixedPpr
 
 -- | Derive an instance of some class. @derive@ only derives instances
 -- for the type of the argument.

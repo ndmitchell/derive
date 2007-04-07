@@ -2,10 +2,10 @@
 module Data.Derive.Play(makePlay) where
 
 import Data.Derive
-import Data.Derive.Peephole
+import Language.Haskell.TH.Peephole
 import Data.List
 import Data.Maybe
-import Data.Derive.FixedPpr
+import Language.Haskell.TH.FixedPpr
 import Control.Monad.State
 import Language.Haskell.TH.Syntax
 

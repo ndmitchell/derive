@@ -1,7 +1,7 @@
 module Data.Derive.Example(Data2(..), guess) where
 
 import Language.Haskell.TH hiding (ppr)
-import Data.Derive.FixedPpr
+import Language.Haskell.TH.FixedPpr
 import Data.List
 
 
