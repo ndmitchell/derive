@@ -87,7 +87,7 @@ deriveInternal x = if not $ isAlgType dtyp then (Nothing,[]) else (Just res, con
                 args = zip (map typeRepTyCon typeChildren) [0..]
 
         ctr :: Constr -> (CtorDef, [DataBox])
-        ctr con = (CtorDef (showConstr con) (length childs) (map toType childs), childs)
+        ctr con = (CtorDef (showConstr con) (zip (repeat Nothing) (map toType childs)), childs)
             where
                 name = showConstr con
                 childs = gmapQ DataBox $ fromConstr con `asTypeOf` x

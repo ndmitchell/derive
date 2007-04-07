@@ -44,12 +44,12 @@ extract' (DataD _cx name args cons _derv)
 extract' (NewtypeD cx name args con derv) = extract' (DataD cx name args [con] derv)
 extract' _ = error "strange tycon decl!"
 
-ctord n ty = CtorDef (show n) (length ty) ty
+ctord n ty = CtorDef (show n) ty
 
 ex_ctor :: [Name] -> Con -> CtorDef
-ex_ctor args (NormalC nm tys) = ctord nm   $ map (ex_type args . snd) tys
-ex_ctor args (RecC name tys)  = ctord name $ map (ex_type args . (\ (x,y,z) -> z)) tys
-ex_ctor args (InfixC t0 n t1) = ctord n    $ map (ex_type args . snd) [t0, t1]
+ex_ctor args (NormalC nm tys) = ctord nm   . zip (repeat Nothing) . map (ex_type args . snd) $ tys
+ex_ctor args (RecC name tys)  = ctord name $ map (\ (x,y,z) -> (Just $ show x , ex_type args z)) tys
+ex_ctor args (InfixC t0 n t1) = undefined --ctord n    - zip (repeat Nothing) . map (ex_type args . snd) $ [t0, t1]
 ex_ctor args ForallC{}        = error "Existential types not yet handled"
 
 ex_type :: [Name] -> Type -> RType

@@ -21,11 +21,16 @@ data DataDef = DataDef {
 -- | The type of individual data constructors.
 data CtorDef = CtorDef {
       ctorName :: String,  -- ^ The constructor's name.
-      ctorArity :: Int,    -- ^ Number of arguments required by this
-                           -- constructor.
-      ctorTypes :: [RType] -- ^ The types of the required arguments.
+      ctorFields :: [(Maybe FieldName, RType)] -- ^ The types of the required arguments and the names of the fields.
     } deriving (Eq, Ord)
 
+type FieldName = String
+-- | Number of arguments required by this constructor.
+ctorArity :: CtorDef -> Int 
+ctorArity = length . ctorFields
+-- | The types of the required arguments. 
+ctorTypes :: CtorDef -> [RType]
+ctorTypes = map snd . ctorFields
 -- | A referencing type.  An object of this type refers to some other
 -- type.  Presently it is used to specify (components of) the types of
 -- constructor arguments.
@@ -52,7 +57,7 @@ instance Show DataDef where
         where c = concat $ intersperse " | " $ map show ctors
 
 instance Show CtorDef where
-    show (CtorDef name arity ts) = name ++ " #" ++ show arity ++ " : " ++ show ts
+    show (CtorDef name ts) = name ++ " : " ++ show ts
 
 instance Show RType where
     show (RType con [])   = show con

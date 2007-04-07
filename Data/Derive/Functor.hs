@@ -18,11 +18,12 @@ derive dat
 -- | Derive Functor over a given argument number for a type
 --   return (derived function, required instances)
 deriveFunctorCtor :: Arg -> CtorDef -> Clause
-deriveFunctorCtor arg (CtorDef name arity types) = sclause lhs rhs
+deriveFunctorCtor arg CtorDef{ctorName=name,ctorFields=types} = sclause lhs rhs
     where
+       arity = length types
        args = map return $ take arity ['a'..]
        lhs = [vr "fun", lK name (map vr args)]
-       rhs = lK name $ zipWith app (map (deriveFunctorType arg) types) (map vr args)
+       rhs = lK name $ zipWith app (map (deriveFunctorType arg . snd) types) (map vr args)
 
 -- | Derive Functor over a given argument number for a type
 --   return (derived function, required instances)
