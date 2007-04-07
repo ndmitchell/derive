@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fth #-}
+{-# OPTIONS_GHC -fth -fno-warn-missing-methods #-}
 
 module Data.Derive.Data(makeData) where
 
