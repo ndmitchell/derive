@@ -13,12 +13,11 @@ module Data.DeriveTH
         _derive_print_instance
        ) where
 
-import Data.Derive
 import Data.List
 import Control.Monad (liftM)
 
-import Language.Haskell.TH.Syntax
-import Language.Haskell.TH.FixedPpr
+import Language.Haskell.TH.All
+
 
 -- | Derive an instance of some class. @derive@ only derives instances
 -- for the type of the argument.
