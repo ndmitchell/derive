@@ -11,7 +11,7 @@ eq' dat = simple_instance "Eq" dat [funN "==" body]
         body = map rule (dataCtors dat) ++ [defclause 2 false]
 
 rule ctor = sclause [ctp ctor 'a', ctp ctor 'b']
-                    (and' (zipWith (==:) (ctv ctor 'a') (ctv ctor 'b')))
+                    (and_ (zipWith (==:) (ctv ctor 'a') (ctv ctor 'b')))
 
 
 example = [d|

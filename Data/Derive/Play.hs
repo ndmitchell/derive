@@ -44,13 +44,13 @@ derive dat@(DataDef name arity ctors) = peephole $
         gbody = [match ctor (gitem $ contain ctor) | ctor <- ctors]
         
         gitem :: [Container] -> Exp
-        gitem conts = concat' [AppE (f c) (var i) | (i,c) <- zip [1..] conts]
+        gitem conts = concat_ [AppE (f c) (var i) | (i,c) <- zip [1..] conts]
             where
                 f None = l1 "const" nil
                 f Target = LamE [var 1] (box (var 1))
                 f (List x) = l1 "concatMap" (f x)
                 f (Tuple xs) = LamE [tup (map var ns)]
-                                    (concat' [AppE (f x) (var n) | (n,x) <- zip ns xs])
+                                    (concat_ [AppE (f x) (var n) | (n,x) <- zip ns xs])
                     where ns = [1..length xs]
 
         rbody = [Clause [vr "x"] (NormalB bod) (r:k:map lst lsts)]

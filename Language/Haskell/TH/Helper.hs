@@ -138,6 +138,7 @@ true, false, nil :: Valcon a => a
 true = l0 "True"
 false = l0 "False"
 nil = l0 "[]"
+unit = lit ()
 
 cons :: Valcon a => a -> a -> a
 cons = l2 ":"
@@ -154,17 +155,16 @@ return' = l1 "return"
 (>>:) = l2 ">>"
 ap' = l2 "ap"
 
--- | Build a chain of and-expressions.
-and' :: [Exp] -> Exp
-and' = foldr (&&:) true
+-- | Build a chain of expressions, with an appropriate terminal
+--   sequence__ does not require a unit at the end (all others are optimised automatically)
+and_, concat_, sequence_, sequence__ :: [Exp] -> Exp
+and_  = foldr (&&:) true
+concat_ = foldr (++:) nil
+sequence_ = foldr (>>:) (return' unit)
 
--- | Build a chain of concat-expressions.
-concat' :: [Exp] -> Exp
-concat' = foldr (++:) nil
+sequence__ [] = return' unit
+sequence__ xs = foldr1 (>>:) xs
 
--- | Build a chain of monadic actions.
-sequ' :: [Exp] -> Exp
-sequ' = foldr (>>:) (return' (lit ()))
 
 -- | K-way liftM
 liftmk :: Exp -> [Exp] -> Exp

@@ -11,7 +11,7 @@ derive dat@(DataDef name arity ctors) = peephole $
         simple_instance "Binary" dat [funN "put" pbody, funN "get" gbody]
     where
         pbody = [ sclause [ctp ctor 'x'] (put_case nm ctor) | (nm,ctor) <- items ]
-        put_case nm ctor = sequ' (ptag (lit nm) : map (l1 "put") (ctv ctor 'x'))
+        put_case nm ctor = sequence__ (ptag (lit nm) : map (l1 "put") (ctv ctor 'x'))
 
         gbody = [sclause [] (gtag >>=: ("tag_" ->: case' (vr "tag_") (map get_case items)))]
         get_case (nm,ctor) = (lit nm, liftmk (ctc ctor) (replicate (ctorArity ctor) (vr "get")))
