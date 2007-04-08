@@ -1,8 +1,7 @@
 
 module Data.Derive.Binary(makeBinary) where
 
-import Data.Derive
-import Language.Haskell.TH.Peephole
+import Language.Haskell.TH.All
 import Data.List
 
 makeBinary :: Derivation

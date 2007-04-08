@@ -2,7 +2,7 @@
 module Language.Haskell.TH.Peephole(Peephole, peephole) where
 
 import Language.Haskell.TH.Syntax
-import Data.Derive
+import Language.Haskell.TH.Helper
 import Debug.Trace
 
 

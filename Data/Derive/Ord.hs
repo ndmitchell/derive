@@ -1,7 +1,7 @@
 module Data.Derive.Ord(makeOrd) where
 
-import Data.Derive
-import Language.Haskell.TH
+import Language.Haskell.TH.All
+
 
 makeOrd = Derivation ord' "Ord"
 ord' dat = simple_instance "Ord" dat [funN "compare" body]

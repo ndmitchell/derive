@@ -2,9 +2,8 @@
 
 module Data.Derive.Eq(makeEq) where
 
-import Data.Derive
 import Data.DeriveGuess
-import Language.Haskell.TH
+import Language.Haskell.TH.All
 
 makeEq = Derivation eq' "Eq"
 eq' dat = simple_instance "Eq" dat [funN "==" body]

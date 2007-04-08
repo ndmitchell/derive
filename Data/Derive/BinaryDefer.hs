@@ -1,8 +1,7 @@
 
 module Data.Derive.BinaryDefer(makeBinaryDefer) where
 
-import Data.Derive
-import Language.Haskell.TH.Syntax
+import Language.Haskell.TH.All
 
 makeBinaryDefer :: Derivation
 makeBinaryDefer = Derivation derive "BinaryDefer"

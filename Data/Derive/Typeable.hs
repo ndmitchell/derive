@@ -1,8 +1,7 @@
 module Data.Derive.Typeable(makeTypeable) where
 
-import Data.Derive
+import Language.Haskell.TH.All
 import Data.Char
-import Language.Haskell.TH
 
 makeTypeable = Derivation typeable' "Typeable"
 typeable' dat = [FunD nam [sclause [] (LitE $ StringL $ dataName dat)]

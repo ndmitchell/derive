@@ -2,10 +2,9 @@
 
 module Data.Derive.Data(makeData) where
 
-import Data.Derive
+import Language.Haskell.TH.All
 import Data.Generics
 import Data.DeriveGuess
-import Language.Haskell.TH
 
 makeData = Derivation data' "Data"
 data' dat = simple_instance "Data" dat [funN "gfoldl" body]

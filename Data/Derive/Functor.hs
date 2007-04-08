@@ -1,9 +1,9 @@
 
 module Data.Derive.Functor(makeFunctor) where
 
-import Data.Derive
+import Language.Haskell.TH.All
 import Data.List
-import Language.Haskell.TH.Syntax
+
 
 makeFunctor :: Derivation
 makeFunctor = Derivation derive "Functor"
