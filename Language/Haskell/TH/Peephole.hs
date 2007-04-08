@@ -120,6 +120,9 @@ peep (AppE (LamE (VarP x:xs) y) z)
 peep (AppE (AppE bind (AppE ret x)) y)
     | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
 
+peep (InfixE (Just (AppE ret x)) bind (Just y))
+    | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
+
 peep (AppE append (AppE (AppE cons x) nil))
     | append ~= "++" && cons ~= ":" && nil ~= "[]"
     = peep $ AppE (l0 ":") x
