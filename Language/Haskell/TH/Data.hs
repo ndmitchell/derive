@@ -44,4 +44,28 @@ ctorArity (InfixC _ _ _ ) = 2
 ctorArity (ForallC _ _ c) = ctorArity c
 
 
+ctorStrictTypes :: CtorDef -> [StrictType]
+ctorStrictTypes (NormalC _ xs ) = xs
+ctorStrictTypes (RecC _ xs    ) = [(b,c) | (a,b,c) <- xs]
+ctorStrictTypes (InfixC x _ y ) = [x,y]
+ctorStrictTypes (ForallC _ _ c) = ctorStrictTypes c
 
+
+ctorTypes :: CtorDef -> [Type]
+ctorTypes = map snd . ctorStrictTypes
+
+
+-- convert AppT chains back to a proper list
+typeApp :: Type -> (Type, [Type])
+typeApp (AppT l r) = (a, b++[r])
+    where (a,b) = typeApp l
+typeApp t = (t, [])
+
+
+eqConT :: String -> Type -> Bool
+eqConT name (ConT x) = name == show x
+eqConT _ _ = False
+
+isTupleT :: Type -> Bool
+isTupleT (TupleT _) = True
+isTupleT _ = False

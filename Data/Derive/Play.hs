@@ -17,15 +17,16 @@ data Container = None | Target
                  deriving (Eq, Show)
 
 
-typeToContainer :: String -> RType -> Container
-typeToContainer active t@(RType (TypeCon x) xs)
-    | x == active = Target
-    | otherwise = if all (== None) ys then None
-                  else if x == "[]" then List (head ys)
-                  else if all (== ',') x then Tuple ys
-                  else error $ "Play derivation on unknown type: " ++ show t
-        where ys = map (typeToContainer active) xs
-typeToContainer _ _ = None
+typeToContainer :: String -> Type -> Container
+typeToContainer active t =
+        if eqConT active name then Target
+        else if all (== None) rest2 then None
+        else if name == ListT then List (head rest2)
+        else if isTupleT name then Tuple rest2
+        else error $ "Play derivation on unknown type: " ++ show t
+    where
+        (name,rest) = typeApp t
+        rest2 = map (typeToContainer active) rest
 
 
 everything :: Container -> [Container]
@@ -34,9 +35,12 @@ everything o@(Tuple x) = o : concatMap everything x
 everything o = [o]
 
 
-derive dat@(DataDef name arity ctors) = peephole $
+derive dat = peephole $
         simple_instance "Play" dat [funN "getChildren" gbody, funN "replaceChildren" rbody]
     where
+        ctors = dataCtors dat
+        name = dataName dat
+    
         contain = map (typeToContainer name) . ctorTypes
         var x = vr $ 'x' : show x
         match ctor = sclause [ctp ctor 'x']
