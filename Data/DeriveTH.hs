@@ -10,7 +10,7 @@ module Data.DeriveTH
         -- * Convienience re-exports
         Derivation, -- abstract!
         -- * Internal
-        _derive_print_instance
+        _derive_string_instance
        ) where
 
 import Data.List
@@ -26,9 +26,9 @@ derive (Derivation f _) = liftM f . deriveOne
 
 -- | Derive for a type and print the code to standard output.  This is
 -- a internal hook for the use of the Derive executable.
-_derive_print_instance :: Derivation -> Name -> Q Exp
-_derive_print_instance (Derivation f _) nm =
-    return . l1 "putStr" . LitE . StringL . (++"\n\n") . show . ppr . f =<< deriveOne nm
+_derive_string_instance :: Derivation -> Name -> Q Exp
+_derive_string_instance (Derivation f _) nm =
+    return . LitE . StringL . (++"\n\n") . show . ppr . f =<< deriveOne nm
 
 -- | Extract a 'DataDef' value from a type using the TH 'reify'
 -- framework.

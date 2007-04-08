@@ -122,14 +122,12 @@ mainFile flags file = do
     (fileflags,modname,datas,reqs) <- parseFile file
     let tmpfile = "Temp.hs"
     
-        devs = ["'\\n':derive make" ++ cls ++ " (undefined :: " ++ unwords (ctor:ars) ++ ")"
-               | (ctor,arity,cls) <- reqs, let ars = map (:[]) $ take arity ['A'..] ]
-    
-        hscode x = "{-# OPTIONS_GHC -fglasgow-exts #-}\n" ++
+        devs = ["'\\n': $( _derive_string_instance make" ++ cls ++ " ''" ++ ctor ++ " )"
+               | (ctor,arity,cls) <- reqs]
+
+        hscode x = "{-# OPTIONS_GHC -fth #-}\n" ++
                    "module " ++ modname ++ " where\n" ++
-                   "import Data.Generics\n" ++
-                   "import System.Environment\n" ++
-                   "import Data.Derive.SYB\n" ++
+                   "import Data.DeriveTH\n" ++
                    concat [ "import Data.Derive." ++ cls ++ "\n" | (_ctor, _arity, cls) <- reqs ] ++
                    datas ++ "\n" ++
                    "main = writeFile " ++ show x ++ " $\n" ++
@@ -225,7 +223,7 @@ parseFile file = do
                 (name,arity) = parseName (drop (length keyword) x)
 
                 f xs | "deriving" `isPrefixOf` xs =
-                    (" deriving (" ++ concat (intersperse ", " $ nub $ have ++ ["Data","Typeable"]) ++ ")"
+                    (" deriving (" ++ concat (intersperse ", " $ nub have) ++ ")"
                     ,map ((,,) name arity) want)
                     where (have,want) = parseDeriving (drop 8 xs)
 
