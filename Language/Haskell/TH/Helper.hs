@@ -67,11 +67,6 @@ instance Show TypeCon where
     show (TypeCon n) = n
     show (TypeArg i) = [chr (ord 'a' + i)]
 
--- | The type of ways to derive classes.
-data Derivation = Derivation {
-      derivationDeriver :: DataDef -> [Dec], -- ^ The derivation function proper
-      derivationName    :: String            -- ^ The name of the derivation
-    }
 
 -- * Template Haskell helper functions
 --
