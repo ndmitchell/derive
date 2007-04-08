@@ -148,12 +148,13 @@ box x = cons x nil
 return' = l1 "return"
 const' = l1 "const"
 
-(==:), (&&:), (++:), (>>=:), (>>:), ap' :: Exp -> Exp -> Exp
+(==:), (&&:), (++:), (>>=:), (>>:), (.:), ap' :: Exp -> Exp -> Exp
 (==:) = l2 "=="
 (&&:) = l2 "&&"
 (++:) = l2 "++"
 (>>=:) = l2 ">>="
 (>>:) = l2 ">>"
+(.:) = l2 "."
 ap' = l2 "ap"
 
 -- | Build a chain of expressions, with an appropriate terminal

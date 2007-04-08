@@ -25,7 +25,7 @@ deriveFunctorCtor dat arg ctor = sclause lhs rhs
        arity = length types
        args = map return $ take arity ['a'..]
        lhs = [vr "fun", lK name (map vr args)]
-       rhs = lK name $ zipWith app (map (deriveFunctorType arg) types) (map vr args)
+       rhs = lK name $ zipWith AppE (map (deriveFunctorType arg) types) (map vr args)
 
 -- | Derive Functor over a given argument number for a type
 --   return (derived function, required instances)
@@ -38,9 +38,9 @@ deriveFunctorType arg (RType (TypeCon "->") [a,b]) -- a -> b
     where af = deriveFunctorType arg{co=not (co arg)} a
           bf = deriveFunctorType arg                  b
 deriveFunctorType arg (RType tycon args)
-    = foldl  composeAp  (deriveFunctorCon arg tycon)
-                        (zipWith fmapAp (map (Arg False) [0..])
-                                        (map (deriveFunctorType arg) args))
+    = foldl (.:) (deriveFunctorCon arg tycon)
+                 (zipWith fmapAp (map (Arg False) [0..])
+                                 (map (deriveFunctorType arg) args))
 
 -- | Derive Functor over a given argument number for a type constructor
 deriveFunctorCon :: Arg -> TypeCon -> Exp
@@ -56,21 +56,12 @@ id' = l0 "id"
 -- | Is a function the identity function?
 isId = (== id')
 
--- | optimized (.) application
-composeAp a b
- | isId a    = b
- | isId b    = a
- | otherwise = l2 "." a b
 
 -- | optimized fmap application
 fmapAp arg b
  | isId b    = id'
  | otherwise = l1 (fmapFor arg) b
 
--- | optimized application
-app a b
- | isId a    = b
- | otherwise = a `AppE` b
 
 -- | Derive Functor or CoFunctor over an argument
 data Arg = Arg { co :: Bool, position :: Int }

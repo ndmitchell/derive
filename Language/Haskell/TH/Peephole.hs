@@ -58,8 +58,12 @@ instance Peephole Exp where
         LetE x y -> f (LetE (p x) (p y))
         CaseE x y -> f (CaseE (p x) (p y))
         TupE x -> f (TupE (map p x))
+        InfixE x y z -> f (InfixE (pm x) (p y) (pm z))
         x -> f x
         where
+            pm Nothing  = Nothing
+            pm (Just x) = Just (p x)
+        
             p x = peephole x
             f x = peep x
 
@@ -122,6 +126,10 @@ peep (AppE (AppE bind (AppE ret x)) y)
 
 peep (InfixE (Just (AppE ret x)) bind (Just y))
     | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
+
+peep (InfixE (Just x) dot (Just y))
+    | dot ~= "." && x ~= "id" = y
+    | dot ~= "." && y ~= "id" = x
 
 peep (AppE append (AppE (AppE cons x) nil))
     | append ~= "++" && cons ~= ":" && nil ~= "[]"
