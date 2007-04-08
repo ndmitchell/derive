@@ -47,7 +47,8 @@ And a list of files to execute upon
 
 
 
-data Flag = Version | Help | Output String | Import | Module String | Append
+data Flag = Version | Help | Output String | Import | Module String
+          | Append | Derive [String] | KeepTemp
             deriving (Eq, Show)
 
 
@@ -59,7 +60,11 @@ options =
  , Option "i"  ["import"]  (NoArg Import)           "add an import statement"
  , Option "m"  ["module"]  (ReqArg Module "MODULE") "add a module MODULE where statement"
  , Option "a"  ["append"]  (NoArg Append)           "append the result to the file"
+ , Option "d"  ["derive"]  (ReqArg split "DERIVES") "things to derive for all types"
+ , Option "k"  ["keep"]    (NoArg KeepTemp)         "keep temporary file"
  ]
+ where
+    split = Derive . words . map (\x -> if x == ',' then ' ' else x)
 
 
 getOpts :: IO ([Flag], [String])
@@ -119,7 +124,7 @@ dropAppend xs = f 0 xs
 
 
 mainFile flags file = do
-    (fileflags,modname,datas,reqs) <- parseFile file
+    (fileflags,modname,datas,reqs) <- parseFile flags file
     let tmpfile = "Temp.hs"
     
         devs = ["'\\n': $( _derive_string_instance make" ++ cls ++ " ''" ++ ctor ++ " )"
@@ -152,8 +157,9 @@ mainFile flags file = do
     length res `seq` return ()
     hClose txhndl
     
-    removeFile hsfile
-    removeFile txfile
+    when (KeepTemp `notElem` flags) $ do
+        removeFile hsfile
+        removeFile txfile
 
     flags <- return $ fileflags ++ flags
     if Append `elem` flags then do
@@ -179,12 +185,13 @@ mainFile flags file = do
 -- group lines so every line starts at column 1
 -- look for newtype, data etc.
 -- look for deriving
-parseFile :: FilePath -> IO ([Flag], String, String, [(String,String)])
-parseFile file = do
+parseFile :: [Flag] -> FilePath -> IO ([Flag], String, String, [(String,String)])
+parseFile flags file = do
         src <- liftM lines $ readFile file
         options <- parseOptions src
         modname <- parseModname src
-        (decl,req) <- return $ unzip $ concatMap checkData $ joinLines $
+        let deriv = concat [x | Derive x <- flags ++ options]
+        (decl,req) <- return $ unzip $ concatMap (checkData deriv) $ joinLines $
                                map dropComments $ filter (not . isBlank) src
         return (options, modname, unlines decl, concat req)
     where
@@ -215,13 +222,14 @@ parseFile file = do
         joinLines (x:xs) = x : joinLines xs
         joinLines [] = []
         
-        checkData x | keyword `elem` ["data","newtype"] = [(x, map ((,) name) req)]
-                    | keyword `elem` ["type","import"] = [(x,[])]
-                    | otherwise = []
+        checkData extra x
+                | keyword `elem` ["data","newtype"] = [(x, map ((,) name) req)]
+                | keyword `elem` ["type","import"] = [(x,[])]
+                | otherwise = []
             where
                 keyword = takeWhile (not . isSpace) x
-                name = parseName x
-                req = parseDeriving x
+                name = parseName $ drop (length keyword) x
+                req = nub $ extra ++ parseDeriving x
 
 
         -- which derivings have been requested
