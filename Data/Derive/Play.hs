@@ -46,7 +46,7 @@ derive dat@(DataDef name arity ctors) = peephole $
         gitem :: [Container] -> Exp
         gitem conts = concat_ [AppE (f c) (var i) | (i,c) <- zip [1..] conts]
             where
-                f None = l1 "const" nil
+                f None = const' nil
                 f Target = LamE [var 1] (box (var 1))
                 f (List x) = l1 "concatMap" (f x)
                 f (Tuple xs) = LamE [tup (map var ns)]

@@ -143,9 +143,10 @@ unit = lit ()
 cons :: Valcon a => a -> a -> a
 cons = l2 ":"
 
-box, return' :: Exp -> Exp
+box, return', const' :: Exp -> Exp
 box x = cons x nil
 return' = l1 "return"
+const' = l1 "const"
 
 (==:), (&&:), (++:), (>>=:), (>>:), ap' :: Exp -> Exp -> Exp
 (==:) = l2 "=="

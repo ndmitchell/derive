@@ -20,7 +20,7 @@ derive dat@(DataDef name arity ctors) = peephole $
         items :: [(Integer,CtorDef)]
         items = zip [0..] ctors
 
-        (ptag, gtag) | nctors <= 1     = (\_ -> l1 "return" (lit ()), l1 "return" (lit (0::Integer)))
+        (ptag, gtag) | nctors <= 1     = (\_ -> return' unit, return' (lit (0::Integer)))
                      | nctors <= 256   = (l1 "putWord8", l0 "getWord8")
                      | nctors <= 65536 = (l1 "putWord16", l0 "getWord16")
                      | otherwise       = (l1 "putWord32", l0 "getWord32")
