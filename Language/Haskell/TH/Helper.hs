@@ -1,6 +1,5 @@
--- | The core module of the Data.Derive system.  This module contains
--- the data types used for communication between the extractors and
--- the derivors.
+-- | These small short-named functions are intended to make the
+--   construction of abstranct syntax trees less tedious.
 module Language.Haskell.TH.Helper where
 
 import Data.List
@@ -10,10 +9,8 @@ import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Data
 
 
--- * Template Haskell helper functions
+-- * Syntax elements
 --
--- These small short-named functions are intended to make the
--- construction of abstranct syntax trees less tedious.
 
 -- | A simple clause, without where or guards.
 sclause :: [Pat] -> Exp -> Clause
@@ -27,6 +24,39 @@ defclause num = sclause (replicate num WildP)
 sval :: Pat -> Exp -> Dec
 sval pat body = ValD pat (NormalB body) []
 
+
+case' :: Exp -> [(Pat, Exp)] -> Exp
+case' exp alts = CaseE exp [ Match x (NormalB y) [] | (x,y) <- alts ]
+
+(->:) :: String -> Exp -> Exp
+(->:) nm bdy = LamE [vr nm] bdy
+
+
+
+-- | Build an instance of a class for a data type, using the heuristic
+-- that the type is itself required on all type arguments.
+simple_instance :: String -> DataDef -> [Dec] -> [Dec]
+simple_instance cls (DataDef name arity _) defs = [InstanceD ctx hed defs]
+    where
+        vars = map (VarT . mkName . ('t':) . show) [1..arity]
+        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName name) : vars))
+        ctx = map (ConT (mkName cls) `AppT`) vars
+
+-- | Build an instance of a class for a data type, using the class at the given types
+generic_instance :: String -> DataDef -> [Type] -> [Dec] -> [Dec]
+generic_instance cls (DataDef name arity _) ctxTypes defs = [InstanceD ctx hed defs]
+    where
+        vars = map (VarT . mkName . ('t':) . show) [1..arity]
+        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName name) : vars))
+        ctx = map (ConT (mkName cls) `AppT`) ctxTypes
+
+-- | Build a fundecl with a string name
+funN :: String -> [Clause] -> Dec
+funN nam claus = FunD (mkName nam) claus
+
+
+
+-- * Pattern vs Value abstraction
 
 -- | The class used to overload lifting operations.  To reduce code
 -- duplication, we overload the wrapped constructors (and everything
@@ -77,6 +107,23 @@ instance (LitC a, LitC b, LitC c) => LitC (a,b,c) where
 instance LitC () where
       lit () = tup []
 
+
+-- * Constructor abstraction
+
+-- | Make a list of variables, one for each argument to a constructor
+ctv :: Valcon a => CtorDef -> Char -> [a]
+ctv ctor c = map (vr . (c:) . show) [1 .. ctorArity ctor]
+
+-- | Make a simple pattern to bind a constructor
+ctp :: Valcon a => CtorDef -> Char -> a
+ctp ctor c = lK (ctorName ctor) (ctv ctor c)
+
+-- | Reference the constructor itself
+ctc :: Valcon a => CtorDef -> a
+ctc = l0 . ctorName
+
+
+
 -- * Lift a constructor over a fixed number of arguments.
 
 l0 :: Valcon a => String -> a
@@ -107,11 +154,6 @@ return' = l1 "return"
 (>>:) = l2 ">>"
 ap' = l2 "ap"
 
-case' :: Exp -> [(Pat, Exp)] -> Exp
-case' exp alts = CaseE exp [ Match x (NormalB y) [] | (x,y) <- alts ]
-(->:) :: String -> Exp -> Exp
-(->:) nm bdy = LamE [vr nm] bdy
-
 -- | Build a chain of and-expressions.
 and' :: [Exp] -> Exp
 and' = foldr (&&:) true
@@ -127,37 +169,3 @@ sequ' = foldr (>>:) (return' (lit ()))
 -- | K-way liftM
 liftmk :: Exp -> [Exp] -> Exp
 liftmk hd args = foldl ap' (return' hd) args
-
--- | Build an instance of a class for a data type, using the heuristic
--- that the type is itself required on all type arguments.
-simple_instance :: String -> DataDef -> [Dec] -> [Dec]
-simple_instance cls (DataDef name arity _) defs = [InstanceD ctx hed defs]
-    where
-        vars = map (VarT . mkName . ('t':) . show) [1..arity]
-        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName name) : vars))
-        ctx = map (ConT (mkName cls) `AppT`) vars
-
--- | Build an instance of a class for a data type, using the class at the given types
-generic_instance :: String -> DataDef -> [Type] -> [Dec] -> [Dec]
-generic_instance cls (DataDef name arity _) ctxTypes defs = [InstanceD ctx hed defs]
-    where
-        vars = map (VarT . mkName . ('t':) . show) [1..arity]
-        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName name) : vars))
-        ctx = map (ConT (mkName cls) `AppT`) ctxTypes
-
--- | Build a fundecl with a string name
-funN :: String -> [Clause] -> Dec
-funN nam claus = FunD (mkName nam) claus
-
--- | Make a list of variables, one for each argument to a constructor
-ctv :: Valcon a => CtorDef -> Char -> [a]
-ctv ctor c = map (vr . (c:) . show) [1 .. ctorArity ctor]
-
--- | Make a simple pattern to bind a constructor
-ctp :: Valcon a => CtorDef -> Char -> a
-ctp ctor c = lK (ctorName ctor) (ctv ctor c)
-
--- | Reference the constructor itself
-ctc :: Valcon a => CtorDef -> a
-ctc = l0 . ctorName
-
