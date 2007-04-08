@@ -8,62 +8,40 @@ import Data.Char
 
 import Language.Haskell.TH.Syntax
 
--- * The main data types used by Derive
 
--- | The type of (algebraic) data declarations.
-data DataDef = DataDef {
-      dataName :: String,    -- ^ The name of the data type
-      dataFree :: Int,       -- ^ The number of arguments to the type
-                             -- constructor (eg 3 for @data Foo b c d = ...@)
-      dataCtors :: [CtorDef] -- ^ The constructors of the type
-    } deriving (Eq, Ord)
+-- must be one of DataD or NewtypeD
+type DataDef = Dec
 
--- | The type of individual data constructors.
-data CtorDef = CtorDef {
-      ctorName :: String,  -- ^ The constructor's name.
-      ctorFields :: [(Maybe FieldName, RType)] -- ^ The types of the required arguments and the names of the fields.
-    } deriving (Eq, Ord)
+type CtorDef = Con
 
-type FieldName = String
--- | Number of arguments required by this constructor.
-ctorArity :: CtorDef -> Int 
-ctorArity = length . ctorFields
--- | The types of the required arguments. 
-ctorTypes :: CtorDef -> [RType]
-ctorTypes = map snd . ctorFields
--- | A referencing type.  An object of this type refers to some other
--- type.  Presently it is used to specify (components of) the types of
--- constructor arguments.
---
--- @Type@ values are represented in uncurried form, with a principle
--- type constructor followed by a list of zero or more arbitrary type
--- arguments.  The structure of the type guaranteed that the
--- applications are in canononical form.
-data RType    = RType {typeCon :: TypeCon, typeArgs :: [RType] }
-	deriving (Eq, Ord)
 
--- | A referencing type which is not itself an application.
-data TypeCon = TypeCon String -- ^ A type defined elsewhere, free in
-                              -- the data declaration.
-             | TypeArg  Int   -- ^ A reference to a type bound by the
-                              -- type constructor; the argument to
-                              -- @TypeArg@ is the index of the type
-                              -- argument, counting from zero at the
-                              -- left.
-	deriving (Eq, Ord)
+dataName :: DataDef -> String
+dataName (DataD    _ name _ _ _) = show name
+dataName (NewtypeD _ name _ _ _) = show name
 
-instance Show DataDef where
-    show (DataDef name arity ctors) = name ++ " #" ++ show arity ++ (if null ctors then "" else " = ") ++ c
-        where c = concat $ intersperse " | " $ map show ctors
 
-instance Show CtorDef where
-    show (CtorDef name ts) = name ++ " : " ++ show ts
+dataArity :: DataDef -> Int
+dataArity (DataD    _ _ xs _ _) = length xs
+dataArity (NewtypeD _ _ xs _ _) = length xs
 
-instance Show RType where
-    show (RType con [])   = show con
-    show (RType con args) = "(" ++ show con ++ concatMap ((" "++) . show) args ++ ")"
 
-instance Show TypeCon where
-    show (TypeCon n) = n
-    show (TypeArg i) = [chr (ord 'a' + i)]
+dataCtors :: DataDef -> [CtorDef]
+dataCtors (DataD    _ _ _ xs _) = xs
+dataCtors (NewtypeD _ _ _ x  _) = [x]
+
+
+ctorName :: CtorDef -> String
+ctorName (NormalC name _ ) = show name
+ctorName (RecC name _    ) = show name
+ctorName (InfixC _ name _) = show name
+ctorName (ForallC _ _ c  ) = ctorName c
+
+
+ctorArity :: CtorDef -> Int
+ctorArity (NormalC _ xs ) = length xs
+ctorArity (RecC _ xs    ) = length xs
+ctorArity (InfixC _ _ _ ) = 2
+ctorArity (ForallC _ _ c) = ctorArity c
+
+
 

@@ -7,7 +7,7 @@ import Data.List
 makeBinary :: Derivation
 makeBinary = Derivation derive "Binary"
 
-derive dat@(DataDef name arity ctors) = peephole $
+derive dat = peephole $
         simple_instance "Binary" dat [funN "put" pbody, funN "get" gbody]
     where
         pbody = [ sclause [ctp ctor 'x'] (put_case nm ctor) | (nm,ctor) <- items ]
@@ -16,6 +16,7 @@ derive dat@(DataDef name arity ctors) = peephole $
         gbody = [sclause [] (gtag >>=: ("tag_" ->: case' (vr "tag_") (map get_case items)))]
         get_case (nm,ctor) = (lit nm, liftmk (ctc ctor) (replicate (ctorArity ctor) (vr "get")))
 
+        ctors = dataCtors dat
         nctors = length ctors
         items :: [(Integer,CtorDef)]
         items = zip [0..] ctors

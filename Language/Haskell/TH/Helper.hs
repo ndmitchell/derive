@@ -36,18 +36,18 @@ case' exp alts = CaseE exp [ Match x (NormalB y) [] | (x,y) <- alts ]
 -- | Build an instance of a class for a data type, using the heuristic
 -- that the type is itself required on all type arguments.
 simple_instance :: String -> DataDef -> [Dec] -> [Dec]
-simple_instance cls (DataDef name arity _) defs = [InstanceD ctx hed defs]
+simple_instance cls dat defs = [InstanceD ctx hed defs]
     where
-        vars = map (VarT . mkName . ('t':) . show) [1..arity]
-        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName name) : vars))
+        vars = map (VarT . mkName . ('t':) . show) [1..dataArity dat]
+        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName (dataName dat)) : vars))
         ctx = map (ConT (mkName cls) `AppT`) vars
 
 -- | Build an instance of a class for a data type, using the class at the given types
 generic_instance :: String -> DataDef -> [Type] -> [Dec] -> [Dec]
-generic_instance cls (DataDef name arity _) ctxTypes defs = [InstanceD ctx hed defs]
+generic_instance cls dat ctxTypes defs = [InstanceD ctx hed defs]
     where
-        vars = map (VarT . mkName . ('t':) . show) [1..arity]
-        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName name) : vars))
+        vars = map (VarT . mkName . ('t':) . show) [1..dataArity dat]
+        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName (dataName dat)) : vars))
         ctx = map (ConT (mkName cls) `AppT`) ctxTypes
 
 -- | Build a fundecl with a string name

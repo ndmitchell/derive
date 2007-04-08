@@ -9,7 +9,7 @@ typeable' dat = [FunD nam [sclause [] (LitE $ StringL $ dataName dat)]
     where
         nam = mkName [if x == '.' then '_' else x | x <- "typename_" ++ dataName dat]
     
-        n = if dataFree dat == 0 then "" else show (dataFree dat)
+        n = if dataArity dat == 0 then "" else show (dataArity dat)
         hd = ConT (mkName $ "Typeable" ++ n) `AppT` ConT (mkName (dataName dat))
         def = funN ("typeOf" ++ n) [sclause [WildP] (VarE nam)]
 
