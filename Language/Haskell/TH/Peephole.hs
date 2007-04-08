@@ -127,9 +127,10 @@ peep (AppE (AppE bind (AppE ret x)) y)
 peep (InfixE (Just (AppE ret x)) bind (Just y))
     | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
 
-peep (InfixE (Just x) dot (Just y))
-    | dot ~= "." && x ~= "id" = y
-    | dot ~= "." && y ~= "id" = x
+peep (InfixE (Just x) op (Just y))
+    | op ~= "." && x ~= "id" = y
+    | op ~= "." && y ~= "id" = x
+    | op ~= "&&" && y ~= "True" = x
 
 peep (AppE append (AppE (AppE cons x) nil))
     | append ~= "++" && cons ~= ":" && nil ~= "[]"
