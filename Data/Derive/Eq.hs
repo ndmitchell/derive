@@ -3,7 +3,7 @@
 module Data.Derive.Eq(makeEq) where
 
 import Data.Derive
-import Data.Derive.Example
+import Data.DeriveGuess
 import Language.Haskell.TH
 
 makeEq = Derivation eq' "Eq"

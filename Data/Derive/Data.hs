@@ -4,7 +4,7 @@ module Data.Derive.Data(makeData) where
 
 import Data.Derive
 import Data.Generics
-import Data.Derive.Example
+import Data.DeriveGuess
 import Language.Haskell.TH
 
 makeData = Derivation data' "Data"
