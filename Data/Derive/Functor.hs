@@ -9,21 +9,23 @@ makeFunctor :: Derivation
 makeFunctor = Derivation derive "Functor"
 
 derive dat
- | dataFree dat == 0 = []
- | otherwise         = generic_instance (classFor arg) dat [] [funN (fmapFor arg) body]
+ | dataArity dat == 0 = []
+ | otherwise          = generic_instance (classFor arg) dat [] [funN (fmapFor arg) body]
     where
         arg  = Arg False 1 -- TODO : make a parameter?
-        body = map (deriveFunctorCtor arg) (dataCtors dat)
+        body = map (deriveFunctorCtor dat arg) (dataCtors dat)
 
 -- | Derive Functor over a given argument number for a type
 --   return (derived function, required instances)
-deriveFunctorCtor :: Arg -> CtorDef -> Clause
-deriveFunctorCtor arg CtorDef{ctorName=name,ctorFields=types} = sclause lhs rhs
+deriveFunctorCtor :: DataDef -> Arg -> CtorDef -> Clause
+deriveFunctorCtor dat arg ctor = sclause lhs rhs
     where
+       name = ctorName ctor
+       types = ctorRTypes dat ctor
        arity = length types
        args = map return $ take arity ['a'..]
        lhs = [vr "fun", lK name (map vr args)]
-       rhs = lK name $ zipWith app (map (deriveFunctorType arg . snd) types) (map vr args)
+       rhs = lK name $ zipWith app (map (deriveFunctorType arg) types) (map vr args)
 
 -- | Derive Functor over a given argument number for a type
 --   return (derived function, required instances)

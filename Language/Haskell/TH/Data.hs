@@ -55,6 +55,7 @@ ctorTypes :: CtorDef -> [Type]
 ctorTypes = map snd . ctorStrictTypes
 
 
+
 -- convert AppT chains back to a proper list
 typeApp :: Type -> (Type, [Type])
 typeApp (AppT l r) = (a, b++[r])
@@ -69,3 +70,58 @@ eqConT _ _ = False
 isTupleT :: Type -> Bool
 isTupleT (TupleT _) = True
 isTupleT _ = False
+
+
+
+
+-- * Depreciated, old type stuff
+
+data RType    = RType {typeCon :: TypeCon, typeArgs :: [RType] }
+    deriving (Eq, Ord)
+
+-- | A referencing type which is not itself an application.
+data TypeCon = TypeCon String -- ^ A type defined elsewhere, free in
+                              -- the data declaration.
+             | TypeArg  Int   -- ^ A reference to a type bound by the
+                              -- type constructor; the argument to
+                              -- @TypeArg@ is the index of the type
+                              -- argument, counting from zero at the
+                              -- left.
+    deriving (Eq, Ord)
+
+
+instance Show RType where
+    show (RType con [])   = show con
+    show (RType con args) = "(" ++ show con ++ concatMap ((" "++) . show) args ++ ")"
+
+instance Show TypeCon where
+    show (TypeCon n) = n
+    show (TypeArg i) = [chr (ord 'a' + i)]
+
+
+
+
+ctorRTypes :: DataDef -> CtorDef -> [RType]
+ctorRTypes dat (NormalC nm tys) = map (ex_type dat . snd) tys
+ctorRTypes dat (RecC name tys)  = map (ex_type dat . (\ (x,y,z) -> z)) tys
+ctorRTypes dat (InfixC t0 n t1) = map (ex_type dat . snd) [t0, t1]
+ctorRTypes dat ForallC{}        = error "Existential types not yet handled"
+
+
+
+ex_type :: DataDef -> Type -> RType
+ex_type dat ForallT{}  = error "Polymorphic components not supported"
+ex_type dat (VarT nm)  = case elemIndex nm (ex_args dat) of
+                                Nothing -> error "impossible: tyvar not in scope"
+                                Just k  -> RType (TypeArg k) []
+ex_type dat (ConT nm)  = RType (TypeCon (show nm)) []
+ex_type dat (TupleT k) = RType (TypeCon ("(" ++ replicate (k-1) ',' ++ ")")) []
+ex_type dat (ArrowT)   = RType (TypeCon "(->)") []
+ex_type dat (ListT)    = RType (TypeCon "[]") []
+ex_type dat (AppT a b) = let (RType tc ar) = ex_type dat a ; arg = ex_type dat b
+                         in RType tc (ar ++ [arg])
+
+
+ex_args :: DataDef -> [Name]
+ex_args (DataD _cx name args cons _derv) = args
+ex_args (NewtypeD cx name args con derv) = args
