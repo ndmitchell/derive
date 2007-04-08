@@ -7,7 +7,7 @@ import Data.List
 makeBinary :: Derivation
 makeBinary = Derivation derive "Binary"
 
-derive dat = peephole $
+derive dat =
         simple_instance "Binary" dat [funN "put" pbody, funN "get" gbody]
     where
         pbody = [ sclause [ctp ctor 'x'] (put_case nm ctor) | (nm,ctor) <- items ]

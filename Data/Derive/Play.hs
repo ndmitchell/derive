@@ -35,7 +35,7 @@ everything o@(Tuple x) = o : concatMap everything x
 everything o = [o]
 
 
-derive dat = peephole $
+derive dat =
         simple_instance "Play" dat [funN "getChildren" gbody, funN "replaceChildren" rbody]
     where
         ctors = dataCtors dat
