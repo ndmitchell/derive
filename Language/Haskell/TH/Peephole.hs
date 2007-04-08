@@ -1,71 +1,17 @@
 
-module Language.Haskell.TH.Peephole(Peephole, peephole) where
+module Language.Haskell.TH.Peephole(peepholeDecs) where
 
 import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Helper
+import Language.Haskell.TH.SYB
+import Data.Generics
 import Debug.Trace
 
 traceMode = False
 
 
-class Peephole a where
-    peephole :: a -> a
-
-
-instance Peephole a => Peephole [a] where
-    peephole = map peephole
-
-
-instance (Peephole a, Peephole b) => Peephole (a,b) where
-    peephole (a,b) = (peephole a, peephole b)
-
-
-instance Peephole Dec where
-    peephole (FunD x y) = FunD x (peephole y)
-    peephole (InstanceD x y z) = InstanceD x y (peephole z)
-    peephole x = x
-
-
-instance Peephole Clause where
-    peephole (Clause x y z) = Clause x (peephole y) (peephole z)
-
-
-instance Peephole Body where
-    peephole (GuardedB x) = GuardedB (peephole x)
-    peephole (NormalB x) = NormalB (peephole x)
-
-
-instance Peephole Guard where
-    peephole (NormalG x) = NormalG (peephole x)
-    peephole (PatG x) = PatG (peephole x)
-
-
-instance Peephole Stmt where
-    peephole (BindS x y) = BindS x (peephole y)
-    peephole (LetS x) = LetS (peephole x)
-    peephole (NoBindS x) = NoBindS (peephole x)
-    peephole (ParS x) = ParS (peephole x)
-
-
-instance Peephole Match where
-    peephole (Match x y z) = Match x (peephole y) (peephole z)
-
-
-instance Peephole Exp where
-    peephole x = case x of
-        AppE x y -> f (AppE (p x) (p y))
-        LamE x y -> f (LamE x (p y))
-        LetE x y -> f (LetE (p x) (p y))
-        CaseE x y -> f (CaseE (p x) (p y))
-        TupE x -> f (TupE (map p x))
-        InfixE x y z -> f (InfixE (pm x) (p y) (pm z))
-        x -> f x
-        where
-            pm Nothing  = Nothing
-            pm (Just x) = Just (p x)
-        
-            p x = peephole x
-            f x = peep x
+peepholeDecs :: [Dec] -> [Dec]
+peepholeDecs x = everywhere (mkT peep) x
 
 
 
@@ -81,6 +27,7 @@ replaceVar name rep orig = fExp orig
             LitE _ -> x
             AppE x y -> AppE (fExp x) (fExp y)
             CaseE x y -> CaseE (fExp x) (map fMatch y)
+            TupE xs -> TupE (map fExp xs)
             _ -> error $ "replaceVar: " ++ show x
 
         fMatch o@(Match pat (NormalB bod) []) =
@@ -119,7 +66,7 @@ peep (LamE [ConP comma [VarP x, VarP y]] (VarE z))
 
 peep (AppE (LamE (VarP x:xs) y) z)
     | simple z
-    = peephole $ LamE xs (replaceVar x z y)
+    = peep $ LamE xs (replaceVar x z y)
 
 peep (AppE (AppE bind (AppE ret x)) y)
     | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
