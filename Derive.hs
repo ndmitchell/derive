@@ -123,12 +123,12 @@ mainFile flags file = do
     let tmpfile = "Temp.hs"
     
         devs = ["'\\n': $( _derive_string_instance make" ++ cls ++ " ''" ++ ctor ++ " )"
-               | (ctor,arity,cls) <- reqs]
+               | (ctor,cls) <- reqs]
 
-        hscode x = "{-# OPTIONS_GHC -fth #-}\n" ++
+        hscode x = "{-# OPTIONS_GHC -fth -fglasgow-exts -w #-}\n" ++
                    "module " ++ modname ++ " where\n" ++
                    "import Data.DeriveTH\n" ++
-                   concat [ "import Data.Derive." ++ cls ++ "\n" | (_ctor, _arity, cls) <- reqs ] ++
+                   concat [ "import Data.Derive." ++ cls ++ "\n" | (_, cls) <- reqs ] ++
                    datas ++ "\n" ++
                    "main = writeFile " ++ show x ++ " $\n" ++
                    "    unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
@@ -179,7 +179,7 @@ mainFile flags file = do
 -- group lines so every line starts at column 1
 -- look for newtype, data etc.
 -- look for deriving
-parseFile :: FilePath -> IO ([Flag], String, String, [(String,Int,String)])
+parseFile :: FilePath -> IO ([Flag], String, String, [(String,String)])
 parseFile file = do
         src <- liftM lines $ readFile file
         options <- parseOptions src
@@ -215,42 +215,32 @@ parseFile file = do
         joinLines (x:xs) = x : joinLines xs
         joinLines [] = []
         
-        checkData x | keyword `elem` ["data","newtype"] = [f x]
+        checkData x | keyword `elem` ["data","newtype"] = [(x, map ((,) name) req)]
                     | keyword `elem` ["type","import"] = [(x,[])]
                     | otherwise = []
             where
                 keyword = takeWhile (not . isSpace) x
-                (name,arity) = parseName (drop (length keyword) x)
-
-                f xs | "deriving" `isPrefixOf` xs =
-                    (" deriving (" ++ concat (intersperse ", " $ nub have) ++ ")"
-                    ,map ((,,) name arity) want)
-                    where (have,want) = parseDeriving (drop 8 xs)
-
-                f (x:xs) = let (a,b) = f xs in (x:a,b)
-                f [] = (" deriving (Data, Typeable)", [])
+                name = parseName x
+                req = parseDeriving x
 
 
-        parseDeriving :: String -> ([String],[String]) -- have, want
-        parseDeriving x = case dropWhile isSpace x of
-                               ('(':xs) -> f True $ map repComma $ takeWhile (/= ')') xs
-                               xs -> ([takeWhile isSpace xs], [])
+        -- which derivings have been requested
+        -- find all things inside {-! !-} and 'words' them
+        parseDeriving :: String -> [String]
+        parseDeriving x = words $ f False x
             where
-                repComma x = if x == ',' then ' ' else x
-            
-                f b [] = ([],[])
-                f b (x:xs) | isSpace x = f b xs
-                f b ('{':'-':'!':xs) = f False xs
-                f b ('!':'-':'}':xs) = f True xs
-                f b x = let (have,want) = f b x2 in ([x1|b] ++ have, [x1|not b] ++ want)
-                    where (x1,x2) = break isSpace x
+                f b ('{':'-':'!':xs) = ' ' : f True  xs
+                f b ('!':'-':'}':xs) = ' ' : f False xs
+                f b (x:xs) = [if x == ',' then ' ' else x | b] ++ f b xs
+                f b [] = []
+
 
         -- if there is a =>, its just after that
         -- if there isn't, then its right now
         -- if the => is after =, then ignore
         parseName x = if "=>" `isPrefixOf` b
                       then parseName (drop 2 b)
-                      else let wa = words a in (head wa, length wa - 1)
+                      else head (words a)
             where (a,b) = break (== '=') x
 
 
