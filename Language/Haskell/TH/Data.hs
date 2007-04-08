@@ -58,9 +58,14 @@ ctorTypes = map snd . ctorStrictTypes
 
 -- convert AppT chains back to a proper list
 typeApp :: Type -> (Type, [Type])
-typeApp (AppT l r) = (a, b++[r])
+typeApp (AppT l r) = (typeNorm a, b++[typeNorm r])
     where (a,b) = typeApp l
 typeApp t = (t, [])
+
+
+typeNorm :: Type -> Type
+typeNorm (ConT lst) | show lst == "GHC.Base.[]" = ListT
+typeNorm x = x
 
 
 eqConT :: String -> Type -> Bool
