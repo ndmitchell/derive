@@ -5,6 +5,8 @@ import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Helper
 import Debug.Trace
 
+traceMode = False
+
 
 class Peephole a where
     peephole :: a -> a
@@ -130,7 +132,7 @@ peep (CaseE (LitE x) (Match (LitP y) (NormalB z) [] : _))
     | x == y = z
 
 -- allow easy flip to tracing mode
-peep x | False = trace (show x) x
+peep x | traceMode = trace (show x) x
 peep x = x
 
 
