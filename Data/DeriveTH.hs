@@ -35,5 +35,5 @@ _derive_string_instance (Derivation f _) nm =
 deriveOne :: Name -> Q DataDef
 deriveOne x = liftM extract (reify x)
 
-extract (TyConI decl) = decl
+extract (TyConI decl) = normData decl
 extract _ = error $ "Data.Derive.TH.deriveInternal: not a type!"

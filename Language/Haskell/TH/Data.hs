@@ -55,6 +55,25 @@ ctorTypes :: CtorDef -> [Type]
 ctorTypes = map snd . ctorStrictTypes
 
 
+-- normalisation
+
+normData :: DataDef -> DataDef
+normData (DataD    a b c d e) = DataD a (normName b) c (map normCtor d) e
+normData (NewtypeD a b c d e) = NewtypeD a (normName b) c (normCtor d) e
+
+normCtor :: CtorDef -> CtorDef
+normCtor (NormalC a b  ) = NormalC (normName a) (map normStrictType b)
+normCtor (RecC a b     ) = RecC (normName a) (map normVarStrictType b)
+normCtor (InfixC a b c ) = InfixC (normStrictType a) (normName b) (normStrictType c)
+normCtor (ForallC a b c) = ForallC a b (normCtor c)
+
+normName = mkName . reverse . takeWhile (/= '.') . reverse . show
+
+normVarStrictType (a,b,c) = (a,b,normType c)
+normStrictType (a,b) = (a,normType b)
+
+normType x = x
+
 
 -- convert AppT chains back to a proper list
 typeApp :: Type -> (Type, [Type])
