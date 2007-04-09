@@ -1,7 +1,9 @@
 module Data.DeriveGuess(Data2(..), guess) where
 
 import Language.Haskell.TH.All
+import Data.Generics
 import Data.List
+import Data.Maybe
 
 
 data Data2 a b = Ctor0
@@ -24,25 +26,42 @@ guessDec x = error $ show x
 
 
 guessClauses :: [Clause] -> String
-guessClauses xs | null mid  = error "output raw"
-                | null h    = error "failed to find a hyp"
-                | otherwise = render (head h)
+guessClauses xs | null h    = error "failed to find a hyp"
+                | otherwise = renderClause
     where
-        h = filter valid $ concatMap hyps mid
-    
-        (start,rest) = span isFree xs
-        (mid,stop) = break isFree rest
-
-        isFree _ = False
-        
-        
-        hyps (Clause pats (NormalB bod) []) = hypothesis (map f pats) bod
+        renderClause = "map (\\c -> Clause " ++ list (map f info1) ++
+                       " (NormalB (" ++ render info1 (head h) ++ ")) [])" ++
+                       " (dataCtor dat)"
             where
-                f WildP = Terms [] []
-                f (VarP x) = Terms [VarE x] []
-                f (ConP name xs) = Terms [ConE name] [VarE x | VarP x <- xs]
+                f (Terms named _) = case lookup "name" named of
+                                       Nothing -> "ctp c"
+                                       Just (VarE x) -> "vr " ++ show (show x)
 
-        valid _ = error "guessClauses.valid"
+    
+        info1 = let Clause pats _ _ = head xs in info pats
+    
+        mid = map simplify xs
+        h = filter (\h -> all (valid h) mid) $ nub $ concatMap hyps mid
+        
+        info pats = map f pats
+            where
+                f WildP = Terms [("name",VarE $ mkName "_")] []
+                f (VarP x) = Terms [("all",VarE x),("name",VarE $ mkName $ getName $ show x)] []
+                f (ConP name xs) = Terms [("ctor",ConE name)] [VarE x | VarP x <- xs]
+        
+        getName = reverse . drop 1 . dropWhile (/= '_') . reverse
+        
+        hyps (Clause pats (NormalB bod) []) = hypothesis (info pats) bod
+
+        valid h (Clause pats (NormalB bod) []) = apply (info pats) h == bod
+
+
+simplify :: Clause -> Clause
+simplify = everywhere (mkT f)
+    where
+        f (InfixE (Just x) y (Just z)) = AppE (AppE y x) z
+        f x = x
+
 
 
 guessContext = list . nub . map guessPrinciple
@@ -61,7 +80,7 @@ list x = "[" ++ concat (intersperse "," x) ++ "]"
 -- Hypothesis generation and testing
 
 
-data Terms = Terms {named :: [Exp], inductive :: [Exp]}
+data Terms = Terms {named :: [(String,Exp)], inductive :: [Exp]}
              deriving Show
 
 
@@ -77,14 +96,84 @@ type Hypothesis = Exp
 
 
 hypothesis :: [Terms] -> Exp -> [Hypothesis]
-hypothesis info x = error $ "DeriveGuess.hypothsis: " ++ show (info,x)
+hypothesis info (AppE x y) =
+    [AppE xs ys | xs <- hypothesis info x, ys <- hypothesis info y] ++
+    hypFold info (AppE x y)
+
+hypothesis info x = x : [VarE $ mkName $ "#" ++ show i ++ "_" ++ name
+                        | (i,Terms named _) <- zip [0..] info, (name,e) <- named, e == x]
+
+
+hypFold info o@(AppE (AppE fn x) y) =
+        [ TupE [VarE fold, TupE (fns : unit), TupE [VarE dir, TupE [VarE $ mkName "Map", LitE (IntegerL ind), mp]]]
+        | fold <- map mkName ["Foldr","Foldl"]
+        , fns <- hypothesis info fn
+        , unit <- [] : map return (unwrap True o ++ unwrap False o)
+        , mp <- [getMap x, getMap y]
+        , ind <- getMapInd x ++ getMapInd y
+        , dir <- map mkName ["Normal","Reverse"]
+        ]
+    where
+        getMap :: Exp -> Exp
+        getMap = everywhere (mkT f)
+            where
+                f x@(VarE _) | x `elem` concatMap inductive info = VarE $ mkName "*"
+                f x = x
+    
+        getMapInd :: Exp -> [Integer]
+        getMapInd = everything (++) ([] `mkQ` f)
+            where
+                f x@(VarE _) = [i | (i,xs) <- zip [0..] info, x `elem` inductive xs]
+                f x = []
+    
+        unwrap b (AppE (AppE fn2 x) y)
+            | fn2 == fn = unwrap b (if b then x else y)
+        unwrap b x = hypothesis info x
+hypFold _ _ = []
+
 
 
 apply :: [Terms] -> Hypothesis -> Exp
-apply x y = error $ "DeriveGuess.apply: " ++ show (x,y)
+apply info x = everywhere (mkT f) x
+    where
+        f (VarE x) | "#" `isPrefixOf` sx = fromJust $ lookup b $ named $ info !! read a
+            where
+                sx = show x
+                (a,_:b) = break (== '_') (tail sx)
+
+        f (TupE [VarE x,LitE (IntegerL i),fn])
+            | show x == "Map" = ListE $ map rep $ inductive $ info !! fromInteger i
+            where
+                rep with = everywhere (mkT g) fn
+                    where
+                        g (VarE x) | show x == "*" = with
+                        g x = x
+
+        f (TupE [VarE x,ListE xs])
+            | show x == "Normal"  = ListE xs
+            | show x == "Reverse" = ListE (reverse xs)
+        
+        f (TupE [VarE x,fn,ListE ys])
+            | show x == "Foldr" = g foldr foldr1
+            | show x == "Foldl" = g foldl foldl1
+            where
+                g :: ((Exp -> Exp -> Exp) -> Exp -> [Exp] -> Exp) ->
+                     ((Exp -> Exp -> Exp) -> [Exp] -> Exp) ->
+                     Exp
+                g app app1 = case fn of
+                                 TupE [x] | null ys -> VarE $ mkName "?"
+                                 TupE [x] -> g2 app1 x
+                                 TupE [x,y] -> g2 (\q -> app q y) x
+            
+                g2 app with = app (g3 with) ys
+                
+                g3 :: Exp -> Exp -> Exp -> Exp
+                g3 with x y = AppE (AppE with x) y
+
+        f x = x
 
 
-render :: Hypothesis -> String
-render x = error $ "DeriveGuess.render: " ++ show x
+render :: [Terms] -> Hypothesis -> String
+render x y = error $ "DeriveGuess.render: " ++ show (x,y)
 
 
