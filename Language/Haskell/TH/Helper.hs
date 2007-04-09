@@ -31,6 +31,9 @@ case' exp alts = CaseE exp [ Match x (NormalB y) [] | (x,y) <- alts ]
 (->:) :: String -> Exp -> Exp
 (->:) nm bdy = LamE [vr nm] bdy
 
+mkType :: String -> Type
+mkType "[]" = ListT
+mkType x = ConT (mkName x)
 
 
 -- | We provide 3 standard instance constructors
@@ -47,8 +50,8 @@ instance_context :: [String] -> String -> DataDef -> [Dec] -> [Dec]
 instance_context req cls dat defs = [InstanceD ctx hed defs]
     where
         vars = map (VarT . mkName . ('t':) . show) [1..dataArity dat]
-        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName (dataName dat)) : vars))
-        ctx = [AppT (ConT (mkName r)) v | r <- req, v <- vars]
+        hed = ConT (mkName cls) `AppT` (foldl1 AppT (mkType (dataName dat) : vars))
+        ctx = [AppT (mkType r) v | r <- req, v <- vars]
 
 
 -- | Build an instance of a class for a data type, using the heuristic
@@ -57,16 +60,16 @@ simple_instance :: String -> DataDef -> [Dec] -> [Dec]
 simple_instance cls dat defs = [InstanceD ctx hed defs]
     where
         vars = map (VarT . mkName . ('t':) . show) [1..dataArity dat]
-        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName (dataName dat)) : vars))
-        ctx = map (ConT (mkName cls) `AppT`) vars
+        hed = (mkType cls) `AppT` (foldl1 AppT (mkType (dataName dat) : vars))
+        ctx = map (mkType cls `AppT`) vars
 
 -- | Build an instance of a class for a data type, using the class at the given types
 generic_instance :: String -> DataDef -> [Type] -> [Dec] -> [Dec]
 generic_instance cls dat ctxTypes defs = [InstanceD ctx hed defs]
     where
         vars = map (VarT . mkName . ('t':) . show) [1..dataArity dat]
-        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName (dataName dat)) : vars))
-        ctx = map (ConT (mkName cls) `AppT`) ctxTypes
+        hed = (mkType cls) `AppT` (foldl1 AppT (mkType (dataName dat) : vars))
+        ctx = map (mkType cls `AppT`) ctxTypes
 
 -- | Build a fundecl with a string name
 funN :: String -> [Clause] -> Dec
