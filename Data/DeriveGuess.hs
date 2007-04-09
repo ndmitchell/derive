@@ -34,8 +34,8 @@ guessClauses xs | null h    = error "failed to find a hyp"
                        " (dataCtor dat)"
             where
                 f (Terms named _) = case lookup "name" named of
-                                       Nothing -> "ctp c"
-                                       Just (VarE x) -> "vr " ++ show (show x)
+                                       Nothing -> "ctp c 'x'"
+                                       Just (VarE x) -> "VarP " ++ show x
 
     
         info1 = let Clause pats _ _ = head xs in info pats
@@ -46,7 +46,7 @@ guessClauses xs | null h    = error "failed to find a hyp"
         info pats = map f pats
             where
                 f WildP = Terms [("name",VarE $ mkName "_")] []
-                f (VarP x) = Terms [("all",VarE x),("name",VarE $ mkName $ getName $ show x)] []
+                f (VarP x) = Terms [("all",VarE x),("name",VarE $ mkName $ show $ getName $ show x)] []
                 f (ConP name xs) = Terms [("ctor",ConE name)] [VarE x | VarP x <- xs]
         
         getName = reverse . drop 1 . dropWhile (/= '_') . reverse
@@ -157,9 +157,6 @@ apply info x = everywhere (mkT f) x
             | show x == "Foldr" = g foldr foldr1
             | show x == "Foldl" = g foldl foldl1
             where
-                g :: ((Exp -> Exp -> Exp) -> Exp -> [Exp] -> Exp) ->
-                     ((Exp -> Exp -> Exp) -> [Exp] -> Exp) ->
-                     Exp
                 g app app1 = case fn of
                                  TupE [x] | null ys -> VarE $ mkName "?"
                                  TupE [x] -> g2 app1 x
@@ -174,6 +171,43 @@ apply info x = everywhere (mkT f) x
 
 
 render :: [Terms] -> Hypothesis -> String
-render x y = error $ "DeriveGuess.render: " ++ show (x,y)
+render info x = strip $ show (everywhere (mkT f) x :: Exp)
+    where
+        strip ('V':'a':'r':'E':' ':'@':xs) = strip xs
+        strip (x:xs) = x : strip xs
+        strip [] = []
+        
+    
+        f (VarE x) | "#" `isPrefixOf` sx =
+                case b of
+                    "all" -> fromJust $ lookup "name" names
+                    "ctor" -> ConE (mkName "(ctorName c)")
+                    x -> error $ "render, asked for " ++ x
+            where
+                names = named $ info !! read a
+                sx = show x
+                (a,_:b) = break (== '_') (tail sx)
 
+        f (TupE [VarE x,LitE (IntegerL i),fn])
+            | show x == "Map" = VarE $ mkName $ "@(map (\\(VarE q) -> " ++ mp ++ ") (ctv c 'x'))"
+            where
+                mp = show (everywhere (mkT g) fn :: Exp)
+                g (VarE x) | show x == "*" = VarE $ mkName "q"
+                g x = x
+
+        f (TupE [VarE x,y])
+            | show x == "Normal"  = y
+            | show x == "Reverse" = VarE $ mkName $ "@(reverse " ++ show y ++ ")"
+        
+        f (TupE [VarE x,fn,y])
+            | show x == "Foldr" = g "foldr"
+            | show x == "Foldl" = g "foldl"
+            where
+                g fold = VarE $ mkName $ '@' : case fn of
+                    TupE [x] -> fold ++ "1" ++ func x ++ show y
+                    TupE [x,d] -> fold ++ func x ++ "(" ++ show d ++ ") " ++ show y
+                    
+                func x = " (\\a b -> AppE (AppE (" ++ show x ++ ") a) b) "
+
+        f x = x
 
