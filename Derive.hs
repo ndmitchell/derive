@@ -48,7 +48,7 @@ And a list of files to execute upon
 
 
 data Flag = Version | Help | Output String | Import | Module String
-          | Append | Derive [String] | KeepTemp
+          | Append | Derive [String] | KeepTemp | NoOpts
             deriving (Eq, Show)
 
 
@@ -62,6 +62,7 @@ options =
  , Option "a"  ["append"]  (NoArg Append)           "append the result to the file"
  , Option "d"  ["derive"]  (ReqArg split "DERIVES") "things to derive for all types"
  , Option "k"  ["keep"]    (NoArg KeepTemp)         "keep temporary file"
+ , Option "n"  ["no-opts"] (NoArg NoOpts)           "ignore the file options"
  ]
  where
     split = Derive . words . map (\x -> if x == ',' then ' ' else x)
@@ -188,7 +189,7 @@ mainFile flags file = do
 parseFile :: [Flag] -> FilePath -> IO ([Flag], String, String, [(String,String)])
 parseFile flags file = do
         src <- liftM lines $ readFile file
-        options <- parseOptions src
+        options <- if NoOpts `elem` flags then return [] else parseOptions src
         modname <- parseModname src
         let deriv = concat [x | Derive x <- flags ++ options]
         (decl,req) <- return $ unzip $ concatMap (checkData deriv) $ joinLines $
