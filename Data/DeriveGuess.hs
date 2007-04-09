@@ -3,6 +3,7 @@ module Data.DeriveGuess(Data2(..), guess) where
 import Language.Haskell.TH.All
 import Data.Generics
 import Data.List
+import Data.Char
 import Data.Maybe
 
 
@@ -15,12 +16,32 @@ guess :: Q [Dec] -> IO ()
 guess x = runQ x >>= putStr . unlines . map guessDec
 
 
-guessDec :: Dec -> String
-guessDec (InstanceD ctx typ inner) =
-    "instance_context " ++ guessContext ctx ++ " " ++
-    guessPrinciple typ ++ " " ++ list (map guessDec inner)
 
-guessDec (FunD name claus) = "FunD " ++ show (show name) ++ " " ++ guessClauses claus
+widthify :: String -> String
+widthify xs = g 80 (f xs)
+    where
+        g n (x:xs) | n - length x <= 0 = "\n    " ++ g 76 ([x|x/=" "] ++ xs)
+                   | otherwise = x ++ g (n - length x) xs
+        g n [] = ""
+        
+        
+        f (x:xs) | isSpace x = " " : f (dropWhile isSpace xs)
+        f x = case lex x of
+                 [("","")] -> []
+                 [(x,y)] -> x : f y
+                 
+
+
+
+guessDec :: Dec -> String
+guessDec (InstanceD ctx typ inner) = widthify $
+    map toLower p ++ "' dat = " ++
+    "instance_context " ++ guessContext ctx ++ " " ++
+    show p ++ " dat " ++ list (map guessDec inner)
+    where
+        p = guessPrinciple typ
+
+guessDec (FunD name claus) = "funN " ++ show (show name) ++ " " ++ guessClauses claus
 
 guessDec x = error $ show x
 
@@ -29,13 +50,13 @@ guessClauses :: [Clause] -> String
 guessClauses xs | null h    = error "failed to find a hyp"
                 | otherwise = renderClause
     where
-        renderClause = "map (\\c -> Clause " ++ list (map f info1) ++
+        renderClause = "(map (\\c -> Clause " ++ list (map f info1) ++
                        " (NormalB (" ++ render info1 (head h) ++ ")) [])" ++
-                       " (dataCtor dat)"
+                       " (dataCtors dat))"
             where
                 f (Terms named _) = case lookup "name" named of
                                        Nothing -> "ctp c 'x'"
-                                       Just (VarE x) -> "VarP " ++ show x
+                                       Just (VarE x) -> "VarP (mkName " ++ show x ++ ")"
 
     
         info1 = let Clause pats _ _ = head xs in info pats
@@ -64,9 +85,9 @@ simplify = everywhere (mkT f)
 
 
 
-guessContext = list . nub . map guessPrinciple
+guessContext = list . nub . map (show . guessPrinciple)
 
-guessPrinciple (AppT (ConT x) _) = show $ dropModule $ show x
+guessPrinciple (AppT (ConT x) _) = dropModule $ show x
 
 
 
@@ -180,8 +201,9 @@ render info x = strip $ show (everywhere (mkT f) x :: Exp)
     
         f (VarE x) | "#" `isPrefixOf` sx =
                 case b of
-                    "all" -> fromJust $ lookup "name" names
-                    "ctor" -> ConE (mkName "(ctorName c)")
+                    "all" -> VarE $ mkName $ "@(VarE (mkName " ++ show y ++ "))"
+                        where VarE y = fromJust $ lookup "name" names
+                    "ctor" -> VarE $ mkName $ "@(ConE (mkName (ctorName c)))"
                     x -> error $ "render, asked for " ++ x
             where
                 names = named $ info !! read a
