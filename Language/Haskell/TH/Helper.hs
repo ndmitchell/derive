@@ -33,6 +33,24 @@ case' exp alts = CaseE exp [ Match x (NormalB y) [] | (x,y) <- alts ]
 
 
 
+-- | We provide 3 standard instance constructors
+--   instance_default requires C for each free type variable
+--   instance_none requires no context
+--   instance_context requires a given context
+instance_none :: String -> DataDef -> [Dec] -> [Dec]
+instance_none = instance_context []
+
+instance_default :: String -> DataDef -> [Dec] -> [Dec]
+instance_default n = instance_context [n] n
+
+instance_context :: [String] -> String -> DataDef -> [Dec] -> [Dec]
+instance_context req cls dat defs = [InstanceD ctx hed defs]
+    where
+        vars = map (VarT . mkName . ('t':) . show) [1..dataArity dat]
+        hed = ConT (mkName cls) `AppT` (foldl1 AppT (ConT (mkName (dataName dat)) : vars))
+        ctx = [AppT (ConT (mkName r)) v | r <- req, v <- vars]
+
+
 -- | Build an instance of a class for a data type, using the heuristic
 -- that the type is itself required on all type arguments.
 simple_instance :: String -> DataDef -> [Dec] -> [Dec]
