@@ -13,6 +13,7 @@ eq' dat = simple_instance "Eq" dat [funN "==" body]
 rule ctor = sclause [ctp ctor 'a', ctp ctor 'b']
                     (and_ (zipWith (==:) (ctv ctor 'a') (ctv ctor 'b')))
 
+#if 0
 
 example = [d|
 
@@ -24,3 +25,4 @@ example = [d|
 
     |]
 
+#endif

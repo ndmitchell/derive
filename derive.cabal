@@ -6,15 +6,26 @@ License: BSD3
 Author: Neil Mitchell & Stefan O'Rear
 Synopsis: A program and library to derive instances for Haskell data types
 Category: Development
+Extensions: CPP
 Exposed-Modules:
-	Data.Derive
-	Data.Derive.FixedPpr
-	Data.Derive.SYB
-	Data.Derive.TH
+	Data.DeriveGuess
+	Data.DeriveTH
+	Data.Derive.All
 	Data.Derive.Binary
 	Data.Derive.BinaryDefer
+	Data.Derive.Data
 	Data.Derive.Eq
+	Data.Derive.Functor
+	Data.Derive.Ord
 	Data.Derive.Play
+	Data.Derive.Typeable
+	Language.Haskell.TH.All
+	Language.Haskell.TH.Data
+	Language.Haskell.TH.FixedPpr
+	Language.Haskell.TH.Helper
+	Language.Haskell.TH.Peephole
+	Language.Haskell.TH.SYB
+
 
 Executable: derive
 Main-Is: Derive.hs
