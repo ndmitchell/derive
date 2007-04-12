@@ -10,14 +10,15 @@ import Language.Haskell.TH.All
 import Data.Generics
 import Data.DeriveGuess
 
-instance Typeable (Data2 a b) where
+instance Typeable (DataName a) where
 
 example = [d|
 
-    instance (Data a, Typeable a, Data b, Typeable b) => Data (Data2 a b) where
-        gfoldl k r Ctor0 = r Ctor0
-        gfoldl k r (Ctor1 x1) = r Ctor1 `k` x1
-        gfoldl k r (Ctor2 x1 x2) = r Ctor2 `k` x1 `k` x2
+    instance (Data a, Typeable a) => Data (DataName a) where
+        gfoldl k r CtorZero = r CtorZero
+        gfoldl k r (CtorOne x1) = r CtorOne `k` x1
+        gfoldl k r (CtorTwo x1 x2) = r CtorTwo `k` x1 `k` x2
+        gfoldl k r (CtorTwo' x1 x2) = r CtorTwo' `k` x1 `k` x2
 
     |]
 
