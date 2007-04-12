@@ -145,12 +145,20 @@ instance Guess a => Guess [a] where
 
                     domain = if indCtr then [0..3] else error "domain here"
                     
-                    
-                    
-                    
+                    {-
+                    f should loop through allowing multiple runs of induction
 
 
-                    induct = [(maxEnv,error $ show ("induct",eenvs,domain)
+                    induct = [(a1,b1) 
+                    
+                    
+                    
+                    pre = [(
+                    
+                    -}
+
+
+                    induct = error $ show ("induct",eenvs,domain)
 
 {-
 
