@@ -1,4 +1,6 @@
-module Data.DeriveGuess(Data2(..), guess) where
+{-# OPTIONS_GHC -fno-warn-missing-methods #-}
+
+module Data.DeriveGuess(DataName(..), guess) where
 
 import Language.Haskell.TH.All
 import Data.Generics
@@ -7,9 +9,10 @@ import Data.Char
 import Data.Maybe
 
 
-data Data2 a b = Ctor0
-               | Ctor1 a
-               | Ctor2 a b
+data DataName a = CtorZero
+                | CtorOne  a
+                | CtorTwo  a a
+                | CtorTwo' a a
 
 
 guess :: Q [Dec] -> IO ()
