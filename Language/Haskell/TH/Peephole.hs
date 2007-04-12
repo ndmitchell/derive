@@ -1,10 +1,11 @@
 
-module Language.Haskell.TH.Peephole(peepholeDecs) where
+module Language.Haskell.TH.Peephole(peepholeDecs, replaceVar, replaceVars) where
 
 import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Helper
 import Language.Haskell.TH.SYB
 import Data.Generics
+import Data.Maybe
 import Debug.Trace
 
 traceMode = False
@@ -17,12 +18,11 @@ peepholeDecs x = everywhere (mkT peep) x
 
 -- find a given string, and replace it with a particular expression
 -- must succeed, so crashes readily (deliberately!)
-replaceVar :: Name -> Exp -> Exp -> Exp
-replaceVar name rep orig = fExp orig
+replaceVars :: [(Name,Exp)] -> Exp -> Exp
+replaceVars rep orig = fExp orig
     where
         fExp x = case x of
-            VarE y | y == name -> rep
-                   | otherwise -> x
+            VarE y -> fromMaybe x $ lookup y rep
             ConE _ -> x
             LitE _ -> x
             AppE x y -> AppE (fExp x) (fExp y)
@@ -31,12 +31,15 @@ replaceVar name rep orig = fExp orig
             _ -> error $ "replaceVar: " ++ show x
 
         fMatch o@(Match pat (NormalB bod) []) =
-            if name `elem` patFree pat then o else Match pat (NormalB (fExp bod)) []
-
+            Match pat (NormalB $ replaceVars (filter ((`notElem` patFree pat) . fst) rep) bod) []
 
         patFree x = case x of
             LitP _ -> []
             _ -> error $ "patFree: " ++ show x
+
+
+replaceVar :: Name -> Exp -> Exp -> Exp
+replaceVar name with = replaceVars [(name,with)]
 
 
 
