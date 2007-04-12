@@ -121,9 +121,8 @@ instance Guess a => Guess [a] where
     guessEnv xs = concatMap f $ mapM guessEnv xs
         where
             f xs | length ctrs <= 1 && length itms <= 1 = [(minEnv, \e -> map ($ e) gens, list strs)]
-                 | null itms = inductCtrs
-                 | length ctrs == 1 = inductItms
-                 | otherwise = []
+                 | length ctrs >  1 && length itms >  1 = []
+                 | otherwise = induct
                 where
                     (envs,gens,strs) = unzip3 xs
 
@@ -134,10 +133,43 @@ instance Guess a => Guess [a] where
                              else if not $ null ctrs then Ctor (head ctrs)
                              else None
 
+                    -- are we inducting over constructor? 
+                    -- False = over items
+                    indCtr = null itms
+                    
+                    eenvs = map f envs
+                        where
+                            f (Ctor i) | indCtr = Just i
+                            f (Item _ i) = Just i
+                            f _ = Nothing
+
+                    domain = if indCtr then [0..3] else error "domain here"
+                    
+                    
+                    
+                    
+
+
+                    induct = [(maxEnv,error $ show ("induct",eenvs,domain)
+
+{-
+
+
                     inductCtrs = error $ show ("Induct ctors",envs)
                     
                     inductItms = error $ show ("Induct items",envs)
 
+
+                    induct (extend,insert,text,domain) = 
+                        
+
+                    induct :: (Env -> Maybe Int          -- extend
+                              ,Env -> Maybe Int -> Env   -- insert
+                              ,String                    -- text
+                              [Int]) ->                  -- domain
+                              [(Env -> [a] 
+-}                            
+                    
 
 
 
