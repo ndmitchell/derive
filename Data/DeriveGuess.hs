@@ -167,16 +167,20 @@ instance Guess a => Guess [a] where
                     
                     construct = if ctorEnv then Ctor else Field
                     
+                    isNone x = x == None || (not ctorEnv && isCtor x)
+                    
                     g :: Eq t => [(Env, Env -> t, String)] -> [(Env -> [t], String)]
-                    g [] = [(\e -> [], "")]
-                    g ((None,gn,st):xs) = [(\e -> gn e : gen e, st ++ ":" ++ str) | (gen,str) <- g xs]
+                    g [] = [(\e -> [], "[]")]
+                    g ((none,gn,st):xs) | isNone none =
+                        [(\e -> gn e : gen e, "[" ++ st ++ "]++" ++ str) | (gen,str) <- g xs]
+                    
                     g xs =  h id "id" xs ++ h reverse "reverse" xs
 
                     h :: Eq t => ([Int] -> [Int]) -> String -> [(Env, Env -> t, String)] -> [(Env -> [t], String)]
                     h fdir sdir xs
                         | map construct (fdir domain) `isPrefixOf` map fst3 xs
                         = [(\e -> map (fhyp . construct) $ fdir $ getDomain e
-                           ,"(map (\\" ++ varName ++ " -> " ++ shyp ++ ") (" ++ sdir ++ " " ++ strDomain ++ ")")
+                           ,"(map (\\" ++ varName ++ " -> " ++ shyp ++ ") (" ++ sdir ++ " " ++ strDomain ++ ")++" ++ str)
                           | (fhyp,shyp) <- validHyp
                           , (gen,str) <- g rest]
                         where
