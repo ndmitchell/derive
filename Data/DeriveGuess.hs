@@ -61,6 +61,10 @@ fst3 (a,b,c) = a
 snd3 (a,b,c) = b
 thd3 (a,b,c) = c
 
+snub x = nub $ sort x
+
+fieldCtors x = x : [3 | x == 2]
+ctorFields x = if x == 3 then 2 else x
 
 on op get a b = op (get a) (get b)
 
@@ -138,27 +142,30 @@ instance Guess a => Guess [a] where
     guessEnv os = concatMap f $ mapM guessEnv os
         where
             f xs | length es <= 1 = [(head (es ++ [None]), \e -> map ($ e) gens, list strs)]
-                 | hasCtor && hasField = []
                  | otherwise = [(env,gen,str) | env <- newEnvs, (gen,str) <- nubBy ((==) `on` snd) $ g xs]
                 where
                     (envs,gens,strs) = unzip3 xs
                     es = nub $ filter (/= None) envs
                     
-                    hasCtor  = any isCtor es
-                    hasField = any isField es
-                    maxField = maximum $ map fromField es
-                    varName = if hasCtor then "ctor" else "field"
+                    ctors = snub [i | Ctor i <- envs]
+                    fields = snub [i | Field i <- envs]
+                    maxField = maximum fields
                     
-                    domain = if hasCtor then [0..3] else [1..maxField]
+                    newEnvs = case ctors of
+                                  [] -> map Ctor $ fieldCtors maxField
+                                  _ | null fields -> [None]
+                                  [x] | ctorFields x == maxField -> [Ctor x]
+                                  _ -> []  
+                    
+                    ctorEnv = head newEnvs == None
+                    varName = if ctorEnv then "ctor" else "field"
+                    
+                    domain = if ctorEnv then [0..3] else [1..maxField]
                     getDomain (Ctor i) = take 2 [1..i]
                     getDomain None = [0..3]
-                    strDomain = if hasCtor then "ctors" else "[1..ctorArity ctor]"
+                    strDomain = if ctorEnv then "ctors" else "[1..ctorArity ctor]"
                     
-                    newEnvs = if hasCtor then [None]
-                              else if maxField == 1 then [Ctor 1]
-                              else [Ctor 2,Ctor 3]
-
-                    construct = if hasCtor then Ctor else Field
+                    construct = if ctorEnv then Ctor else Field
                     
                     g :: Eq t => [(Env, Env -> t, String)] -> [(Env -> [t], String)]
                     g [] = [(\e -> [], "")]
