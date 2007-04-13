@@ -57,33 +57,45 @@ list x = "[" ++ concat (intersperse "," x) ++ "]"
 
 unwordsb x = "(" ++ unwords x ++ ")"
 
-
-patReps :: [Pat] -> (Name -> Name)
-patReps pats = \x -> fromMaybe x $ lookup x rep
-    where
-        rep = concatMap f pats
-        
-        f (ConP c xs) | isJust mn = zip [x | VarP x <- xs] newvars
-            where
-                mn = findIndex (== show c) ctorNames
-                newvars = [mkName $ "_" ++ show n ++ "_" ++ show i | let Just n = mn, i <- [1..n]]
-        f x = []
+fst3 (a,b,c) = a
+snd3 (a,b,c) = b
 
 
 
-data Env = None
-         | Ctor Int
-         | Item Int Int
+-- imagine the following environment table:
+{-
+[("CtorZero",0,0,[])
+,("CtorOne" ,1,1,[1])
+,("CtorTwo" ,2,2,[1,2])
+,("CtorTwo'",2,3,[1,2])
+]
+-}
+
+data Env = None | Ctor Int | Field Int
          deriving (Show,Eq)
 
+isField (Field _) = True; isField _ = False
+isCtor  (Ctor  _) = True; isCtor  _ = False
 
--- Show t only for debug purposes
-class Show t => Guess t where
+fromField (Field i) = i
+
+fromEnv (Field i) = i
+fromEnv (Ctor  i) = i
+
+
+
+-- Show t and Ppr t for better error messages
+-- Eq t required for hypothesis testing
+class (Ppr t, Eq t, Show t) => Guess t where
     -- invariant: all answers must be correct for this example
+    -- will never be given a different type of environment
     guessEnv :: t -> [(Env, Env -> t, String)]
     
     guessStr :: t -> String
-    guessStr t = head [s | (None,_,s) <- guessEnv t]
+    guessStr t = case [s | (None,_,s) <- guessEnv t] of
+                      [] -> error $ "\n\nNo hypothesis for:\n" ++ show t ++
+                                    "\n\nPretty version:\n" ++ show (ppr t)
+                      (x:xs) -> x
 
 
 
@@ -117,14 +129,58 @@ guessTripEnv fjoin sjoin x1 x2 x3 =
 
 
 instance Guess a => Guess [a] where
-    guessEnv [] = [(None, const [], "[]")]
     guessEnv xs = concatMap f $ mapM guessEnv xs
         where
+            f xs | length es <= 1 = [(head (es ++ [None]), \e -> map ($ e) gens, list strs)]
+                 | hasCtor && hasField = []
+                 | otherwise = [(env,gen,str) | env <- newEnvs, (gen,str) <- g xs]
+                where
+                    (envs,gens,strs) = unzip3 xs
+                    es = nub $ filter (/= None) envs
+                    
+                    hasCtor  = any isCtor es
+                    hasField = any isField es
+                    maxField = maximum $ map fromField es
+
+                    domain = if hasCtor then [0..3] else [1..maxField]
+                    getDomain (Ctor i) = take 2 [1..i]
+                    getDomain None = [0..3]
+                    
+                    newEnvs = if hasCtor then [None]
+                              else if maxField == 1 then [Ctor 1]
+                              else [Ctor 2,Ctor 3]
+
+                    construct = if hasCtor then Ctor else Field
+                    
+                    g :: Eq t => [(Env, Env -> t, String)] -> [(Env -> [t], String)]
+                    g [] = [(\e -> [], "")]
+                    g ((None,gn,st):xs) = [(\e -> gn e : gen e, st ++ ":" ++ str) | (gen,str) <- g xs]
+                    g xs = h reverse "reverse" xs ++ h id "id" xs
+
+                    h :: Eq t => ([Int] -> [Int]) -> String -> [(Env, Env -> t, String)] -> [(Env -> [t], String)]
+                    h fdir sdir xs
+                        | map construct (fdir domain) `isPrefixOf` map fst3 xs
+                        = [(\e -> map (hyp . construct) $ fdir $ getDomain e, "maped")
+                          | hyp <- validHyp
+                          , (gen,str) <- g rest]
+                        where
+                            (now,rest) = splitAt (length domain) xs
+
+                            validHyp = filter (\hyp -> all (valid hyp) now) (map snd3 now)
+                            valid hyp (e,gen,_) = hyp e == gen e
+
+                    h _ _ _ = []
+                    
+                    
+
+
+            
+            {-
             f xs | length ctrs <= 1 && length itms <= 1 = [(minEnv, \e -> map ($ e) gens, list strs)]
                  | length ctrs >  1 && length itms >  1 = []
                  | otherwise = induct
                 where
-                    (envs,gens,strs) = unzip3 xs
+                    envs = map fst3 xs
 
                     ctrs = [i | Item i _ <- envs] ++ [i | Ctor i <- envs]
                     itms = [i | Item _ i <- envs]
@@ -137,28 +193,24 @@ instance Guess a => Guess [a] where
                     -- False = over items
                     indCtr = null itms
                     
-                    eenvs = map f envs
-                        where
-                            f (Ctor i) | indCtr = Just i
-                            f (Item _ i) = Just i
-                            f _ = Nothing
+                    extract (Ctor i) | indCtr = Just i
+                    extract (Item _ i) = Just i
+                    extract _ = Nothing
 
                     domain = if indCtr then [0..3] else error "domain here"
                     
-                    {-
-                    f should loop through allowing multiple runs of induction
 
+                    induct = f [(extract e, g, s) | (e,g,s) <- xs]
 
-                    induct = [(a1,b1) 
-                    
-                    
-                    
-                    pre = [(
-                    
+                    f :: [(Maybe Int, Maybe Int -> t, String)] -> [(Env -> [t], String)]
+                    f [] = error "empty list in f"
+                    f ((Nothing, gen, s):xs) =
+                        [(\e -> gen (expand e Nothing) : a e, "_guessEnv_") |(a,b) <- f xs]
+                    f ((Just i, gen, s) : xs) = g domain ++ g 
+                        if i == head domain && map Just domain `isPrefixOf` map fst3 xs
+
                     -}
 
-
-                    induct = error $ show ("induct",eenvs,domain)
 
 {-
 
@@ -205,10 +257,8 @@ instance Guess Name where
 
 
 instance Guess Clause where
-    -- step 1, rename all bindings as required
-    guessEnv o@(Clause pat _ _) = guessTripEnv Clause "Clause" pat2 bod2 whr2
-        where
-            Clause pat2 bod2 whr2 = everywhere (mkT $ patReps pat) o
+    guessEnv (Clause pat bod whr) = guessTripEnv Clause "Clause" pat bod whr
+
 
 instance Guess Pat where
     guessEnv (VarP x) = guessOneEnv VarP "VarP" x
@@ -219,6 +269,7 @@ instance Guess Pat where
 instance Guess Body where
     guessEnv (NormalB x) = guessOneEnv NormalB "NormalB" x
     guessEnv x = error $ show ("Guess Body",x)
+
 
 instance Guess Exp where
     guessEnv (AppE x y) = guessPairEnv AppE "AppE" x y
