@@ -175,6 +175,10 @@ pprBody eq (GuardedB xs) = nest nestDepth $ vcat $ map do_guard xs
                              $$ nest nestDepth (eqd <+> ppr e)
 pprBody eq (NormalB e) = (if eq then text "=" else text "->") <+> ppr e
 
+
+instance Ppr Body where
+    ppr = pprBody True
+
 ------------------------------
 pprLit :: Precedence -> Lit -> Doc
 pprLit i (IntPrimL x)    = parensIf (i > noPrec && x < 0)
