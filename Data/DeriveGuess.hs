@@ -59,7 +59,10 @@ unwordsb x = "(" ++ unwords x ++ ")"
 
 fst3 (a,b,c) = a
 snd3 (a,b,c) = b
+thd3 (a,b,c) = c
 
+
+on op get a b = op (get a) (get b)
 
 
 -- imagine the following environment table:
@@ -78,6 +81,7 @@ isField (Field _) = True; isField _ = False
 isCtor  (Ctor  _) = True; isCtor  _ = False
 
 fromField (Field i) = i
+fromCtor  (Ctor  i) = i
 
 fromEnv (Field i) = i
 fromEnv (Ctor  i) = i
@@ -129,11 +133,11 @@ guessTripEnv fjoin sjoin x1 x2 x3 =
 
 
 instance Guess a => Guess [a] where
-    guessEnv xs = concatMap f $ mapM guessEnv xs
+    guessEnv os = concatMap f $ mapM guessEnv os
         where
             f xs | length es <= 1 = [(head (es ++ [None]), \e -> map ($ e) gens, list strs)]
                  | hasCtor && hasField = []
-                 | otherwise = [(env,gen,str) | env <- newEnvs, (gen,str) <- g xs]
+                 | otherwise = [(env,gen,str) | env <- newEnvs, (gen,str) <- nubBy ((==) `on` snd) $ g xs]
                 where
                     (envs,gens,strs) = unzip3 xs
                     es = nub $ filter (/= None) envs
@@ -141,10 +145,12 @@ instance Guess a => Guess [a] where
                     hasCtor  = any isCtor es
                     hasField = any isField es
                     maxField = maximum $ map fromField es
-
+                    varName = if hasCtor then "ctor" else "field"
+                    
                     domain = if hasCtor then [0..3] else [1..maxField]
                     getDomain (Ctor i) = take 2 [1..i]
                     getDomain None = [0..3]
+                    strDomain = if hasCtor then "ctors" else "[1..ctorArity ctor]"
                     
                     newEnvs = if hasCtor then [None]
                               else if maxField == 1 then [Ctor 1]
@@ -155,23 +161,43 @@ instance Guess a => Guess [a] where
                     g :: Eq t => [(Env, Env -> t, String)] -> [(Env -> [t], String)]
                     g [] = [(\e -> [], "")]
                     g ((None,gn,st):xs) = [(\e -> gn e : gen e, st ++ ":" ++ str) | (gen,str) <- g xs]
-                    g xs = h reverse "reverse" xs ++ h id "id" xs
+                    g xs =  h id "id" xs ++ h reverse "reverse" xs
 
                     h :: Eq t => ([Int] -> [Int]) -> String -> [(Env, Env -> t, String)] -> [(Env -> [t], String)]
                     h fdir sdir xs
                         | map construct (fdir domain) `isPrefixOf` map fst3 xs
-                        = [(\e -> map (hyp . construct) $ fdir $ getDomain e, "maped")
-                          | hyp <- validHyp
+                        = [(\e -> map (fhyp . construct) $ fdir $ getDomain e
+                           ,"(map (\\" ++ varName ++ " -> " ++ shyp ++ ") (" ++ sdir ++ " " ++ strDomain ++ ")")
+                          | (fhyp,shyp) <- validHyp
                           , (gen,str) <- g rest]
                         where
                             (now,rest) = splitAt (length domain) xs
 
-                            validHyp = filter (\hyp -> all (valid hyp) now) (map snd3 now)
+                            validHyp = filter (\hyp -> all (valid (fst hyp)) now) (map (\(a,b,c) -> (b,c)) now)
                             valid hyp (e,gen,_) = hyp e == gen e
 
                     h _ _ _ = []
                     
                     
+                    g2 :: (Show t, Eq t) => [(Env, Env -> t, String)] -> [(Env -> [t], String)]
+                    g2 [] = [(\e -> [], "")]
+                    g2 ((None,gn,st):xs) = [(\e -> gn e : gen e, st ++ ":" ++ str) | (gen,str) <- g2 xs]
+                    g2 xs =  h2 id "id" xs ++ h2 reverse "reverse" xs
+
+                    h2 :: (Show t, Eq t) => ([Int] -> [Int]) -> String -> [(Env, Env -> t, String)] -> [(Env -> [t], String)]
+                    h2 fdir sdir xs
+                        | map construct (fdir domain) `isPrefixOf` map fst3 xs
+                        = [(\e -> map (fhyp . construct) $ fdir $ getDomain e
+                           ,"(map (\\" ++ varName ++ " -> " ++ shyp ++ ") (" ++ sdir ++ " " ++ strDomain ++ ")")
+                          | (fhyp,shyp) <- validHyp
+                          , (gen,str) <- g2 rest]
+                        where
+                            (now,rest) = splitAt (length domain) xs
+
+                            validHyp = filter (\hyp -> all (valid (fst hyp)) now) (map (\(a,b,c) -> (b,c)) now)
+                            valid hyp (e,gen,_) = hyp e == gen e
+
+                    h2 _ _ _ = []
 
 
             
@@ -249,11 +275,31 @@ instance Guess Dec where
 
 
 instance Guess Name where
-    guessEnv name = case show name of
-        x | x `elem` ctorNames -> [(Ctor i, \(Ctor e) -> mkName (ctorNames !! i), "(ctorName)")]
-            where Just i = findIndex (== x) ctorNames
-    
-        x -> [(None,const name, show x)]
+    guessEnv name = if sname `elem` ctorNames then guessCtor else guessRest
+        where
+            sname = show name
+            
+            guessCtor = [(Ctor i, \(Ctor e) -> mkName (ctorNames !! e), "(mkName (ctorName ctor))")]
+                where Just i = findIndex (== sname) ctorNames
+
+            guessRest = guessLast ++ [(None,const name, "(mkName " ++ show sname ++ ")")]
+            
+            guessLast | isDigit end = [(e, \e -> mkName $ pre ++ show (g e)
+                                       ,"(mkName (" ++ show pre ++ " ++ show " ++ s ++ "))")
+                                      | (e,g,s) <- guessNum $ read [end]]
+                      | otherwise   = []
+                where (pre,end) = (init sname, last sname)
+
+
+guessNum :: Int -> [(Env, Env -> Int, String)]
+guessNum i = [(Field i, fromField, "field") | i `elem` [1,2]] ++
+             [(Ctor i, fromCtor, "(ctorTag ctor)") | i `elem` [0..3]] ++
+             [(Ctor i, getArity, "(ctorArity ctor)") | i `elem` [0..2]] ++
+             [(Ctor 3, getArity, "(ctorArity ctor)") | i == 2]
+    where
+        getArity (Ctor 3) = 2
+        getArity (Ctor i) = i
+
 
 
 instance Guess Clause where
@@ -272,11 +318,17 @@ instance Guess Body where
 
 
 instance Guess Exp where
-    guessEnv (AppE x y) = guessPairEnv AppE "AppE" x y
+    guessEnv o@(AppE x y) = guessPairEnv AppE "AppE" x y ++ guessFold o
     guessEnv (VarE x) = guessOneEnv VarE "VarE" x
     guessEnv (ConE x) = guessOneEnv ConE "ConE" x
 
     guessEnv x = error $ show ("Guess Exp",x)
+
+
+
+guessFold :: Exp -> [(Env, Env -> Exp, String)]
+guessFold _ = []
+
 
 
 {-
