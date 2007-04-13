@@ -107,6 +107,10 @@ guessPairStr :: (Guess a, Guess b) => String -> a -> b -> String
 guessPairStr sjoin a b = sjoin ++ " " ++ guessStr a ++ " " ++ guessStr b
 
 
+joinEnvs :: [Env] -> Maybe Env
+joinEnvs xs = if length ys > 1 then Nothing else Just $ head (ys ++ [None])
+    where ys = filter (/= None) $ nub xs
+
 guessOneEnv :: Guess a => (a -> t) -> String -> a -> [(Env, Env -> t, String)]
 guessOneEnv fjoin sjoin x1 =
     [ (e1, \e -> fjoin (f1 e), unwordsb [sjoin,s1])
@@ -115,20 +119,18 @@ guessOneEnv fjoin sjoin x1 =
 -- to join two elements either they are the same env, or one has None
 guessPairEnv :: (Guess a, Guess b) => (a -> b -> t) -> String -> a -> b -> [(Env, Env -> t, String)]
 guessPairEnv fjoin sjoin x1 x2 =
-    [ (head es, \e -> fjoin (f1 e) (f2 e), unwordsb [sjoin,s1,s2])
+    [ (env, \e -> fjoin (f1 e) (f2 e), unwordsb [sjoin,s1,s2])
     | (e1,f1,s1) <- guessEnv x1
     , (e2,f2,s2) <- guessEnv x2
-    , let es = nub [e1,e2]
-    , length (filter (/= None) es) <= 1]
+    , Just env <- [joinEnvs [e1,e2]]]
 
 guessTripEnv :: (Guess a, Guess b, Guess c) => (a -> b -> c -> t) -> String -> a -> b -> c -> [(Env, Env -> t, String)]
 guessTripEnv fjoin sjoin x1 x2 x3 =
-    [ (head es, \e -> fjoin (f1 e) (f2 e) (f3 e), unwordsb [sjoin,s1,s2,s3])
+    [ (env, \e -> fjoin (f1 e) (f2 e) (f3 e), unwordsb [sjoin,s1,s2,s3])
     | (e1,f1,s1) <- guessEnv x1
     , (e2,f2,s2) <- guessEnv x2
     , (e3,f3,s3) <- guessEnv x3
-    , let es = nub [e1,e2,e3]
-    , length (filter (/= None) es) <= 1]
+    , Just env <- [joinEnvs [e1,e2,e3]]]
 
 
 
@@ -199,17 +201,21 @@ instance Guess Name where
     guessEnv name = if sname `elem` ctorNames then guessCtor else guessRest
         where
             sname = show name
+            (pre,end) = (init sname, last sname)
+
             
             guessCtor = [(Ctor i, \(Ctor e) -> mkName (ctorNames !! e), "(mkName (ctorName ctor))")]
                 where Just i = findIndex (== sname) ctorNames
 
-            guessRest = guessLast ++ [(None,const name, "(mkName " ++ show sname ++ ")")]
+            guessRest = guessLast ++ guessDefault
             
             guessLast | isDigit end = [(e, \e -> mkName $ pre ++ show (g e)
                                        ,"(mkName (" ++ show pre ++ " ++ show " ++ s ++ "))")
                                       | (e,g,s) <- guessNum $ read [end]]
                       | otherwise   = []
-                where (pre,end) = (init sname, last sname)
+
+            guessDefault = [(None,const name, "(mkName " ++ show sname ++ ")")
+                           | not (isDigit end) || pre `notElem` ["x","y","z"]]
 
 
 guessNum :: Int -> [(Env, Env -> Int, String)]
@@ -239,7 +245,7 @@ instance Guess Body where
 
 
 instance Guess Exp where
-    guessEnv o@(AppE x y) = guessPairEnv AppE "AppE" x y ++ guessFold o
+    guessEnv o@(AppE x y) = guessFold o ++ guessPairEnv AppE "AppE" x y
     guessEnv (VarE x) = guessOneEnv VarE "VarE" x
     guessEnv (ConE x) = guessOneEnv ConE "ConE" x
 
@@ -248,8 +254,27 @@ instance Guess Exp where
 
 
 guessFold :: Exp -> [(Env, Env -> Exp, String)]
-guessFold _ = []
+guessFold o@(AppE (AppE fn x) y) =
+        {- f (with foldr1) "foldr1With" (list True o) ++ -} f (with foldl1) "foldl1With" (list False o)
+    where
+        with fold join [] = VarE $ mkName "?"
+        with fold join xs = fold (\x y -> AppE (AppE join x) y) xs
+    
+        list b (AppE (AppE fn2 x) y) | fn == fn2 =
+            if b then x : list b y else y : list b x
+        list b x = [x]
 
+        f ffold sfold lst
+            | length lst <= 2 = []
+            | otherwise = error $ show (lst, map (\(a,b,c) -> (a,c)) $ guessEnv lst)
+            
+            
+            {- [if b a == o then error $ show (a,c) - (a,b,c) - else error $ show a ++ "\n" ++ show o ++ "\n" ++ show ( b a) |
+            
+                            (a,b,c) <- guessPairEnv ffold sfold fn lst] -}
+                            
+
+guessFold _ = []
 
 
 {-
