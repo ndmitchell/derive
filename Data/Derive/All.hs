@@ -7,6 +7,7 @@ module Data.Derive.All (
     module Data.Derive.Functor,
     module Data.Derive.Ord,
     module Data.Derive.Play,
+    module Data.Derive.Serial,
     module Data.Derive.Typeable
     ) where
 
@@ -17,4 +18,5 @@ import Data.Derive.Eq
 import Data.Derive.Functor
 import Data.Derive.Ord
 import Data.Derive.Play
+import Data.Derive.Serial
 import Data.Derive.Typeable
