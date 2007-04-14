@@ -15,19 +15,16 @@ example = [d|
     instance Ord a => Ord (DataName a) where
         compare a b = check a b
             where
-                check CtorZero CtorZero = EQ
-                check (CtorOne x1) (CtorOne y1) = compare x1 y1 `thenCmp` EQ
-                check (CtorTwo x1 x2) (CtorTwo y1 y2) = compare x1 y1 `thenCmp` compare x2 y2 `thenCmp` EQ
-                check (CtorTwo' x1 x2) (CtorTwo' y1 y2) = compare x1 y1 `thenCmp` compare x2 y2 `thenCmp` EQ
+                check CtorZero CtorZero = compare () ()
+                check (CtorOne x1) (CtorOne y1) = compare (tup1 x1) (tup1 y1)
+                check (CtorTwo x1 x2) (CtorTwo y1 y2) = compare (x1,x2) (y1,y2)
+                check (CtorTwo' x1 x2) (CtorTwo' y1 y2) = compare (x1,x2) (y1,y2)
                 check a b = compare (tag a) (tag b)
                 
                 tag (CtorZero{}) = 0
                 tag (CtorOne{}) = 1
                 tag (CtorTwo{}) = 2
                 tag (CtorTwo'{}) = 3
-                
-                EQ `thenCmp` o2 = o2
-                o1 `thenCmp` _  = o1
 
     |]
 
@@ -36,24 +33,21 @@ example = [d|
 
 makeOrd = Derivation ord' "Ord"
 ord' dat = instance_context ["Ord"] "Ord" dat [FunD (mkName "compare") [(Clause
-    [(VarP (mkName "a")),(VarP (mkName "b"))] (NormalB (AppE (AppE (VarE (
-    mkName "check")) (VarE (mkName "a"))) (VarE (mkName "b")))) [FunD (mkName
-    "check") ((map (\(ctorInd,ctor) -> (Clause [(ConP (mkName (ctorName ctor))
-    ((map (\field -> (VarP (mkName ("x" ++ show field)))) (id [1..ctorArity
-    ctor]))++[])),(ConP (mkName (ctorName ctor)) ((map (\field -> (VarP (mkName
-    ("y" ++ show field)))) (id [1..ctorArity ctor]))++[]))] (NormalB (
-    foldr1With (VarE (mkName "thenCmp")) ([(ConE (mkName "EQ"))]++(map (\field
-    -> (AppE (AppE (VarE (mkName "compare")) (VarE (mkName ("x" ++ show field))
-    )) (VarE (mkName ("y" ++ show field))))) (reverse [1..ctorArity ctor]))++[]
-    ))) [])) (id (zip [0..] (dataCtors dat))))++[(Clause [(VarP (mkName "a")),(
-    VarP (mkName "b"))] (NormalB (AppE (AppE (VarE (mkName "compare")) (AppE (
-    VarE (mkName "tag")) (VarE (mkName "a")))) (AppE (VarE (mkName "tag")) (
-    VarE (mkName "b"))))) [])]++[]),FunD (mkName "tag") ((map (\(ctorInd,ctor)
-    -> (Clause [((flip RecP []) (mkName (ctorName ctor)))] (NormalB (LitE (
-    IntegerL ctorInd))) [])) (id (zip [0..] (dataCtors dat))))++[]),FunD (
-    mkName "thenCmp") [(Clause [(ConP (mkName "EQ") []),(VarP (mkName "o2"))] (
-    NormalB (VarE (mkName "o2"))) []),(Clause [(VarP (mkName "o1")),WildP] (
-    NormalB (VarE (mkName "o1"))) [])]])]]
+    [(VarP (mkName "a")),(VarP (mkName "b"))] (NormalB (applyWith (VarE (mkName
+    "check")) [(VarE (mkName "a")),(VarE (mkName "b"))])) [FunD (mkName "check"
+    ) ((map (\(ctorInd,ctor) -> (Clause [(ConP (mkName (ctorName ctor)) ((map (
+    \field -> (VarP (mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++[
+    ])),(ConP (mkName (ctorName ctor)) ((map (\field -> (VarP (mkName ("y" ++
+    show field)))) (id [1..ctorArity ctor]))++[]))] (NormalB (applyWith (VarE (
+    mkName "compare")) [(TupE ((map (\field -> (VarE (mkName ("x" ++ show field
+    )))) (id [1..ctorArity ctor]))++[])),(TupE ((map (\field -> (VarE (mkName (
+    "y" ++ show field)))) (id [1..ctorArity ctor]))++[]))])) [])) (id (zip [0..
+    ] (dataCtors dat))))++[(Clause [(VarP (mkName "a")),(VarP (mkName "b"))] (
+    NormalB (applyWith (VarE (mkName "compare")) [(AppE (VarE (mkName "tag")) (
+    VarE (mkName "a"))),(AppE (VarE (mkName "tag")) (VarE (mkName "b")))])) [])
+    ]++[]),FunD (mkName "tag") ((map (\(ctorInd,ctor) -> (Clause [((flip RecP [
+    ]) (mkName (ctorName ctor)))] (NormalB (LitE (IntegerL ctorInd))) [])) (id
+    (zip [0..] (dataCtors dat))))++[])])]]
 
 {-
 -- HAND WRITTEN VERSION
