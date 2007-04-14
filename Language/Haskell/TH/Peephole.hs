@@ -90,6 +90,8 @@ peep (AppE f (ListE xs))
 peep (CaseE (LitE x) (Match (LitP y) (NormalB z) [] : _))
     | x == y = z
 
+peep (TupE [x]) = x
+
 -- allow easy flip to tracing mode
 peep x | traceMode = trace (show x) x
 peep x = x
