@@ -12,7 +12,8 @@ import Language.Haskell.TH.Data
 -- * Special folds for the guessing
 
 
-foldl1With, foldr1With :: Exp -> [Exp] -> Exp
+applyWith, foldl1With, foldr1With :: Exp -> [Exp] -> Exp
+applyWith  join xs = foldl  AppE join                      xs
 foldl1With join xs = foldr1 (\y x -> AppE (AppE join y) x) xs
 foldr1With join xs = foldr1 (\y x -> AppE (AppE join x) y) xs
 
