@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fglasgow-exts #-}
+-- pattern bindings only
 
 module Language.Haskell.TH.Peephole(peepholeDecs, replaceVar, replaceVars) where
 
@@ -48,15 +50,11 @@ peep :: Exp -> Exp
 peep (AppE x y)
     | x ~= "id" = y
 
-peep (AppE (AppE x y) z)
-    | x ~= "const" = y
-    | x ~= "map" && y ~= "id" = z
-    | x ~= "++" && y ~= "[]" = z
-    | x ~= "++" && z ~= "[]" = y
-    | x ~= "." && z ~= "id" = y
+peep (AppE (AppE op x) y)
+    | Just res <- peepBin op x y = res
 
-peep (AppE bind (AppE ret (TupE [])))
-    | bind ~= ">>" && ret ~= "return" = l0 "id"
+peep (InfixE (Just x) op (Just y))
+    | Just res <- peepBin op x y = res
 
 peep (LamE [] x) = x
 
@@ -77,11 +75,6 @@ peep (AppE (AppE bind (AppE ret x)) y)
 peep (InfixE (Just (AppE ret x)) bind (Just y))
     | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
 
-peep (InfixE (Just x) op (Just y))
-    | op ~= "." && x ~= "id" = y
-    | op ~= "." && y ~= "id" = x
-    | op ~= "&&" && y ~= "True" = x
-
 peep (AppE append (AppE (AppE cons x) nil))
     | append ~= "++" && cons ~= ":" && nil ~= "[]"
     = peep $ AppE (l0 ":") x
@@ -96,6 +89,22 @@ peep (CaseE (LitE x) (Match (LitP y) (NormalB z) [] : _))
 -- allow easy flip to tracing mode
 peep x | traceMode = trace (show x) x
 peep x = x
+
+
+
+peepBin :: Exp -> Exp -> Exp -> Maybe Exp
+peepBin op x y
+    | op ~= "." && x ~= "id" = Just y
+    | op ~= "." && y ~= "id" = Just x
+    | op ~= "&&" && y ~= "True" = Just x
+    | op ~= "const" = Just x
+    | op ~= "map" && x ~= "id" = Just y
+    | op ~= "++" && x ~= "[]" = Just y
+    | op ~= "++" && y ~= "[]" = Just x
+    | op ~= "." && y ~= "id" = Just x
+    | op ~= ">>" && x ~= "return" && y == TupE [] = Just $ l0 "id"
+    | otherwise = Nothing
+
 
 
 (VarE f) ~= x = show f == x
