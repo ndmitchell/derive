@@ -32,6 +32,8 @@ widthify xs = g 80 (f xs)
         f (x:xs) | isSpace x = " " : f (dropWhile isSpace xs)
         f x = case lex x of
                  [("","")] -> []
+                 -- \\ must not occur at the end of a line (CPP restrictions)
+                 [("\\",y)] -> let a:b = f y in ('\\':a) : b
                  [(x,y)] -> x : f y
 
 
