@@ -125,6 +125,9 @@ guessEnvStr t = [(None, const t, guessStr t)]
 guessPairStr :: (Guess a, Guess b) => String -> a -> b -> String
 guessPairStr sjoin a b = sjoin ++ " " ++ guessStr a ++ " " ++ guessStr b
 
+guessTripStr :: (Guess a, Guess b, Guess c) => String -> a -> b -> c -> String
+guessTripStr sjoin a b c = unwords [sjoin, guessStr a, guessStr b, guessStr c]
+
 
 joinEnvs :: [Env] -> Maybe Env
 joinEnvs xs = if length ys > 1 then Nothing else Just $ head (ys ++ [None])
@@ -224,6 +227,10 @@ instance Guess Dec where
             guessPrinciple (AppT (ConT x) _) = dropModule $ show x
 
     guessStr (FunD name claus) = guessPairStr "FunD" name claus
+    
+    guessStr (ValD pat bod whr) = guessTripStr "ValD" pat bod whr
+    
+    guessStr x = error $ show ("Guess Dec",x)
 
 
 instance Guess Name where
@@ -266,6 +273,7 @@ instance Guess Pat where
     guessEnv (VarP x) = guessOneEnv VarP "VarP" x
     guessEnv (ConP x xs) = guessPairEnv ConP "ConP" x xs
     guessEnv (WildP) = [(None, const WildP, "WildP")]
+    guessEnv (TildeP x) = guessOneEnv TildeP "TildeP" x
     guessEnv (RecP x []) = guessOneEnv (flip RecP []) "(flip RecP [])" x
     guessEnv x = error $ show ("Guess Pat",x)
 
@@ -280,6 +288,8 @@ instance Guess Exp where
     guessEnv (VarE x) = guessOneEnv VarE "VarE" x
     guessEnv (ConE x) = guessOneEnv ConE "ConE" x
     guessEnv (LitE x) = guessOneEnv LitE "LitE" x
+    guessEnv (ListE x) = guessOneEnv ListE "ListE" x
+    guessEnv (LamE x y) = guessPairEnv LamE "LamE" x y
 
     guessEnv x = error $ show ("Guess Exp",x)
 
