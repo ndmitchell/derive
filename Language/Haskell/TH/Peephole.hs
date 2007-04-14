@@ -102,6 +102,9 @@ peep (AppE f (ListE xs))
 peep (AppE f (TupE [x,y]))
     | f ~= "choose" && x == y = peep $ AppE (VarE (mkName "return")) x
 
+peep (AppE (AppE sq o@(AppE rnf x)) (TupE []))
+    | sq ~= "seq" && rnf ~= "rnf" = o
+
 peep (CaseE (LitE x) (Match (LitP y) (NormalB z) [] : _))
     | x == y = z
 
