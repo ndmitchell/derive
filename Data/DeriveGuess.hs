@@ -249,7 +249,7 @@ instance Guess Name where
 
 guessNum :: Int -> [(Env, Env -> Int, String)]
 guessNum i = [(Field i, fromField, "field") | i `elem` [1,2]] ++
-             [(Ctor i, fromCtor, "(ctorTag ctor)") | i `elem` [0..3]] ++
+             [(Ctor i, fromCtor, "ctorInd") | i `elem` [0..3]] ++
              [(Ctor i, getArity, "(ctorArity ctor)") | i `elem` [0..2]] ++
              [(Ctor 3, getArity, "(ctorArity ctor)") | i == 2]
     where
@@ -298,7 +298,6 @@ guessFold o@(AppE (AppE fn x) y) =
         f ffold sfold lst
             | length lst <= 2 = []
             | otherwise = guessPairEnv ffold sfold fn lst
-                            
 
 guessFold _ = []
 
