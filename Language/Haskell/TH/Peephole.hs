@@ -108,8 +108,11 @@ peepBin op x y
     | op ~= "." && y ~= "id" = Just x
     | op ~= ">>" && x ~= "return" && y == TupE [] = Just $ l0 "id"
     | op ~= "$" = Just $ peep $ AppE x y
-    | otherwise = Nothing
 
+peepBin op (LitE (StringL x)) (LitE (StringL y))
+    | op ~= "++" = Just $ LitE $ StringL (x++y)
+
+peepBin _ _ _ = Nothing
 
 
 (VarE f) ~= x = show f == x
