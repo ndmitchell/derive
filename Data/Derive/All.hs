@@ -6,6 +6,7 @@ module Data.Derive.All (
     module Data.Derive.Data,
     module Data.Derive.Enum,
     module Data.Derive.Eq,
+    module Data.Derive.From,
     module Data.Derive.Functor,
     module Data.Derive.Is,
     module Data.Derive.Ord,
@@ -20,6 +21,7 @@ import Data.Derive.Bounded
 import Data.Derive.Data
 import Data.Derive.Enum
 import Data.Derive.Eq
+import Data.Derive.From
 import Data.Derive.Functor
 import Data.Derive.Is
 import Data.Derive.Ord
