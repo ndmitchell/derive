@@ -118,6 +118,9 @@ checkGuess t xs = map f xs
                                                         ]
 
 
+guessEnvStr :: Guess t => t -> [(Env, Env -> t, String)]
+guessEnvStr t = [(None, const t, guessStr t)]
+
 
 guessPairStr :: (Guess a, Guess b) => String -> a -> b -> String
 guessPairStr sjoin a b = sjoin ++ " " ++ guessStr a ++ " " ++ guessStr b
@@ -207,6 +210,8 @@ instance Guess a => Guess [a] where
 
 
 instance Guess Dec where
+    guessEnv = guessEnvStr
+
     guessStr (InstanceD ctx typ inner) =
             prefix ++ list (map guessStr inner)
         where
