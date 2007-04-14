@@ -192,6 +192,9 @@ pprLit _ (CharL c)       = text (show c)
 pprLit _ (StringL s)     = text (show s)
 pprLit i (RationalL rat) = parensIf (i > noPrec) $ rational rat
 
+instance Ppr Lit where
+    ppr = pprLit 10
+
 ------------------------------
 instance Ppr Pat where
     ppr = pprPat noPrec
