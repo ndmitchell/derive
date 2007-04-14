@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-missing-methods #-}
 
-module Data.DeriveGuess(DataName(..), guess) where
+module Data.DeriveGuess(DataName(..), tup1, guess) where
 
 import Language.Haskell.TH.All
 import Data.Generics
@@ -20,6 +20,7 @@ ctorNames = ["CtorZero","CtorOne","CtorTwo","CtorTwo'"]
 guess :: Q [Dec] -> IO ()
 guess x = runQ x >>= putStr . unlines . map (widthify . guessStr . unQ)
 
+tup1 = id
 
 widthify :: String -> String
 widthify xs = g 80 (f xs)
@@ -38,7 +39,7 @@ widthify xs = g 80 (f xs)
 
 
 unQ :: Dec -> Dec
-unQ x = normData $ everywhere (mkT g) $ everywhere (mkT f) x
+unQ x = everywhere (mkT g) $ everywhere (mkT f) $ normData x
     where
         f :: Name -> Name
         f name = if match s then mkName $ dropUnder s else name
@@ -48,6 +49,8 @@ unQ x = normData $ everywhere (mkT g) $ everywhere (mkT f) x
 
         g :: Exp -> Exp
         g (InfixE (Just x) y (Just z)) = AppE (AppE y x) z
+        g (AppE (VarE tup) x) | show tup == "tup1" = TupE [x]
+        g (ConE unit) | show unit == "()" = TupE []
         g x = x
 
 
@@ -300,6 +303,7 @@ instance Guess Exp where
     guessEnv (LamE x y) = guessPairEnv LamE "LamE" x y
     guessEnv (CompE x) = guessOneEnv CompE "CompE" x
     guessEnv (CaseE x y) = guessPairEnv CaseE "CaseE" x y
+    guessEnv (TupE x) = guessOneEnv TupE "TupE" x
     guessEnv (RecConE x []) = guessOneEnv (flip RecConE []) "(flip RecConE [])" x
 
     guessEnv o@(AppE x y) = guessApply o ++ guessFold o ++ guessPairEnv AppE "AppE" x y
