@@ -5,6 +5,7 @@ module Data.Derive.All (
     module Data.Derive.Bounded,
     module Data.Derive.Data,
     module Data.Derive.Enum,
+    module Data.Derive.EnumCyclic,
     module Data.Derive.Eq,
     module Data.Derive.From,
     module Data.Derive.Functor,
@@ -20,6 +21,7 @@ import Data.Derive.BinaryDefer
 import Data.Derive.Bounded
 import Data.Derive.Data
 import Data.Derive.Enum
+import Data.Derive.EnumCyclic
 import Data.Derive.Eq
 import Data.Derive.From
 import Data.Derive.Functor
