@@ -124,50 +124,35 @@ runhaskell Setup install
 	<li><b>Is</b> - for each constructor generates <tt>isCtorName</tt> which returns <tt>True</tt> if given the appropriate constructor, and <tt>False</tt> otherwise.</li>
 </ul>
 
-<h3>Scrap Your Boilerplate</h3>
+<h3>Generics</h3>
 
 <p>
-	We support the two classes from the first <a href="http://www.cs.vu.nl/boilerplate/">Scrap Your Boilerplate</a> paper:
+	We support the two classes from the first <a href="http://www.cs.vu.nl/boilerplate/">Scrap Your Boilerplate</a> paper, and the classes from the <a href="http://www-users.cs.york.ac.uk/~ndm/play/">Play library</a>:
 </p>
 <ul>
 	<li><b>Typeable</b> - I believe this will only work on GHC, although am not yet sure.</li>
 	<li><b>Data</b> - we implement only <tt>gfoldl</tt>.</li>
+	<li><b>Play</b> - this is still under construction, and is not recommended for use.</li>
 </ul>
 
 <h3>Binary</h3>
 
 <p>
-	We support the new <a href="http://www.cse.unsw.edu.au/~dons/binary.html">Binary library</a>:
+	We support the new <a href="http://www.cse.unsw.edu.au/~dons/binary.html">Binary library</a>, and the <a href="http://www-users.cs.york.ac.uk/~ndm/binarydefer/">BinaryDefer library</a>.
 </p>
 <ul>
 	<li><b>Binary</b> - our implementation will pick the minimum number of tag bits, and works with any size of data structure.</li>
+	<li><b>BinaryDefer</b> - implemented as per the manual.</li>
 </ul>
 
-<h3>SmallCheck</h3>
+<h3>Testing</h3>
 
 <p>
-	We support the <a href="http://www.cs.york.ac.uk/fp/darcs/smallcheck/">SmallCheck library</a>:
+	We support both <a href="http://www.cs.chalmers.se/~rjmh/QuickCheck/">QuickCheck</a> and the <a href="http://www.cs.york.ac.uk/fp/darcs/smallcheck/">SmallCheck library</a>:
 </p>
 <ul>
+	<li><b>Arbitrary</b> - we follow the DrIFT instance, implementing only <tt>arbitrary</tt>, not <tt>coarbitrary</tt>.</li>
 	<li><b>Serial</b> - we follow the guidelines in the <a href="http://www.cs.york.ac.uk/fp/darcs/smallcheck/README">README</a>, implementing both <tt>series</tt> and <tt>coseries</tt>.</li>
-</ul>
-
-<h3>Play</h3>
-
-<p>
-	We support the <a href="http://www-users.cs.york.ac.uk/~ndm/play/">Play library</a>:
-</p>
-<ul>
-	<li><b>Play</b> - this is still under construction, and is not recommended for use.</li>
-</ul>
-
-<h3>BinaryDefer</h3>
-
-<p>
-	We support the <a href="http://www-users.cs.york.ac.uk/~ndm/binarydefer/">BinaryDefer library</a>:
-</p>
-<ul>
-	<li><b>BinaryDefer</b> - as per the manual.</li>
 </ul>
 
 
