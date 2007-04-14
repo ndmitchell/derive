@@ -292,7 +292,6 @@ instance Guess Body where
 
 
 instance Guess Exp where
-    guessEnv o@(AppE x y) = guessFold o ++ guessPairEnv AppE "AppE" x y
     guessEnv (VarE x) = guessOneEnv VarE "VarE" x
     guessEnv (ConE x) = guessOneEnv ConE "ConE" x
     guessEnv (LitE x) = guessOneEnv LitE "LitE" x
@@ -301,6 +300,8 @@ instance Guess Exp where
     guessEnv (CompE x) = guessOneEnv CompE "CompE" x
     guessEnv (CaseE x y) = guessPairEnv CaseE "CaseE" x y
 
+    guessEnv o@(AppE x y) = guessApply o ++ guessFold o ++ guessPairEnv AppE "AppE" x y
+    
     guessEnv x = error $ show ("Guess Exp",x)
 
 
@@ -317,6 +318,18 @@ instance Guess Lit where
     guessEnv x = error $ show ("Guess Lit",x)
 
 
+-- for when an expression is just an application
+guessApply :: Exp -> [(Env, Env -> Exp, String)]
+guessApply o | length args <= 1 = []
+             | otherwise = guessPairEnv applyWith "applyWith" fn args
+    where
+        (fn,args) = list o
+    
+        list (AppE x y) = let (fn,args) = list x in (fn, args ++ [y])
+        list x = (x, [])
+
+
+-- for when an expression comes from folding
 guessFold :: Exp -> [(Env, Env -> Exp, String)]
 guessFold o@(AppE (AppE fn x) y) =
         f (with foldl1With) "foldl1With" (list True  o) ++
