@@ -13,7 +13,7 @@ import Language.Haskell.TH.Data
 
 
 foldl1With, foldr1With :: Exp -> [Exp] -> Exp
-foldl1With join xs = foldl1 (\y x -> AppE (AppE join x) y) xs
+foldl1With join xs = foldr1 (\y x -> AppE (AppE join y) x) xs
 foldr1With join xs = foldr1 (\y x -> AppE (AppE join x) y) xs
 
 
