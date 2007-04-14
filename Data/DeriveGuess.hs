@@ -106,6 +106,18 @@ class (Ppr t, Eq t, Show t) => Guess t where
                       (x:xs) -> x
 
 
+checkGuess :: (Ppr t, Eq t, Show t) => t -> [(Env, Env -> t, String)] -> [(Env, Env -> t, String)]
+checkGuess t xs = map f xs
+    where
+        f o@(env,gen,str) | t == gen env = o
+                          | otherwise = error $ unlines ["checkGuess failed:"
+                                                        ,"INPUT : " ++ show t
+                                                        ,"OUTPUT: " ++ show (gen env)
+                                                        ,"ENV   : " ++ show env
+                                                        ,"HYP   : " ++ str
+                                                        ]
+
+
 
 guessPairStr :: (Guess a, Guess b) => String -> a -> b -> String
 guessPairStr sjoin a b = sjoin ++ " " ++ guessStr a ++ " " ++ guessStr b
