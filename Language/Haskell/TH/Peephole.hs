@@ -8,6 +8,7 @@ import Language.Haskell.TH.Helper
 import Language.Haskell.TH.SYB
 import Data.Generics
 import Data.Maybe
+import Data.List
 import Debug.Trace
 
 traceMode = False
@@ -30,7 +31,13 @@ replaceVars rep orig = fExp orig
             AppE x y -> AppE (fExp x) (fExp y)
             CaseE x y -> CaseE (fExp x) (map fMatch y)
             TupE xs -> TupE (map fExp xs)
+            _ | null $ map fst rep `intersect` getNames x -> x
             _ -> error $ "replaceVar: " ++ show x
+
+        getNames x = everything (++) ([] `mkQ` f) x
+            where
+                f :: Name -> [Name]
+                f x = [x]
 
         fMatch o@(Match pat (NormalB bod) []) =
             Match pat (NormalB $ replaceVars (filter ((`notElem` patFree pat) . fst) rep) bod) []
