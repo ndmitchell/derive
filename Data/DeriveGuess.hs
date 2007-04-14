@@ -18,7 +18,7 @@ ctorNames = ["CtorZero","CtorOne","CtorTwo","CtorTwo'"]
 
 
 guess :: Q [Dec] -> IO ()
-guess x = runQ x >>= putStr . unlines . map (widthify . guessStr . unQ)
+guess x = runQ x >>= putStr . unlines . map (widthify . guessStr) . unQ
 
 tup1 = id
 
@@ -38,8 +38,8 @@ widthify xs = g 80 (f xs)
                  [(x,y)] -> x : f y
 
 
-unQ :: Dec -> Dec
-unQ x = everywhere (mkT g) $ everywhere (mkT f) $ normData x
+unQ :: [Dec] -> [Dec]
+unQ x = everywhere (mkT g) $ everywhere (mkT f) $ map normData x
     where
         f :: Name -> Name
         f name = if match s then mkName $ dropUnder s else name
