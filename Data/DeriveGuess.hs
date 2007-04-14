@@ -240,14 +240,15 @@ instance Guess Dec where
 
 
 instance Guess Name where
-    guessEnv name = if sname `elem` ctorNames then guessCtor else guessRest
+    guessEnv name = if null guessCtor then guessRest else guessCtor
         where
             sname = show name
             (pre,end) = (init sname, last sname)
-
             
-            guessCtor = [(Ctor i, \(Ctor e) -> mkName (ctorNames !! e), "(mkName (ctorName ctor))")]
-                where Just i = findIndex (== sname) ctorNames
+            guessCtor = [(Ctor i, \(Ctor e) -> mkName (pre ++ (ctorNames !! e))
+                                ,"(mkName (" ++ show pre ++ " ++ ctorName ctor))")
+                        | (i,nam) <- zip [0..] ctorNames, nam `isSuffixOf` sname
+                        , let pre = take (length sname - length nam) sname]
 
             guessRest = guessLast ++ guessDefault
             
