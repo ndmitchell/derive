@@ -279,9 +279,18 @@ instance Guess Exp where
     guessEnv o@(AppE x y) = guessFold o ++ guessPairEnv AppE "AppE" x y
     guessEnv (VarE x) = guessOneEnv VarE "VarE" x
     guessEnv (ConE x) = guessOneEnv ConE "ConE" x
+    guessEnv (LitE x) = guessOneEnv LitE "LitE" x
 
     guessEnv x = error $ show ("Guess Exp",x)
 
+
+instance Guess Lit where
+    guessEnv o@(IntegerL i) =
+        [ (env, \e -> IntegerL $ toInteger $ gen e, "(IntegerL " ++ str ++ ")")
+        | (env,gen,str) <- guessNum $ fromInteger i] ++
+        [(None,const $ IntegerL i,"(IntegerL " ++ show i ++ ")")]
+    
+    guessEnv x = error $ show ("Guess Lit",x)
 
 
 guessFold :: Exp -> [(Env, Env -> Exp, String)]
