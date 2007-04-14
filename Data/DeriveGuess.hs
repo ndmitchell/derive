@@ -18,7 +18,7 @@ ctorNames = ["CtorZero","CtorOne","CtorTwo","CtorTwo'"]
 
 
 guess :: Q [Dec] -> IO ()
-guess x = runQ x >>= putStr . unlines . map (widthify . guessStr) . unQ
+guess x = runQ x >>= putStr . widthify . guessStr . unQ
 
 tup1 = id
 
@@ -27,7 +27,7 @@ widthify xs = g 80 (f xs)
     where
         g n (x:xs) | n - length x <= 0 = "\n    " ++ g 76 ([x|x/=" "] ++ xs)
                    | otherwise = x ++ g (n - length x) xs
-        g n [] = ""
+        g n [] = "\n"
         
         
         f (x:xs) | isSpace x = " " : f (dropWhile isSpace xs)
@@ -218,24 +218,21 @@ instance Guess a => Guess [a] where
 
 
 instance Guess Dec where
-    guessEnv = guessEnvStr
-
-    guessStr (InstanceD ctx typ inner) =
-            prefix ++ list (map guessStr inner)
+    guessEnv (InstanceD ctx typ inner) =
+            [(None, \e -> InstanceD ctx typ (gen e), prefix ++ str)
+            |(None,gen,str) <- guessEnv inner]
         where
-            prefix = map toLower p ++ "' dat = " ++
-                     "instance_context " ++ guessContext ctx ++ " " ++
+            prefix = "instance_context " ++ guessContext ctx ++ " " ++
                      show p ++ " dat "
 
             p = guessPrinciple typ
             guessContext = list . nub . map (show . guessPrinciple)
             guessPrinciple (AppT (ConT x) _) = dropModule $ show x
 
-    guessStr (FunD name claus) = guessPairStr "FunD" name claus
+    guessEnv (FunD name claus) = guessPairEnv FunD "FunD" name claus
+    guessEnv (ValD pat bod whr) = guessTripEnv ValD "ValD" pat bod whr
     
-    guessStr (ValD pat bod whr) = guessTripStr "ValD" pat bod whr
-    
-    guessStr x = error $ show ("Guess Dec",x)
+    guessEnv x = error $ show ("Guess Dec",x)
 
 
 instance Guess Name where
