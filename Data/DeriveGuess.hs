@@ -142,7 +142,8 @@ instance Guess a => Guess [a] where
     guessEnv os = concatMap f $ mapM guessEnv os
         where
             f xs | length es <= 1 = [(head (es ++ [None]), \e -> map ($ e) gens, list strs)]
-                 | otherwise = [(env,gen,str) | env <- newEnvs, (gen,str) <- nubBy ((==) `on` snd) $ g xs]
+                 | otherwise = [(env,gen,"("++str++")")
+                               | env <- newEnvs, (gen,str) <- nubBy ((==) `on` snd) $ g xs]
                 where
                     (envs,gens,strs) = unzip3 xs
                     es = nub $ filter (/= None) envs
@@ -158,12 +159,12 @@ instance Guess a => Guess [a] where
                                   _ -> []  
                     
                     ctorEnv = head newEnvs == None
-                    varName = if ctorEnv then "ctor" else "field"
+                    varName = if ctorEnv then "(ctorInd,ctor)" else "field"
                     
                     domain = if ctorEnv then [0..3] else [1..maxField]
                     getDomain (Ctor i) = take 2 [1..i]
                     getDomain None = [0..3]
-                    strDomain = if ctorEnv then "ctors" else "[1..ctorArity ctor]"
+                    strDomain = if ctorEnv then "(zip [0..] (dataCtors dat))" else "[1..ctorArity ctor]"
                     
                     construct = if ctorEnv then Ctor else Field
                     
@@ -180,7 +181,7 @@ instance Guess a => Guess [a] where
                     h fdir sdir xs
                         | map construct (fdir domain) `isPrefixOf` map fst3 xs
                         = [(\e -> map (fhyp . construct) (fdir $ getDomain e) ++ gen e
-                           ,"(map (\\" ++ varName ++ " -> " ++ shyp ++ ") (" ++ sdir ++ " " ++ strDomain ++ ")++" ++ str)
+                           ,"(map (\\" ++ varName ++ " -> " ++ shyp ++ ") (" ++ sdir ++ " " ++ strDomain ++ "))++" ++ str)
                           | (fhyp,shyp) <- validHyp
                           , (gen,str) <- g rest]
                         where
@@ -266,10 +267,10 @@ instance Guess Exp where
 
 guessFold :: Exp -> [(Env, Env -> Exp, String)]
 guessFold o@(AppE (AppE fn x) y) =
-        {- f (with foldr1) "foldr1With" (list True o) ++ -} f (with foldl1) "foldl1With" (list False o)
+        f (with foldl1) "foldl1With" (list True o) ++ f (with foldr1) "foldr1With" (list False o)
     where
         with fold join [] = VarE $ mkName "?"
-        with fold join xs = fold (\x y -> AppE (AppE join x) y) xs
+        with fold join xs = fold (\y x -> AppE (AppE join x) y) xs
     
         list b (AppE (AppE fn2 x) y) | fn == fn2 =
             if b then x : list b y else y : list b x
@@ -277,12 +278,7 @@ guessFold o@(AppE (AppE fn x) y) =
 
         f ffold sfold lst
             | length lst <= 2 = []
-            | otherwise = error $ show (lst, map (\(a,b,c) -> (a,c)) $ guessEnv lst)
-            
-            
-            {- [if b a == o then error $ show (a,c) - (a,b,c) - else error $ show a ++ "\n" ++ show o ++ "\n" ++ show ( b a) |
-            
-                            (a,b,c) <- guessPairEnv ffold sfold fn lst] -}
+            | otherwise = guessPairEnv ffold sfold fn lst
                             
 
 guessFold _ = []
