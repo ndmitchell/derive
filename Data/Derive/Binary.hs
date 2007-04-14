@@ -1,3 +1,4 @@
+-- NOTE: Cannot be guessed as is not inductive because of getWordN
 
 module Data.Derive.Binary(makeBinary) where
 

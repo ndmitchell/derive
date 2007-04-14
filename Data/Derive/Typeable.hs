@@ -1,3 +1,5 @@
+-- NOTE: Cannot be guessed as it inducts on the data type (not its constructors)
+
 module Data.Derive.Typeable(makeTypeable) where
 
 import Language.Haskell.TH.All

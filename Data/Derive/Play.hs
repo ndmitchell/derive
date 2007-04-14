@@ -1,3 +1,4 @@
+-- NOTE: Cannot be guessed as it relies on type information
 
 module Data.Derive.Play(makePlay) where
 
