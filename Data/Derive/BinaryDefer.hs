@@ -26,14 +26,14 @@ example = [d|
 
 
 makeBinaryDefer = Derivation binarydefer' "BinaryDefer"
-binarydefer' dat = instance_context ["BinaryDefer"] "BinaryDefer" dat [ValD (
+binarydefer' dat = [instance_context ["BinaryDefer"] "BinaryDefer" dat [ValD (
     VarP (mkName "bothDefer")) (NormalB (AppE (VarE (mkName "defer")) (ListE ((
     map (\(ctorInd,ctor) -> (LamE [(TildeP (ConP (mkName (ctorName ctor)) ((map
     (\field -> (VarP (mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++
     [])))] (foldr1With (VarE (mkName "<<")) ((map (\field -> (VarE (mkName ("x"
     ++ show field)))) (reverse [1..ctorArity ctor]))++[(AppE (VarE (mkName
     "unit")) (ConE (mkName (ctorName ctor))))]++[])))) (id (zip [0..] (
-    dataCtors dat))))++[])))) []]
+    dataCtors dat))))++[])))) []]]
     
 
 {-    

@@ -21,10 +21,10 @@ example = [d|
 
 
 makeBounded = Derivation bounded' "Bounded"
-bounded' dat = instance_context [] "Bounded" dat [ValD (VarP (mkName "minBound"
+bounded' dat = [instance_context [] "Bounded" dat [ValD (VarP (mkName "minBound"
     )) (NormalB (AppE (VarE (mkName "head")) (ListE ((map (\(ctorInd,ctor) -> (
     (flip RecConE []) (mkName (ctorName ctor)))) (id (zip [0..] (dataCtors dat)
     )))++[])))) [],ValD (VarP (mkName "maxBound")) (NormalB (applyWith (VarE (
     mkName "$")) [(VarE (mkName "head")),(AppE (VarE (mkName "reverse")) (ListE
     ((map (\(ctorInd,ctor) -> ((flip RecConE []) (mkName (ctorName ctor)))) (id
-    (zip [0..] (dataCtors dat))))++[])))])) []]
+    (zip [0..] (dataCtors dat))))++[])))])) []]]

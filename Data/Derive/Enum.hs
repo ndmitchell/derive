@@ -29,7 +29,7 @@ example = [d|
 
 
 makeEnum = Derivation enum' "Enum"
-enum' dat = instance_context [] "Enum" dat [FunD (mkName "toEnum") ((map (\(
+enum' dat = [instance_context [] "Enum" dat [FunD (mkName "toEnum") ((map (\(
     ctorInd,ctor) -> (Clause [(LitP (IntegerL ctorInd))] (NormalB ((flip
     RecConE []) (mkName (ctorName ctor)))) [])) (id (zip [0..] (dataCtors dat))
     ))++[(Clause [(VarP (mkName "n"))] (NormalB (applyWith (VarE (mkName "$"))
@@ -39,4 +39,4 @@ enum' dat = instance_context [] "Enum" dat [FunD (mkName "toEnum") ((map (\(
     ", not defined for ")),(LitE (StringL (dataName dat)))])])])])) [])]++[]),
     FunD (mkName "fromEnum") ((map (\(ctorInd,ctor) -> (Clause [((flip RecP [])
     (mkName (ctorName ctor)))] (NormalB (LitE (IntegerL ctorInd))) [])) (id (
-    zip [0..] (dataCtors dat))))++[])]
+    zip [0..] (dataCtors dat))))++[])]]

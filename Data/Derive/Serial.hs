@@ -36,7 +36,7 @@ example = [d|
 
 
 makeSerial = Derivation serial' "Serial"
-serial' dat = instance_context ["Serial"] "Serial" dat [ValD (VarP (mkName
+serial' dat = [instance_context ["Serial"] "Serial" dat [ValD (VarP (mkName
     "series")) (NormalB (foldl1With (VarE (mkName "\\/")) ((map (\(ctorInd,ctor
     ) -> (AppE (VarE (mkName ("cons" ++ show (ctorArity ctor)))) (ConE (mkName
     (ctorName ctor))))) (id (zip [0..] (dataCtors dat))))++[]))) [],FunD (
@@ -49,4 +49,4 @@ serial' dat = instance_context ["Serial"] "Serial" dat [ValD (VarP (mkName
     ctorArity ctor]))++[])) (NormalB (applyWith (VarE (mkName ("t" ++ show
     ctorInd))) ((map (\field -> (VarE (mkName ("x" ++ show field)))) (id [1..
     ctorArity ctor]))++[]))) [])) (id (zip [0..] (dataCtors dat))))++[]))))]++[
-    ]))) [])]]
+    ]))) [])]]]

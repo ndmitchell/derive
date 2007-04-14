@@ -27,11 +27,11 @@ example = [d|
 
 makeData = Derivation data' "Data"
 
-data' dat = instance_context ["Data","Typeable"] "Data" dat [FunD (mkName
+data' dat = [instance_context ["Data","Typeable"] "Data" dat [FunD (mkName
     "gfoldl") ((map (\(ctorInd,ctor) -> (Clause [(VarP (mkName "k")),(VarP (
     mkName "r")),(ConP (mkName (ctorName ctor)) ((map (\field -> (VarP (mkName
     ("x" ++ show field)))) (id [1..ctorArity ctor]))++[]))] (NormalB (
     foldr1With (VarE (mkName "k")) ((map (\field -> (VarE (mkName ("x" ++ show
     field)))) (reverse [1..ctorArity ctor]))++[(AppE (VarE (mkName "r")) (ConE
     (mkName (ctorName ctor))))]++[]))) [])) (id (zip [0..] (dataCtors dat))))++
-    [])]
+    [])]]

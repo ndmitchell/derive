@@ -24,7 +24,7 @@ example = [d|
 
 
 makeEq = Derivation eq' "Eq"
-eq' dat = instance_context ["Eq"] "Eq" dat [FunD (mkName "==") ((map (\(ctorInd
+eq' dat = [instance_context ["Eq"] "Eq" dat [FunD (mkName "==") ((map (\(ctorInd
     ,ctor) -> (Clause [(ConP (mkName (ctorName ctor)) ((map (\field -> (VarP (
     mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++[])),(ConP (mkName
     (ctorName ctor)) ((map (\field -> (VarP (mkName ("y" ++ show field)))) (id
@@ -32,7 +32,7 @@ eq' dat = instance_context ["Eq"] "Eq" dat [FunD (mkName "==") ((map (\(ctorInd
     map (\field -> (AppE (AppE (VarE (mkName "==")) (VarE (mkName ("x" ++ show
     field)))) (VarE (mkName ("y" ++ show field))))) (id [1..ctorArity ctor]))++
     [(ConE (mkName "True"))]++[]))) [])) (id (zip [0..] (dataCtors dat))))++[(
-    Clause [WildP,WildP] (NormalB (ConE (mkName "False"))) [])]++[])]
+    Clause [WildP,WildP] (NormalB (ConE (mkName "False"))) [])]++[])]]
 
 
 {-

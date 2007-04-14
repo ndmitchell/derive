@@ -32,7 +32,7 @@ example = [d|
 
 
 makeOrd = Derivation ord' "Ord"
-ord' dat = instance_context ["Ord"] "Ord" dat [FunD (mkName "compare") [(Clause
+ord' dat = [instance_context ["Ord"] "Ord" dat [FunD (mkName "compare") [(Clause
     [(VarP (mkName "a")),(VarP (mkName "b"))] (NormalB (applyWith (VarE (mkName
     "check")) [(VarE (mkName "a")),(VarE (mkName "b"))])) [FunD (mkName "check"
     ) ((map (\(ctorInd,ctor) -> (Clause [(ConP (mkName (ctorName ctor)) ((map (
@@ -47,7 +47,7 @@ ord' dat = instance_context ["Ord"] "Ord" dat [FunD (mkName "compare") [(Clause
     VarE (mkName "a"))),(AppE (VarE (mkName "tag")) (VarE (mkName "b")))])) [])
     ]++[]),FunD (mkName "tag") ((map (\(ctorInd,ctor) -> (Clause [((flip RecP [
     ]) (mkName (ctorName ctor)))] (NormalB (LitE (IntegerL ctorInd))) [])) (id
-    (zip [0..] (dataCtors dat))))++[])])]]
+    (zip [0..] (dataCtors dat))))++[])])]]]
 
 {-
 -- HAND WRITTEN VERSION
