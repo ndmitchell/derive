@@ -299,6 +299,7 @@ instance Guess Exp where
     guessEnv (LamE x y) = guessPairEnv LamE "LamE" x y
     guessEnv (CompE x) = guessOneEnv CompE "CompE" x
     guessEnv (CaseE x y) = guessPairEnv CaseE "CaseE" x y
+    guessEnv (RecConE x []) = guessOneEnv (flip RecConE []) "(flip RecConE [])" x
 
     guessEnv o@(AppE x y) = guessApply o ++ guessFold o ++ guessPairEnv AppE "AppE" x y
     
