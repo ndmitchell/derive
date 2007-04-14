@@ -4,6 +4,7 @@ module Data.Derive.All (
     module Data.Derive.BinaryDefer,
     module Data.Derive.Bounded,
     module Data.Derive.Data,
+    module Data.Derive.Enum,
     module Data.Derive.Eq,
     module Data.Derive.Functor,
     module Data.Derive.Ord,
@@ -16,6 +17,7 @@ import Data.Derive.Binary
 import Data.Derive.BinaryDefer
 import Data.Derive.Bounded
 import Data.Derive.Data
+import Data.Derive.Enum
 import Data.Derive.Eq
 import Data.Derive.Functor
 import Data.Derive.Ord
