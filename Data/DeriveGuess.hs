@@ -280,10 +280,11 @@ instance Guess Exp where
 
 guessFold :: Exp -> [(Env, Env -> Exp, String)]
 guessFold o@(AppE (AppE fn x) y) =
-        f (with foldl1) "foldl1With" (list True o) ++ f (with foldr1) "foldr1With" (list False o)
+        f (with foldl1With) "foldl1With" (list True  o) ++
+        f (with foldr1With) "foldr1With" (list False o)
     where
         with fold join [] = VarE $ mkName "?"
-        with fold join xs = fold (\y x -> AppE (AppE join x) y) xs
+        with fold join xs = fold join xs
     
         list b (AppE (AppE fn2 x) y) | fn == fn2 =
             if b then x : list b y else y : list b x
