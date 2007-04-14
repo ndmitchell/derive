@@ -26,8 +26,12 @@ example = [d|
 
 
 makeData = Derivation data' "Data"
-data' dat = instance_context ["Data","Typeable"] "Data" dat [funN "gfoldl" (map
-    (\c -> Clause [VarP (mkName "k"),VarP (mkName "r"),ctp c 'x'] (NormalB (
-    foldl (\a b -> AppE (AppE ((VarE (mkName "k"))) a) b) (AppE ((VarE (mkName
-    "r"))) ((ConE (mkName (ctorName c))))) (map (\(VarE q) -> VarE q) (ctv c
-    'x')))) []) (dataCtors dat))]
+
+data' dat = instance_context ["Data","Typeable"] "Data" dat [FunD (mkName
+    "gfoldl") ((map (\(ctorInd,ctor) -> (Clause [(VarP (mkName "k")),(VarP (
+    mkName "r")),(ConP (mkName (ctorName ctor)) ((map (\field -> (VarP (mkName
+    ("x" ++ show field)))) (id [1..ctorArity ctor]))++[]))] (NormalB (
+    foldr1With (VarE (mkName "k")) ((map (\field -> (VarE (mkName ("x" ++ show
+    field)))) (reverse [1..ctorArity ctor]))++[(AppE (VarE (mkName "r")) (ConE
+    (mkName (ctorName ctor))))]++[]))) [])) (id (zip [0..] (dataCtors dat))))++
+    [])]
