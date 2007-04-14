@@ -1,5 +1,6 @@
 
 module Data.Derive.All (
+    module Data.Derive.Arbitrary,
     module Data.Derive.Binary,
     module Data.Derive.BinaryDefer,
     module Data.Derive.Bounded,
@@ -16,6 +17,7 @@ module Data.Derive.All (
     module Data.Derive.Typeable
     ) where
 
+import Data.Derive.Arbitrary
 import Data.Derive.Binary
 import Data.Derive.BinaryDefer
 import Data.Derive.Bounded
