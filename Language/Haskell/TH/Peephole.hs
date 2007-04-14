@@ -83,6 +83,10 @@ peep (AppE f (LamE x (AppE (AppE cons y) nil)))
     | f ~= "concatMap" && cons ~= ":" && nil ~= "[]"
     = peep $ AppE (l0 "map") (peep $ LamE x y)
 
+peep (AppE f (ListE xs))
+    | f ~= "head" && not (null xs) = head xs
+    | f ~= "reverse" = ListE $ reverse xs
+
 peep (CaseE (LitE x) (Match (LitP y) (NormalB z) [] : _))
     | x == y = z
 
@@ -103,6 +107,7 @@ peepBin op x y
     | op ~= "++" && y ~= "[]" = Just x
     | op ~= "." && y ~= "id" = Just x
     | op ~= ">>" && x ~= "return" && y == TupE [] = Just $ l0 "id"
+    | op ~= "$" = Just $ peep $ AppE x y
     | otherwise = Nothing
 
 
