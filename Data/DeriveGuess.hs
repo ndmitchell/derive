@@ -271,6 +271,12 @@ instance Guess Clause where
     guessEnv (Clause pat bod whr) = guessTripEnv Clause "Clause" pat bod whr
 
 
+instance Guess Stmt where
+    guessEnv (BindS x y) = guessPairEnv BindS "BindS" x y
+    guessEnv (NoBindS x) = guessOneEnv NoBindS "NoBindS" x
+    guessEnv x = error $ show ("Guess Stmt",x)
+
+
 instance Guess Pat where
     guessEnv (VarP x) = guessOneEnv VarP "VarP" x
     guessEnv (ConP x xs) = guessPairEnv ConP "ConP" x xs
@@ -292,8 +298,14 @@ instance Guess Exp where
     guessEnv (LitE x) = guessOneEnv LitE "LitE" x
     guessEnv (ListE x) = guessOneEnv ListE "ListE" x
     guessEnv (LamE x y) = guessPairEnv LamE "LamE" x y
+    guessEnv (CompE x) = guessOneEnv CompE "CompE" x
+    guessEnv (CaseE x y) = guessPairEnv CaseE "CaseE" x y
 
     guessEnv x = error $ show ("Guess Exp",x)
+
+
+instance Guess Match where
+    guessEnv (Match a b c) = guessTripEnv Match "Match" a b c
 
 
 instance Guess Lit where
