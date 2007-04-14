@@ -179,7 +179,7 @@ instance Guess a => Guess [a] where
                     h :: Eq t => ([Int] -> [Int]) -> String -> [(Env, Env -> t, String)] -> [(Env -> [t], String)]
                     h fdir sdir xs
                         | map construct (fdir domain) `isPrefixOf` map fst3 xs
-                        = [(\e -> map (fhyp . construct) $ fdir $ getDomain e
+                        = [(\e -> map (fhyp . construct) (fdir $ getDomain e) ++ gen e
                            ,"(map (\\" ++ varName ++ " -> " ++ shyp ++ ") (" ++ sdir ++ " " ++ strDomain ++ ")++" ++ str)
                           | (fhyp,shyp) <- validHyp
                           , (gen,str) <- g rest]
