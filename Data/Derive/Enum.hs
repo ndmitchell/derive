@@ -9,7 +9,7 @@ import Language.Haskell.TH.All
 
 import Data.DeriveGuess
 
-example = [d|
+example = (,) "Enum" [d|
 
     instance Enum (DataName a) where
         toEnum 0 = CtorZero{}

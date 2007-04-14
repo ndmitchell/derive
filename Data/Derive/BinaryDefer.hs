@@ -11,7 +11,7 @@ import Data.Binary.Defer
 
 instance Eq (DataName a) where
 
-example = [d|
+example = (,) "BinaryDefer" [d|
 
     instance BinaryDefer a => BinaryDefer (DataName a) where
         bothDefer = defer [\ ~(CtorZero) -> unit CtorZero

@@ -12,7 +12,7 @@ import Data.DeriveGuess
 
 instance Typeable (DataName a) where
 
-example = [d|
+example = (,) "Data" [d|
 
     instance (Data a, Typeable a) => Data (DataName a) where
         gfoldl k r CtorZero = r CtorZero

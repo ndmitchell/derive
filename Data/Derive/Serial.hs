@@ -10,8 +10,7 @@ import Language.Haskell.TH.All
 import SmallCheck
 import Data.DeriveGuess
 
-example = [d|
-
+example = (,) "Serial" [d|
 
     instance Serial a => Serial (DataName a) where
         series = cons0 CtorZero \/

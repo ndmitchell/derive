@@ -9,7 +9,7 @@ import Language.Haskell.TH.All
 
 import Data.DeriveGuess
 
-example = [d|
+example = (,) "Eq" [d|
 
     instance Eq a => Eq (DataName a) where
         CtorZero == CtorZero = True

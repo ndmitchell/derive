@@ -10,7 +10,7 @@ import Data.DeriveGuess
 
 instance Eq (DataName a) where
 
-example = [d|
+example = (,) "Ord" [d|
 
     instance Ord a => Ord (DataName a) where
         compare a b = check a b

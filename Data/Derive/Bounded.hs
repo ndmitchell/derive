@@ -9,7 +9,7 @@ import Language.Haskell.TH.All
 
 import Data.DeriveGuess
 
-example = [d|
+example = (,) "Bounded" [d|
 
     instance Bounded (DataName a) where
         minBound = head [CtorZero{}, CtorOne{}, CtorTwo{}, CtorTwo'{}]
