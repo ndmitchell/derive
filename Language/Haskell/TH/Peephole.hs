@@ -31,6 +31,7 @@ replaceVars rep orig = fExp orig
             AppE x y -> AppE (fExp x) (fExp y)
             CaseE x y -> CaseE (fExp x) (map fMatch y)
             TupE xs -> TupE (map fExp xs)
+            ListE xs -> ListE (map fExp xs)
             _ | null $ map fst rep `intersect` getNames x -> x
             _ -> error $ "replaceVar: " ++ show x
 
@@ -70,6 +71,12 @@ peep (LamE [VarP x] (VarE y))
 
 peep (DoE [NoBindS x]) = x
 
+peep x@(ConE _)
+    | x ~= "[]" = ListE []
+
+peep (AppE (AppE cons x) nil)
+    | cons ~= ":" && nil ~= "[]" = ListE [x]
+
 peep (DoE [BindS (VarP p) (AppE ret (LitE val)),NoBindS e])
     | ret ~= "return" = peep $ replaceVar p (LitE val) e
 
@@ -87,13 +94,14 @@ peep (AppE (AppE bind (AppE ret x)) y)
 peep (InfixE (Just (AppE ret x)) bind (Just y))
     | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
 
-peep (AppE append (AppE (AppE cons x) nil))
-    | append ~= "++" && cons ~= ":" && nil ~= "[]"
-    = peep $ AppE (l0 ":") x
+peep (AppE append (ListE [x]))
+    | append ~= "++" = peep $ AppE (l0 ":") x
 
-peep (AppE f (LamE x (AppE (AppE cons y) nil)))
-    | f ~= "concatMap" && cons ~= ":" && nil ~= "[]"
-    = peep $ AppE (l0 "map") (peep $ LamE x y)
+peep (InfixE (Just (ListE [x])) append y)
+    | append ~= "++" = peep $ InfixE (Just x) (l0 ":") y
+
+peep (AppE f (LamE x (ListE [y])))
+    | f ~= "concatMap" = peep $ AppE (l0 "map") (peep $ LamE x y)
 
 peep (AppE f (ListE xs))
     | f ~= "head" && not (null xs) = head xs
@@ -137,6 +145,7 @@ peepBin _ _ _ = Nothing
 
 (VarE f) ~= x = show f == x
 (ConE f) ~= x = show f == x
+(ListE []) ~= "[]" = True
 _ ~= _ = False
 
 
