@@ -260,6 +260,7 @@ instance Guess Clause where
 instance Guess Pat where
     guessEnv (VarP x) = guessOneEnv VarP "VarP" x
     guessEnv (ConP x xs) = guessPairEnv ConP "ConP" x xs
+    guessEnv (WildP) = [(None, const WildP, "WildP")]
     guessEnv x = error $ show ("Guess Pat",x)
 
 
