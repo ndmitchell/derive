@@ -10,7 +10,7 @@ import Control.Monad.State
 
 
 makePlay :: Derivation
-makePlay = Derivation derive "Play"
+makePlay = Derivation play' "Play"
 
 
 data Container = None | Target
@@ -18,6 +18,7 @@ data Container = None | Target
                  deriving (Eq, Show)
 
 
+-- convert a type to the appropriate container type
 typeToContainer :: String -> Type -> Container
 typeToContainer active t =
         if eqConT active name then Target
@@ -30,18 +31,33 @@ typeToContainer active t =
         rest2 = map (typeToContainer active) rest
 
 
-everything :: Container -> [Container]
-everything o@(List x) = o : everything x
-everything o@(Tuple x) = o : concatMap everything x
-everything o = [o]
 
-
-derive dat =
-        simple_instance "Play" dat [funN "getChildren" gbody, funN "replaceChildren" rbody]
+play' dat =
+        [instance_default "Play" dat [funN "getChildren" gbody, funN "replaceChildren" rbody]]
     where
-        ctors = dataCtors dat
-        name = dataName dat
-    
+        ctors :: [(CtorDef,[Container])]
+        ctors = [(c, map (typeToContainer (dataName dat)) (ctorTypes c)) | c <- dataCtors dat]
+
+
+        gbody = [sclause [ctp (fst c) 'x'] (gitem c) | c <- ctors]
+
+        gitem :: (CtorDef,[Container]) -> Exp
+        gitem (c,ts) = concat_ [AppE (f t) v | (t,v) <- zip ts (ctv c 'x')]
+            where
+                f None = const' nil
+                f Target = LamE [vr "x"] (box (vr "x"))
+                f (List t) = l1 "concatMap" (f t)
+                f (Tuple ts) = LamE [tup (map vr vars)] (concat_ [AppE (f t) (vr v) | (t,v) <- zip ts vars])
+                    where vars = ['x':show i | i <- [1..length ts]]
+
+        rbody = gbody
+        
+        
+
+
+
+{-
+
         contain = map (typeToContainer name) . ctorTypes
         var x = vr $ 'x' : show x
         match ctor = sclause [ctp ctor 'x']
@@ -101,7 +117,7 @@ derive dat =
         --ritem :: Ctor -> (Exp, [Decl])
         --ritem conts = 
 
-
+-}
 
 
 {-                
