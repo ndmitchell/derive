@@ -50,8 +50,13 @@ play' dat =
                 f (Tuple ts) = LamE [tup (map vr vars)] (concat_ [AppE (f t) (vr v) | (t,v) <- zip ts vars])
                     where vars = ['x':show i | i <- [1..length ts]]
 
-        rbody = gbody
+
+        rbody = [sclause [vr "x"] (case' (vr "x")
+                    [(ctp (fst c) 'x', tup [gitem c, ritem c]) | c <- ctors]
+                )]
         
+        ritem :: (CtorDef,[Container]) -> Exp
+        ritem (c,ts) = gitem (c,ts)
         
 
 
