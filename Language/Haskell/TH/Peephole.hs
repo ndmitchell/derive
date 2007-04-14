@@ -68,6 +68,11 @@ peep (LamE [] x) = x
 peep (LamE [VarP x] (VarE y))
     | x == y = l0 "id"
 
+peep (DoE [NoBindS x]) = x
+
+peep (DoE [BindS (VarP p) (AppE ret (LitE val)),NoBindS e])
+    | ret ~= "return" = peep $ replaceVar p (LitE val) e
+
 peep (LamE [ConP comma [VarP x, VarP y]] (VarE z))
     | show comma == "," && x == z = l0 "fst"
     | show comma == "," && y == z = l0 "snd"
@@ -93,6 +98,9 @@ peep (AppE f (LamE x (AppE (AppE cons y) nil)))
 peep (AppE f (ListE xs))
     | f ~= "head" && not (null xs) = head xs
     | f ~= "reverse" = ListE $ reverse xs
+
+peep (AppE f (TupE [x,y]))
+    | f ~= "choose" && x == y = peep $ AppE (VarE (mkName "return")) x
 
 peep (CaseE (LitE x) (Match (LitP y) (NormalB z) [] : _))
     | x == y = z
