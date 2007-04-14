@@ -283,6 +283,7 @@ instance Guess Pat where
     guessEnv (WildP) = [(None, const WildP, "WildP")]
     guessEnv (TildeP x) = guessOneEnv TildeP "TildeP" x
     guessEnv (RecP x []) = guessOneEnv (flip RecP []) "(flip RecP [])" x
+    guessEnv (LitP x) = guessOneEnv LitP "LitP" x
     guessEnv x = error $ show ("Guess Pat",x)
 
 
@@ -315,6 +316,9 @@ instance Guess Lit where
         [ (env, \e -> IntegerL $ toInteger $ gen e, "(IntegerL " ++ str ++ ")")
         | (env,gen,str) <- guessNum $ fromInteger i] ++
         [(None,const $ IntegerL i,"(IntegerL " ++ show i ++ ")")]
+    
+    guessEnv o@(StringL s) | s == "DataName" = [(None, const o, "(StringL (dataName dat))")]
+                           | otherwise = [(None, const o, "(StringL " ++ show s ++ ")")]
     
     guessEnv x = error $ show ("Guess Lit",x)
 
