@@ -263,6 +263,7 @@ instance Guess Name where
 
 guessNum :: Int -> [(Env, Env -> Int, String)]
 guessNum i = [(Field i, fromField, "field") | i `elem` [1,2]] ++
+             [(None, const 3, "(toInteger (length (dataCtors dat)))") | i == 3] ++
              [(Ctor i, fromCtor, "ctorInd") | i `elem` [0..3]] ++
              [(Ctor i, getArity, "(ctorArity ctor)") | i `elem` [0..2]] ++
              [(Ctor 3, getArity, "(ctorArity ctor)") | i == 2]
@@ -307,6 +308,7 @@ instance Guess Exp where
     guessEnv (CaseE x y) = guessPairEnv CaseE "CaseE" x y
     guessEnv (TupE x) = guessOneEnv TupE "TupE" x
     guessEnv (RecConE x []) = guessOneEnv (flip RecConE []) "(flip RecConE [])" x
+    guessEnv (CondE x y z) = guessTripEnv CondE "CondE" x y z
 
     guessEnv o@(AppE x y) = guessApply o ++ guessFold o ++ guessPairEnv AppE "AppE" x y
     
