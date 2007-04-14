@@ -11,6 +11,7 @@ module Data.Derive.All (
     module Data.Derive.From,
     module Data.Derive.Functor,
     module Data.Derive.Is,
+    module Data.Derive.NFData,
     module Data.Derive.Ord,
     module Data.Derive.Play,
     module Data.Derive.Serial,
@@ -28,6 +29,7 @@ import Data.Derive.Eq
 import Data.Derive.From
 import Data.Derive.Functor
 import Data.Derive.Is
+import Data.Derive.NFData
 import Data.Derive.Ord
 import Data.Derive.Play
 import Data.Derive.Serial
