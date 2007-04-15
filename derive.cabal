@@ -1,7 +1,7 @@
 Name: derive
 Version: 0.1
 Copyright: 2006-7, Neil Mitchell
-Build-Depends: base, template-haskell, FilePath, mtl
+Build-Depends: base, template-haskell, filepath, mtl
 License: BSD3
 Author: Neil Mitchell & Stefan O'Rear
 Synopsis: A program and library to derive instances for Haskell data types
@@ -11,13 +11,21 @@ Exposed-Modules:
 	Data.DeriveGuess
 	Data.DeriveTH
 	Data.Derive.All
+	Data.Derive.Arbitrary
 	Data.Derive.Binary
 	Data.Derive.BinaryDefer
+	Data.Derive.Bounded
 	Data.Derive.Data
+	Data.Derive.Enum
+	Data.Derive.EnumCyclic
 	Data.Derive.Eq
+	Data.Derive.From
 	Data.Derive.Functor
+	Data.Derive.Is
+	Data.Derive.NFData
 	Data.Derive.Ord
 	Data.Derive.Play
+	Data.Derive.Serial
 	Data.Derive.Typeable
 	Language.Haskell.TH.All
 	Language.Haskell.TH.Data
