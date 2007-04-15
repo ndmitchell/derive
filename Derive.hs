@@ -197,7 +197,10 @@ parseFile flags file = do
         return (options, modname, unlines decl, concat req)
     where
         parseOptions (x:xs)
-            | "{-# OPTIONS_DERIVE " `isPrefixOf` x = readOptions $ takeWhile (/= '#') $ drop 19 x
+            | "{-# OPTIONS_DERIVE " `isPrefixOf` x = do
+                    a <- readOptions $ takeWhile (/= '#') $ drop 19 x
+                    b <- parseOptions xs
+                    return $ a ++ b
             | "{-# OPTIONS" `isPrefixOf` x = parseOptions xs
         parseOptions _ = return []
         
