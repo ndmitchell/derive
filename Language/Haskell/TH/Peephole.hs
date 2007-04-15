@@ -88,9 +88,9 @@ peep (AppE (AppE cons x) nil)
 peep (DoE [BindS (VarP p) (AppE ret (LitE val)),NoBindS e])
     | ret ~= "return" = peep $ replaceVar p (LitE val) e
 
-peep (LamE [ConP comma [VarP x, VarP y]] (VarE z))
-    | show comma == "," && x == z = l0 "fst"
-    | show comma == "," && y == z = l0 "snd"
+peep (LamE [TupP [VarP x, VarP y]] (VarE z))
+    | x == z = l0 "fst"
+    | y == z = l0 "snd"
 
 peep (AppE (LamE (VarP x:xs) y) z)
     | simple z
@@ -107,6 +107,9 @@ peep (AppE append (ListE [x]))
 
 peep (InfixE (Just (ListE [x])) append y)
     | append ~= "++" = peep $ InfixE (Just x) (l0 ":") y
+
+peep (InfixE (Just x) cons (Just (ListE xs)))
+    | cons ~= ":" = peep $ ListE (x:xs)
 
 peep (AppE f (LamE x (ListE [y])))
     | f ~= "concatMap" = peep $ AppE (l0 "map") (peep $ LamE x y)
