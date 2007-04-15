@@ -121,6 +121,12 @@ instance Valcon Pat where
       tup = TupP
       lst = ListP
 
+
+-- | Build an application node without a given head
+app :: Exp -> [Exp] -> Exp
+app root args = foldl AppE root args
+
+
 -- | This class is used to overload literal construction based on the
 -- type of the literal.
 class LitC a where
