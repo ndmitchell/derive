@@ -5,7 +5,10 @@ module Data.Derive.Play(makePlay) where
 import Language.Haskell.TH.All
 import Data.List
 import Data.Maybe
+import Data.Generics
+import qualified Data.Map as Map
 import Control.Monad.State
+import Debug.Trace
 
 
 
@@ -31,9 +34,22 @@ typeToContainer active t =
         rest2 = map (typeToContainer active) rest
 
 
+-- the variable type
+type Var x = State (Map.Map String Int) x
+
+getVar :: String -> Var String
+getVar x = do mp <- get
+              let i = Map.findWithDefault 1 x mp
+              put $ Map.insert x (i+1) mp
+              return $ x -- ++ if i == 1 then "" else show i
+
+runVar :: Var a -> a
+runVar x = evalState x Map.empty
+
+
 
 play' dat =
-        [instance_default "Play" dat [funN "getChildren" gbody, funN "replaceChildren" rbody]]
+        [instance_default "Play" dat [funN "getChildren" gbody, funN "setChildren" rbody]]
     where
         ctors :: [(CtorDef,[Container])]
         ctors = [(c, map (typeToContainer (dataName dat)) (ctorTypes c)) | c <- dataCtors dat]
@@ -51,109 +67,108 @@ play' dat =
                     where vars = ['x':show i | i <- [1..length ts]]
 
 
-        rbody = [sclause [vr "x"] (case' (vr "x")
+        rbody = [sclause [ctp (fst c) 'x'] (ritem c) | c <- ctors]
+
+        {-
+        [sclause [vr "x"] (case' (vr "x")
                     [(ctp (fst c) 'x', tup [gitem c, ritem c]) | c <- ctors]
                 )]
+        -}
+        
+        
+        
+        wildcard :: Exp -> Exp
+        wildcard x = everywhere (mkT f) x
+            where
+                vars = everything (++) ([] `mkQ` g) x
+                
+                g (VarE x) = [x]
+                g x = []
+                
+                f (VarP x) | x `notElem` vars = WildP
+                f x = x
+        
         
         ritem :: (CtorDef,[Container]) -> Exp
-        ritem (c,ts) = gitem (c,ts)
-        
-
-
-
-{-
-
-        contain = map (typeToContainer name) . ctorTypes
-        var x = vr $ 'x' : show x
-        match ctor = sclause [ctp ctor 'x']
-    
-        gbody = [match ctor (gitem $ contain ctor) | ctor <- ctors]
-        
-        gitem :: [Container] -> Exp
-        gitem conts = concat_ [AppE (f c) (var i) | (i,c) <- zip [1..] conts]
+        ritem (c,ts) = wildcard $ runVar (value_ $ joins_ items)
             where
-                f None = const' nil
-                f Target = LamE [var 1] (box (var 1))
-                f (List x) = l1 "concatMap" (f x)
-                f (Tuple xs) = LamE [tup (map var ns)]
-                                    (concat_ [AppE (f x) (var n) | (n,x) <- zip ns xs])
-                    where ns = [1..length xs]
-
-        rbody = [Clause [vr "x"] (NormalB bod) (r:k:map lst lsts)]
-            where
-                lsts :: [(Container,Int)]
-                lsts = zip (nub [x | List x <- concatMap (concatMap everything . contain) ctors]) [1..]
-                
-                lst (x,i) = funN ("lst" ++ show i)
-                    [sclause [nil, vr "xs"] $ tup [nil, vr "xs"]
-                    ,sclause [cons (vr "c") (vr "cs"), vr "xs"] $
-                        LetE [sval (tup [vr "a", vr "b"]) (AppE (ritem lsts x) (vr "c"))
-                             ,sval (tup [vr "q", vr "u"]) (l2 ("lst" ++ show i) (vr "cs") (vr "b"))
-                             ]
-                             (tup [cons (vr "a") (vr "q"), vr "u"])
-                    ]
+                items = const1_ (l0 (ctorName c)) :
+                        [do q <- f t; return $ AppE q v | (t,v) <- zip ts (ctv c 'x')]
             
-                bod = case' (vr "x") [(ctp ctor 'x',
-                    tup [gitem cs, l2 "." (l0 "fst") $ rs (ctorName ctor) (map (ritem lsts) cs)]
-                    ) | ctor <- ctors, let cs = contain ctor]
-                
-                r = funN "r" [sclause [vr "c", vr "xs"] $ tup [vr "c", vr "xs"]]
-                k = funN "k" [sclause [vr "f", vr "g", vr "xs"] $
-                        LetE [sval (tup [vr "a", vr "b"]) (AppE (vr "f") (vr "xs"))
-                             ,sval (tup [vr "c", vr "d"]) (AppE (vr "g") (vr "b"))
-                             ]
-                             (tup [AppE (vr "a") (vr "c"), vr "d"])
-                        ]
+                f None = const_
+                f Target = id_
+                f (List Target) = listId_
+                f (List t) = list_ (f t)
+                f (Tuple ts) = joins_ $ const1_ (l0 "tup") : map f ts
 
-        ritem :: [(Container,Int)] -> Container -> Exp
-        ritem lsts None = LamE [vr "c",vr "xs"] (tup [vr "c",vr "xs"])
-        ritem lsts Target = LamE [vr "c",cons (vr "x") (vr "xs")] (tup [vr "x",vr "xs"])
-        ritem lsts (List x) = l0 $ "lst" ++ show (fromJust $ lookup x lsts)
+        -- the replaceChildren combinators
         
-        ritem lsts _ = l0 "todo"
+        const_ = do
+            x <- getVar "x"
+            ns <- getVar "ns"
+            c <- getVar "c"
+            return $ lamE [vr x,vr ns,vr c] (app (vr c) [vr x,vr ns])
 
-
-        rs c xs = foldl f (l1 "r" (l0 c)) xs
-            where f x y = AppE (AppE (vr "k") x) y
-
-
+        id_ = do
+            n <- getVar "n"
+            ns <- getVar "ns"
+            c <- getVar "c"
+            return $ lamE [WildP,lK ":" [vr n,vr ns],vr c] (app (vr c) [vr n,vr ns])
         
-
-        --ritem :: Ctor -> (Exp, [Decl])
-        --ritem conts = 
-
--}
-
-
-{-                
-                -- return Left for an item, Right for a list
-                rhss (Container _ xs) = concatMap rhss xs
-                rhss None = []
-                rhss (Var x Target) = [Left (vr x)]
-                rhss (Var x (Container "[]" [Target])) = [Right (vr x)]
-                rhss x = error $ "Right hand side of Play not handled, " ++ show x
--}
-
-
-
-{-        
+        list_ x = liftM (l1 "list'") x
         
-        -- sequ' (ptag (lit (0::Integer)) : map (l1 "put") (ctv ctor 'x'))
+        listId_ = return $ l0 "listId'"
+
+        value_ inp = do
+            inp <- inp
+            ns <- getVar "ns"
+            x <- getVar "x"
+            return $ lamE [vr ns] $ appE2 inp (vr ns) $ lamE [vr x,WildP] (vr x)
+
+        join_ ina inb = do
+            ns1 <- getVar "ns"
+            ns2 <- getVar "ns"
+            ns3 <- getVar "ns"
+            c <- getVar "c"
+            a <- getVar "a"
+            b <- getVar "b"
+            return $ lamE [vr ns1,vr c]
+                   $ appE2 ina (vr ns1) $ lamE [vr a,vr ns2]
+                   $ appE2 inb (vr ns2) $ lamE [vr b,vr ns3]
+                   $ appE2 (vr c) (appE (vr a) (vr b)) (vr ns3)
+
+        const1_ x = do c <- const_ ; return $ appE c x
+
+        joins_ x = do (y:ys) <- sequence x
+                      foldM join_ y ys
+
+
+        -- can be a bit more fast and loose about variable clashes etc
+        -- since we guarantee a limited set of generated values
+
+        -- very special rule, only valid for play
+        appE (AppE (AppE (VarE l) x) y) (LamE (b:WildP:bs) c)
+            | show l == "listId'" = appE (lamE (b:bs) c) y
+
+        appE (LamE (VarP x:xs) y) z = lamE xs (rebuild $ replaceVar x z y)
+        appE (LamE (WildP :xs) y) z = lamE xs y
+        appE (AppE (LamE (x1@(ConP{}):VarP x2:xs) xb) y) z =
+              AppE (lamE (x1:xs) (rebuild $ replaceVar x2 z xb)) y
+        appE x y = AppE x y
         
+        
+        
+        
+        appE2 x y z = appE (appE x y) z
+        
+        lamE [] y = y
+        lamE xs (LamE ys z) = lamE (xs++ys) z
+        lamE xs (AppE y (VarE z)) | last xs == VarP z = lamE (init xs) y
+        lamE x  y = LamE x y
 
-    
-        rbody = [ sclause [ctp ctor 'x'] (put_case nm ctor) | (nm,ctor) <- items ]
-        put_case nm ctor = sequ' (ptag (lit nm) : map (l1 "put") (ctv ctor 'x'))
-
-        dbody = [sclause [] (gtag >>=: ("tag_" ->: case' (vr "tag_") (map get_case items)))]
-        get_case (nm,ctor) = (lit nm, liftmk (ctc ctor) (replicate (ctorArity ctor) (vr "get")))
-
-        nctors = length ctors
-        items :: [(Integer,CtorDef)]
-        items = zip [0..] ctors
-
-        (ptag, gtag) | nctors <= 1     = (\_ -> l1 "return" (lit ()), l1 "return" (lit (0::Integer)))
-                     | nctors <= 256   = (l1 "putWord8", l0 "getWord8")
-                     | nctors <= 65536 = (l1 "putWord16", l0 "getWord16")
-                     | otherwise       = (l1 "putWord32", l0 "getWord32")
--}
+        rebuild :: Exp -> Exp
+        rebuild = everywhere (mkT f)
+            where
+                f (AppE x y) = appE x y
+                f (LamE x y) = lamE x y
+                f x = x
