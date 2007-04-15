@@ -32,6 +32,7 @@ replaceVars rep orig = fExp orig
             CaseE x y -> CaseE (fExp x) (map fMatch y)
             TupE xs -> TupE (map fExp xs)
             ListE xs -> ListE (map fExp xs)
+            LamE x y -> LamE x (fPat x y)
             _ | null $ map fst rep `intersect` getNames x -> x
             _ -> error $ "replaceVar: " ++ show x
 
@@ -41,11 +42,18 @@ replaceVars rep orig = fExp orig
                 f x = [x]
 
         fMatch o@(Match pat (NormalB bod) []) =
-            Match pat (NormalB $ replaceVars (filter ((`notElem` patFree pat) . fst) rep) bod) []
+            Match pat (NormalB $ fPat [pat] bod) []
 
-        patFree x = case x of
-            LitP _ -> []
-            _ -> error $ "patFree: " ++ show x
+        -- given these pattern have come into scope
+        -- continue matching on the rest
+        fPat :: [Pat] -> Exp -> Exp
+        fPat pat = replaceVars (filter ((`notElem` used) . fst) rep)
+            where used = concatMap usedPats pat
+
+        usedPats x = everything (++) ([] `mkQ` f) x
+            where
+                f (VarP x) = [x]
+                f _ = []
 
 
 replaceVar :: Name -> Exp -> Exp -> Exp
