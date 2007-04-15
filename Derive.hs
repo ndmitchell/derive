@@ -47,7 +47,7 @@ And a list of files to execute upon
 
 
 
-data Flag = Version | Help | Output String | Import | Module String
+data Flag = Version | Help | Output String | Import String | Module String
           | Append | Derive [String] | KeepTemp | NoOpts
             deriving (Eq, Show)
 
@@ -57,7 +57,7 @@ options =
  [ Option "v"  ["version"] (NoArg Version)          "show version number"
  , Option "h?" ["help"]    (NoArg Help)             "show help message"
  , Option "o"  ["output"]  (ReqArg Output "FILE")   "output FILE"
- , Option "i"  ["import"]  (NoArg Import)           "add an import statement"
+ , Option "i"  ["import"]  (OptArg (Import . fromMaybe "") "MODULE") "add an import statement"
  , Option "m"  ["module"]  (ReqArg Module "MODULE") "add a module MODULE where statement"
  , Option "a"  ["append"]  (NoArg Append)           "append the result to the file"
  , Option "d"  ["derive"]  (ReqArg split "DERIVES") "things to derive for all types"
@@ -170,7 +170,7 @@ mainFile flags file = do
         writeFile file $ src2 ++ (if null res then "" else appendMsg ++ hashString res ++ "\n" ++ res)
      else do
         let modline = concat $ take 1 ["module " ++ x ++ " where\n" | Module x <- flags]
-            impline = if Import `elem` flags then "import " ++ modname ++ "\n" else ""
+            impline = unlines ["import " ++ if null i then modname else i | Import i <- flags]
             answer = modline ++ impline ++ res
         
         case [x | Output x <- flags] of
