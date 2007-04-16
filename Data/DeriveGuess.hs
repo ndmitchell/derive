@@ -16,7 +16,7 @@ data DataName a = CtorZero
 
 ctorNames = ["CtorZero","CtorOne","CtorTwo","CtorTwo'"]
 
-
+-- | Guess an instantiator from a sample instance.
 guess :: (String, Q [Dec]) -> IO ()
 guess (name,x) = runQ x >>= putStr . (++) line0. widthify . (++) line1 . guessStr . unQ
     where
@@ -24,16 +24,20 @@ guess (name,x) = runQ x >>= putStr . (++) line0. widthify . (++) line1 . guessSt
         line1 = lname ++ "' dat = "
         lname = toLower (head name) : tail name
 
+-- | A fake constructor for the unary tuple.  Helps 'guess' to see
+-- patterns in progressions of differently sized tuples.
 tup1 = id
 
+-- | Chop and mangle a String representing Haskell code so that it
+-- fits in 80 columns, without regard for prettiness.
 widthify :: String -> String
 widthify xs = g 80 (f xs)
     where
         g n (x:xs) | n - length x <= 0 = "\n    " ++ g 76 ([x|x/=" "] ++ xs)
                    | otherwise = x ++ g (n - length x) xs
         g n [] = "\n"
-        
-        
+
+
         f (x:xs) | isSpace x = " " : f (dropWhile isSpace xs)
         f x = case lex x of
                  [("","")] -> []
@@ -41,16 +45,21 @@ widthify xs = g 80 (f xs)
                  [("\\",y)] -> let a:b = f y in ('\\':a) : b
                  [(x,y)] -> x : f y
 
-
+-- | Process a tree produced by a quasiquote, stripping name
+-- uniquifiers and changing applications and tuplings into a standard
+-- form.
 unQ :: [Dec] -> [Dec]
 unQ x = everywhere (mkT g) $ everywhere (mkT f) $ map normData x
     where
+        -- | Remove_0 evil_1 ghc_2 name_3 uniquifiers_4
         f :: Name -> Name
         f name = if match s then mkName $ dropUnder s else name
             where
                 s = show name
                 match = isPrefixOf "_" . dropWhile isDigit . reverse
 
+        -- | Turn infix applications into prefix, and normalise
+        -- tuples.
         g :: Exp -> Exp
         g (InfixE (Just x) y (Just z)) = AppE (AppE y x) z
         g (AppE (VarE tup) x) | show tup == "tup1" = TupE [x]
@@ -58,8 +67,10 @@ unQ x = everywhere (mkT g) $ everywhere (mkT f) $ map normData x
         g x = x
 
 
-
+-- | Extract the module from a qualified name.
 dropModule = reverse . takeWhile (/= '.') . reverse
+-- | Drop the first _ and everything after it; used to trim GHC name
+-- uniques.
 dropUnder = reverse . drop 1 . dropWhile (/= '_') . reverse
 
 list x = "[" ++ concat (intersperse "," x) ++ "]"
