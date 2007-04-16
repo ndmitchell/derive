@@ -43,10 +43,10 @@ isPrefixName = classify . showNameRaw
                             ((x:xs),[]) -> isAlpha x || x == '_'
                             _ -> False -- operators ending with .
 
-pprName' :: Bool -> Name -> Doc
-pprName' True nm  | isPrefixName nm = text (showNameRaw nm)
+pprName_ :: Bool -> Name -> Doc
+pprName_ True nm  | isPrefixName nm = text (showNameRaw nm)
                   | otherwise       = text ("(" ++ showNameRaw nm ++ ")")
-pprName' False nm | isPrefixName nm = text ("`" ++ showNameRaw nm ++ "`")
+pprName_ False nm | isPrefixName nm = text ("`" ++ showNameRaw nm ++ "`")
                   | otherwise       = text (showNameRaw nm)
 
 ------------------------------
@@ -64,7 +64,7 @@ instance Ppr a => Ppr [a] where
 
 ------------------------------
 instance Ppr Name where
-    ppr v = pprName' True v -- text (show v)
+    ppr v = pprName_ True v -- text (show v)
 
 ------------------------------
 instance Ppr Info where
@@ -102,8 +102,8 @@ instance Ppr Exp where
     ppr = pprExp noPrec
 
 pprExpInfix :: Exp -> Doc
-pprExpInfix (VarE v) = pprName' False v
-pprExpInfix (ConE c) = pprName' False c
+pprExpInfix (VarE v) = pprName_ False v
+pprExpInfix (ConE c) = pprName_ False c
 
 pprExp :: Precedence -> Exp -> Doc
 pprExp _ (VarE v)     = ppr v
@@ -207,7 +207,7 @@ pprPat i (ConP s ps)  = parensIf (i > noPrec) $ ppr s
                                             <+> sep (map (pprPat appPrec) ps)
 pprPat i (InfixP p1 n p2)
                       = parensIf (i > noPrec)
-                      $ pprPat opPrec p1 <+> pprName' False n <+> pprPat opPrec p2
+                      $ pprPat opPrec p1 <+> pprName_ False n <+> pprPat opPrec p2
 pprPat i (TildeP p)   = parensIf (i > noPrec) $ text "~" <> pprPat appPrec p
 pprPat i (AsP v p)    = parensIf (i > noPrec) $ ppr v <> text "@"
                                                       <> pprPat appPrec p
@@ -288,7 +288,7 @@ instance Ppr Con where
     ppr (NormalC c sts) = ppr c <+> sep (map pprStrictType sts)
     ppr (RecC c vsts)
         = ppr c <+> braces (sep (punctuate comma $ map pprVarStrictType vsts))
-    ppr (InfixC st1 c st2) = pprStrictType st1 <+> pprName' False c <+> pprStrictType st2
+    ppr (InfixC st1 c st2) = pprStrictType st1 <+> pprName_ False c <+> pprStrictType st2
     ppr (ForallC ns ctxt con) = text "forall" <+> hsep (map ppr ns)
                             <+> char '.' <+> pprCxt ctxt <+> ppr con
 
@@ -356,4 +356,3 @@ where_clause ds = nest nestDepth $ text "where" <+> vcat (map ppr ds)
 
 showtextl :: Show a => a -> Doc
 showtextl = text . map toLower . show
-
