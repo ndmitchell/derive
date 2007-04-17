@@ -21,6 +21,7 @@ Exposed-Modules:
 	Data.Derive.Eq
 	Data.Derive.From
 	Data.Derive.Functor
+	Data.Derive.Has
 	Data.Derive.Is
 	Data.Derive.NFData
 	Data.Derive.Ord

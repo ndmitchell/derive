@@ -130,7 +130,8 @@ runhaskell Setup install
 </p>
 <ul>
 	<li><b>From</b> - for each constructor generates <tt>fromCtorName</tt> which extracts the components if given the appropriate constructor, and crashes otherwise. Unlike DrIFT our version works for all constructors - 0-arity constructors always return <tt>()</tt>, 1-arity constructors return the contained value, all others return a tuple with all components.</li>
-	<li><b>Is</b> - for each constructor generates <tt>isCtorName</tt> which returns <tt>True</tt> if given the appropriate constructor, and <tt>False</tt> otherwise.</li>
+    <li><b>Has</b> - for each field generates <tt>hasFieldName</tt> which returns <tt>True</tt> if given the the given field is a member of that constructor.</li>
+    <li><b>Is</b> - for each constructor generates <tt>isCtorName</tt> which returns <tt>True</tt> if given the appropriate constructor, and <tt>False</tt> otherwise.</li>
 </ul>
 
 <h3>Generics</h3>

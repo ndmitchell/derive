@@ -10,6 +10,7 @@ module Data.Derive.All (
     module Data.Derive.Eq,
     module Data.Derive.From,
     module Data.Derive.Functor,
+    module Data.Derive.Has,
     module Data.Derive.Is,
     module Data.Derive.NFData,
     module Data.Derive.Ord,
@@ -28,6 +29,7 @@ import Data.Derive.EnumCyclic
 import Data.Derive.Eq
 import Data.Derive.From
 import Data.Derive.Functor
+import Data.Derive.Has
 import Data.Derive.Is
 import Data.Derive.NFData
 import Data.Derive.Ord
