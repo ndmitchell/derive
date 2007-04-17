@@ -9,6 +9,38 @@ import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Data
 
 
+-- * GHC 6.4.2 compatability
+
+-- isSymbol and isPunctuation are lacking from GHC 6.4.2
+
+isOperator :: Char -> Bool
+isOperator c = isSymbol_ c || isPunctuation_ c
+
+
+-- | Selects Unicode punctuation characters, including various kinds
+-- of connectors, brackets and quotes.
+isPunctuation_ :: Char -> Bool
+isPunctuation_ c = case generalCategory c of
+        ConnectorPunctuation    -> True
+        DashPunctuation         -> True
+        OpenPunctuation         -> True
+        ClosePunctuation        -> True
+        InitialQuote            -> True
+        FinalQuote              -> True
+        OtherPunctuation        -> True
+        _                       -> False
+
+-- | Selects Unicode symbol characters, including mathematical and
+-- currency symbols.
+isSymbol_ :: Char -> Bool
+isSymbol_ c = case generalCategory c of
+        MathSymbol              -> True
+        CurrencySymbol          -> True
+        ModifierSymbol          -> True
+        OtherSymbol             -> True
+        _                       -> False
+
+
 -- * Special folds for the guessing
 
 
@@ -107,8 +139,7 @@ class Valcon a where
       lst :: [a] -> a
 instance Valcon Exp where
       lK nm@(x:_) args | isUpper x || x == ':' = foldl AppE (ConE (mkName nm)) args
-      lK nm@(x:_) [a,b] | isOper x = InfixE (Just a) (VarE (mkName nm)) (Just b)
-         where isOper c = isSymbol c || isPunctuation c
+      lK nm@(x:_) [a,b] | isOperator x = InfixE (Just a) (VarE (mkName nm)) (Just b)
       lK nm       args = foldl AppE (VarE (mkName nm)) args
       vr = VarE . mkName
       raw_lit = LitE
