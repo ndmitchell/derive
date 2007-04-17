@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fglasgow-exts #-}
 -- pattern bindings only
 
-module Language.Haskell.TH.Peephole(peepholeDecs, replaceVar, replaceVars) where
+module Language.Haskell.TH.Peephole(peephole, replaceVar, replaceVars) where
 
 import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Helper
@@ -14,8 +14,8 @@ import Debug.Trace
 traceMode = False
 
 
-peepholeDecs :: [Dec] -> [Dec]
-peepholeDecs x = everywhere (mkT peep) x
+peephole :: Data a => a -> a
+peephole x = everywhere (mkT peep) x
 
 
 
