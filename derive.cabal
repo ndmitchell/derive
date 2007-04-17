@@ -23,6 +23,7 @@ Exposed-Modules:
 	Data.Derive.Functor
 	Data.Derive.Has
 	Data.Derive.Is
+	Data.Derive.Monoid
 	Data.Derive.NFData
 	Data.Derive.Ord
 	Data.Derive.Play

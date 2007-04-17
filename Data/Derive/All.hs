@@ -12,6 +12,7 @@ module Data.Derive.All (
     module Data.Derive.Functor,
     module Data.Derive.Has,
     module Data.Derive.Is,
+    module Data.Derive.Monoid,
     module Data.Derive.NFData,
     module Data.Derive.Ord,
     module Data.Derive.Play,
@@ -31,6 +32,7 @@ import Data.Derive.From
 import Data.Derive.Functor
 import Data.Derive.Has
 import Data.Derive.Is
+import Data.Derive.Monoid
 import Data.Derive.NFData
 import Data.Derive.Ord
 import Data.Derive.Play
