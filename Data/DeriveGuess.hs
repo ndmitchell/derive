@@ -119,11 +119,11 @@ class (Ppr t, Eq t, Show t) => Guess t where
     -- will never be given a different type of environment
     guessEnv :: t -> [(Env, Env -> t, String)]
     
-    guessStr :: t -> String
-    guessStr t = case [s | (None,_,s) <- guessEnv t] of
-                      [] -> error $ "\n\nNo hypothesis for:\n" ++ show t ++
-                                    "\n\nPretty version:\n" ++ show (ppr t)
-                      (x:xs) -> x
+guessStr :: Guess t => t -> String
+guessStr t = case [s | (None,_,s) <- guessEnv t] of
+                  [] -> error $ "\n\nNo hypothesis for:\n" ++ show t ++
+                                "\n\nPretty version:\n" ++ show (ppr t)
+                  (x:xs) -> x
 
 
 checkGuess :: (Ppr t, Eq t, Show t) => t -> [(Env, Env -> t, String)] -> [(Env, Env -> t, String)]
