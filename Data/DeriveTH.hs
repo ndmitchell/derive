@@ -27,8 +27,11 @@ derive (Derivation f _) = liftM f . deriveOne
 -- | Derive for a type and print the code to standard output.  This is
 -- a internal hook for the use of the Derive executable.
 _derive_string_instance :: Derivation -> Name -> Q Exp
-_derive_string_instance (Derivation f _) nm =
-    return . LitE . StringL . (++"\n\n") . show . ppr . peephole . f =<< deriveOne nm
+_derive_string_instance (Derivation f s) nm =
+    return . LitE . StringL . blankLine . show . ppr . peephole . f =<< deriveOne nm
+    where
+        blankLine "" = "-- Cannot derive " ++ s ++ " for " ++ show nm
+        blankLine xs = xs
     
 
 -- | Extract a 'DataDef' value from a type using the TH 'reify'
