@@ -83,8 +83,8 @@ thd3 (a,b,c) = c
 
 snub x = nub $ sort x
 
-fieldCtors x = x : [3 | x == 2]
-ctorFields x = if x == 3 then 2 else x
+arityToCtors x = x : [3 | x == 2]
+ctorToArity  x = if x == 3 then 2 else x
 
 on op get a b = op (get a) (get b)
 
@@ -191,9 +191,9 @@ instance Guess a => Guess [a] where
                     maxField = maximum fields
                     
                     newEnvs = case ctors of
-                                  [] -> map Ctor $ fieldCtors maxField
+                                  [] -> map Ctor $ arityToCtors maxField
                                   _ | null fields -> [None]
-                                  [x] | ctorFields x == maxField -> [Ctor x]
+                                  [x] | ctorToArity x == maxField -> [Ctor x]
                                   _ -> []  
                     
                     ctorEnv = head newEnvs == None
@@ -202,7 +202,7 @@ instance Guess a => Guess [a] where
                     domain = if ctorEnv then [0..3] else [1..maxField]
                     getDomain (Ctor i) = take 2 [1..i]
                     getDomain None = [0..3]
-                    strDomain = if ctorEnv then "(zip [0..] (dataCtors dat))" else "[1..ctorArity ctor]"
+                    strDomain = if ctorEnv then "(zip [0..] (dataCtors dat))" else "[1..ctorToArity ctor]"
                     
                     construct = if ctorEnv then Ctor else Field
                     
@@ -277,8 +277,8 @@ guessNum i = [(Field i, fromField, "field") | i `elem` [1,2]] ++
              [(None, const 3, "(toInteger (length (dataCtors dat) - 1))") | i == 3] ++
              [(None, const 4, "(toInteger (length (dataCtors dat)))") | i == 4] ++
              [(Ctor i, fromCtor, "ctorInd") | i `elem` [0..3]] ++
-             [(Ctor i, getArity, "(ctorArity ctor)") | i `elem` [0..2]] ++
-             [(Ctor 3, getArity, "(ctorArity ctor)") | i == 2]
+             [(Ctor i, getArity, "(ctorToArity ctor)") | i `elem` [0..2]] ++
+             [(Ctor 3, getArity, "(ctorToArity ctor)") | i == 2]
     where
         getArity (Ctor 3) = 2
         getArity (Ctor i) = i
