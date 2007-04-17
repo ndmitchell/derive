@@ -124,15 +124,16 @@ runhaskell Setup install
 	<li><b>NFData</b> - from <a href="http://haskell.org/ghc/docs/latest/html/libraries/base/Control-Parallel-Strategies.html#t%3ANFData">Control.Parallel.Strategies</a>.</li>
 </ul>
 
-<h3>DrIFT</h3>
+<h3>Query</h3>
 
 <p>
-	DrIFT defines a number of useful query functions, which are technically not instances, but can be derived in a similar manner. We support some of these:
+	DrIFT defines a number of useful query functions, which are technically not instances, but can be derived in a similar manner. We support some of these as from DrIFT, some with modifications, and some which are brand new:
 </p>
 <ul>
 	<li><b>From</b> - for each constructor generates <tt>fromCtorName</tt> which extracts the components if given the appropriate constructor, and crashes otherwise. Unlike DrIFT our version works for all constructors - 0-arity constructors always return <tt>()</tt>, 1-arity constructors return the contained value, all others return a tuple with all components.</li>
     <li><b>Has</b> - for each field generates <tt>hasFieldName</tt> which returns <tt>True</tt> if given the the given field is a member of that constructor.</li>
     <li><b>Is</b> - for each constructor generates <tt>isCtorName</tt> which returns <tt>True</tt> if given the appropriate constructor, and <tt>False</tt> otherwise.</li>
+    <li><b>Set</b> - for each field generates <tt>setFieldName v x = x{fieldName=v}</tt>. This derivation is intended to work around the fact that in Haskell assigning to a field is not a first class object (although extracting from a field is).</li>
 </ul>
 
 <h3>Generics</h3>

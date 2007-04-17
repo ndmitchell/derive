@@ -17,6 +17,7 @@ module Data.Derive.All (
     module Data.Derive.Ord,
     module Data.Derive.Play,
     module Data.Derive.Serial,
+    module Data.Derive.Set,
     module Data.Derive.Typeable
     ) where
 
@@ -37,4 +38,5 @@ import Data.Derive.NFData
 import Data.Derive.Ord
 import Data.Derive.Play
 import Data.Derive.Serial
+import Data.Derive.Set
 import Data.Derive.Typeable
