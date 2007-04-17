@@ -9,15 +9,6 @@ import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Data
 
 
--- * GHC 6.4.2 compatability
-
--- isSymbol and isPunctuation are lacking from GHC 6.4.2
-
-isOperator :: Char -> Bool
-isOperator c = c `elem` "!#$%&*+./<=>?@\\^|-~"
-    -- previously: isSymbol c || isPunctuation c
-
-
 
 -- * Special folds for the guessing
 
@@ -117,7 +108,8 @@ class Valcon a where
       lst :: [a] -> a
 instance Valcon Exp where
       lK nm@(x:_) args | isUpper x || x == ':' = foldl AppE (ConE (mkName nm)) args
-      lK nm@(x:_) [a,b] | isOperator x = InfixE (Just a) (VarE (mkName nm)) (Just b)
+      lK nm@(x:_) [a,b] | isOper x = InfixE (Just a) (VarE (mkName nm)) (Just b)
+         where isOper x = not (isAlpha x || x == '_')
       lK nm       args = foldl AppE (VarE (mkName nm)) args
       vr = VarE . mkName
       raw_lit = LitE
