@@ -14,31 +14,9 @@ import Language.Haskell.TH.Data
 -- isSymbol and isPunctuation are lacking from GHC 6.4.2
 
 isOperator :: Char -> Bool
-isOperator c = isSymbol_ c || isPunctuation_ c
+isOperator c = c `elem` "!#$%&*+./<=>?@\\^|-~"
+    -- previously: isSymbol c || isPunctuation c
 
-
--- | Selects Unicode punctuation characters, including various kinds
--- of connectors, brackets and quotes.
-isPunctuation_ :: Char -> Bool
-isPunctuation_ c = case generalCategory c of
-        ConnectorPunctuation    -> True
-        DashPunctuation         -> True
-        OpenPunctuation         -> True
-        ClosePunctuation        -> True
-        InitialQuote            -> True
-        FinalQuote              -> True
-        OtherPunctuation        -> True
-        _                       -> False
-
--- | Selects Unicode symbol characters, including mathematical and
--- currency symbols.
-isSymbol_ :: Char -> Bool
-isSymbol_ c = case generalCategory c of
-        MathSymbol              -> True
-        CurrencySymbol          -> True
-        ModifierSymbol          -> True
-        OtherSymbol             -> True
-        _                       -> False
 
 
 -- * Special folds for the guessing
