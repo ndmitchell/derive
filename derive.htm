@@ -103,7 +103,7 @@ runhaskell Setup install
 <h3>Prelude</h3>
 
 <p>
-	These are the standard classes defined in the <a href="http://haskell.org/onlinereport/basic.html">Haskell Report</a>, some of which the existing <tt>deriving</tt> works upon.
+	These are the standard classes defined in the <a href="http://haskell.org/onlinereport/derived.html">Haskell Report</a>, some of which the existing <tt>deriving</tt> works upon.
 </p>
 <ul>
 	<li><b>Eq</b> - as defined by the Haskell report.</li>
@@ -164,6 +164,24 @@ runhaskell Setup install
 <ul>
 	<li><b>Arbitrary</b> - we follow the DrIFT instance, implementing only <tt>arbitrary</tt>, not <tt>coarbitrary</tt>.</li>
 	<li><b>Serial</b> - we follow the guidelines in the <a href="http://www.cs.york.ac.uk/fp/darcs/smallcheck/README">README</a>, implementing both <tt>series</tt> and <tt>coseries</tt>.</li>
+</ul>
+
+<h3>Missing</h3>
+
+<p>
+	These derivations are in DrIFT, but not in Derive. If you need them, let us know and we'll implement them.
+</p>
+<ul>
+	<li><b>ATermConvertible</b> - encode terms in the ATerm format.</li>
+	<li><b>BitsBinary</b> - efficient binary encoding of terms.</li>
+	<li><b>FunctorM</b> - derive reasonable fmapM implementation.</li>
+	<li><b>GhcBinary</b> - byte sized binary encoding of terms.</li>
+	<li><b>HFoldable</b> - Strafunski hfoldr.</li>
+	<li><b>Haskell2Xml</b> - encode terms as XML (HaXml&lt;=1.13).</li>
+	<li><b>Observable</b> - HOOD observable.</li>
+	<li><b>RMapM</b> - derive reasonable rmapM implementation.</li>
+	<li><b>Term</b> - Strafunski representation via Dynamic.</li>
+	<li><b>XmlContent</b> - encode terms as XML (HaXml&gt;=1.14).</li>
 </ul>
 
 
