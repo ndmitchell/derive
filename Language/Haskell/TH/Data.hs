@@ -57,6 +57,11 @@ ctorTypes :: CtorDef -> [Type]
 ctorTypes = map snd . ctorStrictTypes
 
 
+ctorFields :: CtorDef -> [String]
+ctorFields (RecC name xs) = [show a | (a,b,c) <- xs]
+ctorFields _ = []
+
+
 -- normalisation
 
 normData :: DataDef -> DataDef
