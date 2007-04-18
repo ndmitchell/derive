@@ -11,9 +11,9 @@ import Data.DeriveGuess
 
 example = (,) "Bounded" [d|
 
-    instance Bounded (DataName a) where
-        minBound = head [CtorZero{}, CtorOne{}, CtorTwo{}, CtorTwo'{}]
-        maxBound = head $ reverse [CtorZero{}, CtorOne{}, CtorTwo{}, CtorTwo'{}]
+    instance Bounded a => Bounded (DataName a) where
+        minBound = head [CtorZero, CtorOne minBound, CtorTwo minBound minBound, CtorTwo' minBound minBound]
+        maxBound = head [CtorTwo' maxBound maxBound, CtorTwo maxBound maxBound, CtorOne maxBound, CtorZero]
 
     |]
 
@@ -21,10 +21,11 @@ example = (,) "Bounded" [d|
 
 
 makeBounded = Derivation bounded' "Bounded"
-bounded' dat = [instance_context [] "Bounded" dat [ValD (VarP (mkName "minBound"
-    )) (NormalB (AppE (VarE (mkName "head")) (ListE ((map (\(ctorInd,ctor) -> (
-    (flip RecConE []) (mkName (ctorName ctor)))) (id (zip [0..] (dataCtors dat)
-    )))++[])))) [],ValD (VarP (mkName "maxBound")) (NormalB (applyWith (VarE (
-    mkName "$")) [(VarE (mkName "head")),(AppE (VarE (mkName "reverse")) (ListE
-    ((map (\(ctorInd,ctor) -> ((flip RecConE []) (mkName (ctorName ctor)))) (id
-    (zip [0..] (dataCtors dat))))++[])))])) []]]
+bounded' dat = [instance_context ["Bounded"] "Bounded" dat [(ValD (VarP (mkName
+    "minBound")) (NormalB (AppE (VarE (mkName "head")) (ListE ((map (\(ctorInd,
+    ctor) -> (applyWith (ConE (mkName ("" ++ ctorName ctor))) (replicate (
+    ctorArity ctor) (VarE (mkName "minBound"))))) (id (zip [0..] (dataCtors dat
+    ))))++[])))) []),(ValD (VarP (mkName "maxBound")) (NormalB (AppE (VarE (
+    mkName "head")) (ListE ((map (\(ctorInd,ctor) -> (applyWith (ConE (mkName (
+    "" ++ ctorName ctor))) (replicate (ctorArity ctor) (VarE (mkName "maxBound"
+    ))))) (reverse (zip [0..] (dataCtors dat))))++[])))) [])]]
