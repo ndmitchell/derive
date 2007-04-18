@@ -55,33 +55,27 @@ instance_default n = instance_context [n] n
 instance_context :: [String] -> String -> DataDef -> [Dec] -> Dec
 instance_context req cls dat defs = InstanceD ctx hed defs
     where
-        vars = map (VarT . mkName . ('t':) . show) [1..dataArity dat]
-        hed = ConT (mkName cls) `AppT` (foldl1 AppT (mkType (dataName dat) : vars))
-        ctx = [AppT (mkType r) v | r <- req, v <- vars]
+        vrs = vars (dataArity dat)
+        hed = l1 cls (lK (dataName dat) vars)
+        ctx = [l1 r v | r <- req, v <- vars]
 
 
 -- | Build an instance of a class for a data type, using the heuristic
 -- that the type is itself required on all type arguments.
 simple_instance :: String -> DataDef -> [Dec] -> [Dec]
-simple_instance cls dat defs = [InstanceD ctx hed defs]
-    where
-        vars = map (VarT . mkName . ('t':) . show) [1..dataArity dat]
-        hed = (mkType cls) `AppT` (foldl1 AppT (mkType (dataName dat) : vars))
-        ctx = map (mkType cls `AppT`) vars
+simple_instance cls dat defs = [instance_default cls dat defs]
 
 -- | Build an instance of a class for a data type, using the class at the given types
 generic_instance :: String -> DataDef -> [Type] -> [Dec] -> [Dec]
 generic_instance cls dat ctxTypes defs = [InstanceD ctx hed defs]
     where
-        vars = map (VarT . mkName . ('t':) . show) [1..dataArity dat]
-        hed = (mkType cls) `AppT` (foldl1 AppT (mkType (dataName dat) : vars))
-        ctx = map (mkType cls `AppT`) ctxTypes
+        vrs = vars (dataArity dat)
+        hed = l1 cls (lK (dataName dat) vars)
+        ctx = map (l1 cls) ctxTypes
 
 -- | Build a fundecl with a string name
 funN :: String -> [Clause] -> Dec
 funN nam claus = FunD (mkName nam) claus
-
-
 
 -- * Pattern vs Value abstraction
 
