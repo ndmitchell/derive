@@ -55,9 +55,9 @@ instance_default n = instance_context [n] n
 instance_context :: [String] -> String -> DataDef -> [Dec] -> Dec
 instance_context req cls dat defs = InstanceD ctx hed defs
     where
-        vrs = vars (dataArity dat)
-        hed = l1 cls (lK (dataName dat) vars)
-        ctx = [l1 r v | r <- req, v <- vars]
+        vrs = vars 't' (dataArity dat)
+        hed = l1 cls (lK (dataName dat) vrs)
+        ctx = [l1 r v | r <- req, v <- vrs]
 
 
 -- | Build an instance of a class for a data type, using the heuristic
@@ -69,8 +69,8 @@ simple_instance cls dat defs = [instance_default cls dat defs]
 generic_instance :: String -> DataDef -> [Type] -> [Dec] -> [Dec]
 generic_instance cls dat ctxTypes defs = [InstanceD ctx hed defs]
     where
-        vrs = vars (dataArity dat)
-        hed = l1 cls (lK (dataName dat) vars)
+        vrs = vars 't' (dataArity dat)
+        hed = l1 cls (lK (dataName dat) vrs)
         ctx = map (l1 cls) ctxTypes
 
 -- | Build a fundecl with a string name
