@@ -181,6 +181,19 @@ guessTripEnv fjoin sjoin x1 x2 x3 =
 instance Guess a => Guess [a] where
     guessEnv os = concatMap f $ mapM guessEnv os
         where
+            -- first try and induct based on the length of the list
+            f xs | all (== None) (map fst3 xs) &&
+                   length xs == 2 &&
+                   length vals == 1
+                 = [(Ctor i, \e -> replicate (ctorArityEnv e) (head vals),
+                             "(replicate (ctorArity ctor) " ++ thd3 (head xs) ++ ")")
+                   | i <- [2,3]] ++
+                   [(None, \e -> map ($ e) gens, list strs)]
+                 where
+                    (envs,gens,strs) = unzip3 xs
+                    vals = nub $ zipWith ($) gens envs
+
+        
             f xs | length es <= 1 = [(head (es ++ [None]), \e -> map ($ e) gens, list strs)]
                  | otherwise = [(env,gen,"("++str++")")
                                | env <- newEnvs, (gen,str) <- nubBy ((==) `on` snd) $ g xs]
