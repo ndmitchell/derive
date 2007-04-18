@@ -148,9 +148,13 @@ instance LitC () where
 
 -- * Constructor abstraction
 
+-- | Common pattern: list of a familiy of variables
+vars :: Valcon a => Char -> Int -> [a]
+vars c n = map (vr . (c:) . show) [1 .. n]
+
 -- | Make a list of variables, one for each argument to a constructor
 ctv :: Valcon a => CtorDef -> Char -> [a]
-ctv ctor c = map (vr . (c:) . show) [1 .. ctorArity ctor]
+ctv ctor c = vars c (ctorArity ctor)
 
 -- | Make a simple pattern to bind a constructor
 ctp :: Valcon a => CtorDef -> Char -> a
@@ -159,7 +163,6 @@ ctp ctor c = lK (ctorName ctor) (ctv ctor c)
 -- | Reference the constructor itself
 ctc :: Valcon a => CtorDef -> a
 ctc = l0 . ctorName
-
 
 
 -- * Lift a constructor over a fixed number of arguments.
