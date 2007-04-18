@@ -170,20 +170,27 @@ l2 s a b = lK s [a,b]
 
 -- * Pre-lifted versions of common operations
 true, false, nil :: Valcon a => a
+hNil', hZero' :: Type
 true = l0 "True"
 false = l0 "False"
 nil = l0 "[]"
 unit = lit ()
+hNil' = l0 "HNil"
+hZero' = l0 "HZero"
 
 cons :: Valcon a => a -> a -> a
 cons = l2 ":"
 
-box, return', const' :: Exp -> Exp
+box :: Valcon a => a -> a
+return', const' :: Exp -> Exp
+hSucc' :: Type -> Type
 box x = cons x nil
 return' = l1 "return"
 const' = l1 "const"
+hSucc' = l1 "HSucc"
 
 (==:), (&&:), (++:), (>>=:), (>>:), (.:), ap' :: Exp -> Exp -> Exp
+hCons' :: Type -> Type -> Type
 (==:) = l2 "=="
 (&&:) = l2 "&&"
 (++:) = l2 "++"
@@ -191,6 +198,7 @@ const' = l1 "const"
 (>>:) = l2 ">>"
 (.:) = l2 "."
 ap' = l2 "ap"
+hCons' = l2 "HCons"
 
 -- | Build a chain of expressions, with an appropriate terminal
 --   sequence__ does not require a unit at the end (all others are optimised automatically)
