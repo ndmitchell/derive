@@ -92,8 +92,8 @@ funN nam claus = FunD (mkName nam) claus
 
 -- | The class used to overload lifting operations.  To reduce code
 -- duplication, we overload the wrapped constructors (and everything
--- else, but that's irrelevant) to work both in patterns and
--- expressions.
+-- else, but that's irrelevant) to work in patterns, expressions, and
+-- types.
 class Valcon a where
       -- | Build an application node, with a name for a head and a
       -- provided list of arguments.
@@ -121,7 +121,12 @@ instance Valcon Pat where
       raw_lit = LitP
       tup = TupP
       lst = ListP
-
+instance Valcon Type where
+      lK nm = foldl AppT (ConT (mkName nm))
+      vr = VarT . mkName
+      raw_lit = error "raw_lit @ Type"
+      tup l = foldl AppT (TupleT (length l)) l
+      lst = error "lst @ Type"
 
 -- | Build an application node without a given head
 app :: Exp -> [Exp] -> Exp
