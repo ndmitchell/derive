@@ -42,11 +42,6 @@ case' exp alts = CaseE exp [ Match x (NormalB y) [] | (x,y) <- alts ]
 (->:) :: String -> Exp -> Exp
 (->:) nm bdy = LamE [vr nm] bdy
 
-mkType :: String -> Type
-mkType "[]" = ListT
-mkType x = ConT (mkName x)
-
-
 -- | We provide 3 standard instance constructors
 --   instance_default requires C for each free type variable
 --   instance_none requires no context
@@ -122,7 +117,7 @@ instance Valcon Pat where
       tup = TupP
       lst = ListP
 instance Valcon Type where
-      lK nm = foldl AppT (ConT (mkName nm))
+      lK nm = foldl AppT (if nm == "[]" then ListT else ConT (mkName nm))
       vr = VarT . mkName
       raw_lit = error "raw_lit @ Type"
       tup l = foldl AppT (TupleT (length l)) l
