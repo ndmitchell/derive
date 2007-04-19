@@ -23,12 +23,14 @@ Exposed-Modules:
 	Data.Derive.Functor
 	Data.Derive.Has
 	Data.Derive.Is
+	Data.Derive.LazySet
 	Data.Derive.Monoid
 	Data.Derive.NFData
 	Data.Derive.Ord
 	Data.Derive.Play
 	Data.Derive.Serial
 	Data.Derive.Set
+	Data.Derive.TTypeable
 	Data.Derive.Typeable
 	Language.Haskell.TH.All
 	Language.Haskell.TH.Data
