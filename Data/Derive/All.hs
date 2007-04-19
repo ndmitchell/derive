@@ -13,10 +13,12 @@ import Data.Derive.From        as D
 import Data.Derive.Functor     as D
 import Data.Derive.Has         as D
 import Data.Derive.Is          as D
+import Data.Derive.LazySet     as D
 import Data.Derive.Monoid      as D
 import Data.Derive.NFData      as D
 import Data.Derive.Ord         as D
 import Data.Derive.Play        as D
 import Data.Derive.Serial      as D
 import Data.Derive.Set         as D
+import Data.Derive.TTypeable   as D
 import Data.Derive.Typeable    as D
