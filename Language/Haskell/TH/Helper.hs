@@ -144,7 +144,11 @@ instance LitC () where
 
 -- | Common pattern: list of a familiy of variables
 vars :: Valcon a => Char -> Int -> [a]
-vars c n = map (vr . (c:) . show) [1 .. n]
+vars c n = map (vrn c) [1 .. n]
+
+-- | Variable based on a letter + number
+vrn :: Valcon a => Char -> Int -> a
+vrn c n = vr (c : show n)
 
 -- | Make a list of variables, one for each argument to a constructor
 ctv :: Valcon a => CtorDef -> Char -> [a]
