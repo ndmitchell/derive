@@ -58,12 +58,12 @@ play' dat =
         gbody = [sclause [ctp (fst c) 'x'] (gitem c) | c <- ctors]
 
         gitem :: (CtorDef,[Container]) -> Exp
-        gitem (c,ts) = concat_ [AppE (f t) v | (t,v) <- zip ts (ctv c 'x')]
+        gitem (c,ts) = (++::) [AppE (f t) v | (t,v) <- zip ts (ctv c 'x')]
             where
                 f None = const' nil
                 f Target = LamE [vr "x"] (box (vr "x"))
                 f (List t) = l1 "concatMap" (f t)
-                f (Tuple ts) = LamE [tup (map vr vars)] (concat_ [AppE (f t) (vr v) | (t,v) <- zip ts vars])
+                f (Tuple ts) = LamE [tup (map vr vars)] ((++::) [AppE (f t) (vr v) | (t,v) <- zip ts vars])
                     where vars = ['x':show i | i <- [1..length ts]]
 
 

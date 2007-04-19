@@ -204,10 +204,10 @@ hCons' = l2 "HCons"
 
 -- | Build a chain of expressions, with an appropriate terminal
 --   sequence__ does not require a unit at the end (all others are optimised automatically)
-and_, concat_, sequence_, sequence__, (.::) :: [Exp] -> Exp
-and_  = foldr (&&:) true
-concat_ = foldr (++:) nil
-sequence_ = foldr (>>:) (return' unit)
+(&&::), (++::), (>>::), sequence__, (.::) :: [Exp] -> Exp
+(&&::)  = foldr (&&:) true
+(++::) = foldr (++:) nil
+(>>::) = foldr (>>:) (return' unit)
 (.::) = foldr (.:) id'
 
 sequence__ [] = return' unit
