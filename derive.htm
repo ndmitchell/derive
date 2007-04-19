@@ -135,6 +135,7 @@ runhaskell Setup install
     <li><b>Has</b> - for each field generates <tt>hasFieldName</tt> which returns <tt>True</tt> if given the the given field is a member of that constructor.</li>
     <li><b>Is</b> - for each constructor generates <tt>isCtorName</tt> which returns <tt>True</tt> if given the appropriate constructor, and <tt>False</tt> otherwise.</li>
     <li><b>Set</b> - for each field generates <tt>setFieldName v x = x{fieldName=v}</tt>. This derivation is intended to work around the fact that in Haskell assigning to a field is not a first class object (although extracting from a field is).</li>
+    <li><b>LazySet</b> - same as <tt>Set</tt>, but using irrefutable patterns.  Useful in certain situations to improve laziness properties.</li>
 </ul>
 
 <h3>Generics</h3>
@@ -166,6 +167,15 @@ runhaskell Setup install
 <ul>
 	<li><b>Arbitrary</b> - we follow the DrIFT instance, implementing only <tt>arbitrary</tt>, not <tt>coarbitrary</tt>.</li>
 	<li><b>Serial</b> - we follow the guidelines in the <a href="http://www.cs.york.ac.uk/fp/darcs/smallcheck/README">README</a>, implementing both <tt>series</tt> and <tt>coseries</tt>.</li>
+</ul>
+
+<h3>Classhacking</h3>
+
+<p>
+	From the <a href="http://homepages.cwi.nl/~ralf/HList">HList library</a>:
+</p>
+<ul>
+	<li><b>TTypeable</b> - Type level typeable, using little-endian Enum representation of the type's name to generate type numbers.  (NB: will truncate characters above 255)</li>
 </ul>
 
 <h3>Missing</h3>
