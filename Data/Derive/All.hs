@@ -1,42 +1,22 @@
 
-module Data.Derive.All (
-    module Data.Derive.Arbitrary,
-    module Data.Derive.Binary,
-    module Data.Derive.BinaryDefer,
-    module Data.Derive.Bounded,
-    module Data.Derive.Data,
-    module Data.Derive.Enum,
-    module Data.Derive.EnumCyclic,
-    module Data.Derive.Eq,
-    module Data.Derive.From,
-    module Data.Derive.Functor,
-    module Data.Derive.Has,
-    module Data.Derive.Is,
-    module Data.Derive.Monoid,
-    module Data.Derive.NFData,
-    module Data.Derive.Ord,
-    module Data.Derive.Play,
-    module Data.Derive.Serial,
-    module Data.Derive.Set,
-    module Data.Derive.Typeable
-    ) where
+module Data.Derive.All (module D) where
 
-import Data.Derive.Arbitrary
-import Data.Derive.Binary
-import Data.Derive.BinaryDefer
-import Data.Derive.Bounded
-import Data.Derive.Data
-import Data.Derive.Enum
-import Data.Derive.EnumCyclic
-import Data.Derive.Eq
-import Data.Derive.From
-import Data.Derive.Functor
-import Data.Derive.Has
-import Data.Derive.Is
-import Data.Derive.Monoid
-import Data.Derive.NFData
-import Data.Derive.Ord
-import Data.Derive.Play
-import Data.Derive.Serial
-import Data.Derive.Set
-import Data.Derive.Typeable
+import Data.Derive.Arbitrary   as D
+import Data.Derive.Binary      as D
+import Data.Derive.BinaryDefer as D
+import Data.Derive.Bounded     as D
+import Data.Derive.Data        as D
+import Data.Derive.Enum        as D
+import Data.Derive.EnumCyclic  as D
+import Data.Derive.Eq          as D
+import Data.Derive.From        as D
+import Data.Derive.Functor     as D
+import Data.Derive.Has         as D
+import Data.Derive.Is          as D
+import Data.Derive.Monoid      as D
+import Data.Derive.NFData      as D
+import Data.Derive.Ord         as D
+import Data.Derive.Play        as D
+import Data.Derive.Serial      as D
+import Data.Derive.Set         as D
+import Data.Derive.Typeable    as D
