@@ -20,5 +20,6 @@ import Data.Derive.Ord         as D
 import Data.Derive.Play        as D
 import Data.Derive.Serial      as D
 import Data.Derive.Set         as D
+import Data.Derive.Show        as D
 import Data.Derive.TTypeable   as D
 import Data.Derive.Typeable    as D

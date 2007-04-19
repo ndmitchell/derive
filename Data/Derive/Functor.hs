@@ -50,10 +50,6 @@ deriveFunctorCon (Arg True  i) (TypeArg j) | i == j = error "argument used in co
 deriveFunctorCon _             _                    = id'
 
 
--- | The identity function
-id' :: Exp
-id' = l0 "id"
-
 -- | Is a function the identity function?
 isId = (== id')
 

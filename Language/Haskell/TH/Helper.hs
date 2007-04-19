@@ -177,6 +177,7 @@ nil = l0 "[]"
 unit = lit ()
 hNil' = l0 "HNil"
 hZero' = l0 "HZero"
+id' = l0 "id"
 
 cons :: Valcon a => a -> a -> a
 cons = l2 ":"
@@ -189,7 +190,7 @@ return' = l1 "return"
 const' = l1 "const"
 hSucc' = l1 "HSucc"
 
-(==:), (&&:), (++:), (>>=:), (>>:), (.:), ap' :: Exp -> Exp -> Exp
+(==:), (&&:), (++:), (>>=:), (>>:), (.:), ap', (>:) :: Exp -> Exp -> Exp
 hCons' :: Type -> Type -> Type
 (==:) = l2 "=="
 (&&:) = l2 "&&"
@@ -197,15 +198,17 @@ hCons' :: Type -> Type -> Type
 (>>=:) = l2 ">>="
 (>>:) = l2 ">>"
 (.:) = l2 "."
+(>:) = l2 ">"
 ap' = l2 "ap"
 hCons' = l2 "HCons"
 
 -- | Build a chain of expressions, with an appropriate terminal
 --   sequence__ does not require a unit at the end (all others are optimised automatically)
-and_, concat_, sequence_, sequence__ :: [Exp] -> Exp
+and_, concat_, sequence_, sequence__, (.::) :: [Exp] -> Exp
 and_  = foldr (&&:) true
 concat_ = foldr (++:) nil
 sequence_ = foldr (>>:) (return' unit)
+(.::) = foldr (.:) id'
 
 sequence__ [] = return' unit
 sequence__ xs = foldr1 (>>:) xs
