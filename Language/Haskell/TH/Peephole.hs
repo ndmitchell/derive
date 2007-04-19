@@ -15,7 +15,7 @@ traceMode = False
 
 
 peephole :: Data a => a -> a
-peephole x = everywhere (mkT peep) x
+peephole = everywhere (mkT peep) . everywhere (mkT peepPat)
 
 
 
@@ -139,6 +139,13 @@ peep x | traceMode = trace (show x) x
 peep x = x
 
 
+peepPat :: Pat -> Pat
+peepPat (ListP xs)
+    | all (\x -> case x of LitP (CharL _) -> True
+                           _ -> False) xs =
+      LitP $ StringL $ map (\(LitP (CharL x)) -> x) xs
+
+peepPat x = x
 
 peepBin :: Exp -> Exp -> Exp -> Maybe Exp
 peepBin op x y
