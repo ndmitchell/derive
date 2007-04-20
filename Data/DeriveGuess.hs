@@ -247,18 +247,38 @@ instance Guess a => Guess [a] where
                     h _ _ _ = []
 
 
+guessType :: Type -> Type -> String
+guessType principle x =
+        if hasPrinciple then "(map (\\tdat -> " ++ disp x ++ ") (dataVars dat))" else "[" ++ disp x ++ "]"
+    where
+        hasPrinciple = f x
+            where
+                f x | x == principle = True
+                f (AppT (ConT x) y) | show x == "DataName" = False
+                f (AppT a b) = f a || f b
+                f _ = False
+
+        disp x | x == principle = "tdat"
+        disp (AppT (ConT x) y) | show x == "DataName" = "(lK (dataName dat) (dataVars dat))"
+        disp (AppT a b) = "(AppT " ++ disp a ++ " " ++ disp b ++ ")"
+        disp (VarT a) = "(VarT (mkName " ++ show (show a) ++ "))"
+        disp (ConT a) = "(ConT (mkName " ++ show (show a) ++ "))"
+
+
 
 instance Guess Dec where
     guessEnv (InstanceD ctx typ inner) =
-            [(None, \e -> InstanceD ctx typ (gen e), prefix ++ str)
-            |(None,gen,str) <- guessEnv inner]
+            [ (None, \e -> InstanceD ctx typ (gen e), prefix ++ str)
+            | (None,gen,str) <- guessEnv inner]
         where
-            prefix = "instance_context " ++ guessContext ctx ++ " " ++
-                     show p ++ " dat "
-
-            p = guessPrinciple typ
-            guessContext = list . nub . map (show . guessPrinciple)
-            guessPrinciple (AppT (ConT x) _) = dropModule $ show x
+            principle = head (everything (++) ([] `mkQ` f) typ ++ [VarT $ mkName "?"])
+                where
+                    f (AppT (ConT x) y) | show x == "DataName" = [y]
+                    f _ = []
+            
+            prefix = "InstanceD " ++
+                     "(concat (" ++ list (map (guessType principle) ctx) ++ ")) " ++
+                     "(head " ++ guessType principle typ ++ ")"
 
     guessEnv (FunD name claus) = guessPairEnv FunD "FunD" name claus
     guessEnv (ValD pat bod whr) = guessTripEnv ValD "ValD" pat bod whr
