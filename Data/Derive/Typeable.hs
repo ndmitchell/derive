@@ -1,8 +1,8 @@
 -- NOTE: Cannot be guessed as it inducts on the data type (not its constructors)
 
 -- | Derivation for the 'Typeable' class, as described in the Scrap
--- Your Boilerplate papers.  This derivation only generates an
--- instance for the highest-kinded TypeableK class, requiring the
+-- Your Boilerplate papers.  This derivation generates instances for
+-- all kinds of TypeableK classes; as such we do NOT require the
 -- GHC-specific generic downkinding instances to provide lower kind
 -- instances.
 --
