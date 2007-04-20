@@ -1,4 +1,7 @@
 
+-- | Derives an instance of @Monoid@. This derivation is limited to
+-- data types with only one constructor; it uses the product
+-- construction of monoids.
 module Data.Derive.Monoid(makeMonoid) where
 
 import Language.Haskell.TH.All
@@ -14,6 +17,7 @@ instance Monoid a => Monoid (Foo a) where
 
 -}
 
+makeMonoid :: Derivation
 makeMonoid = Derivation monoid' "Monoid"
 
 monoid' dat | length (dataCtors dat) == 1

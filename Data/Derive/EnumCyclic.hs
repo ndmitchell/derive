@@ -1,5 +1,10 @@
 {-# OPTIONS_GHC -fth -cpp #-}
 
+-- | @EnumCyclic@ defines the @Enum@ class, using the same
+-- modifications as our @Enum@ derivation, but additionally @succ@
+-- and @pred@ treat the data type as cyclic, wrapping between the
+-- first and last constructors.
+
 module Data.Derive.EnumCyclic(makeEnumCyclic) where
 
 import Language.Haskell.TH.All
@@ -34,7 +39,7 @@ example = (,) "EnumCyclic" [d|
 
 #endif
 
-
+makeEnumCyclic :: Derivation
 makeEnumCyclic = Derivation enumCyclic' "EnumCyclic"
 enumCyclic' dat = [instance_context [] "Enum" dat [(FunD (mkName "toEnum") ((
     map (\(ctorInd,ctor) -> (Clause [(LitP (IntegerL ctorInd))] (NormalB ((flip

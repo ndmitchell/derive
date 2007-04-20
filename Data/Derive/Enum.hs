@@ -1,5 +1,9 @@
 {-# OPTIONS_GHC -fth -cpp #-}
 
+-- | Derivation for 'Enum', as defined by the Haskell 98 Language
+-- report, except that we support arbitrary types.  toEnum (and
+-- derived functions, notably succ and pred) use undefined to fill all
+-- fields of nonzero arity constructors.
 module Data.Derive.Enum(makeEnum) where
 
 import Language.Haskell.TH.All
@@ -27,7 +31,7 @@ example = (,) "Enum" [d|
 
 #endif
 
-
+makeEnum :: Derivation
 makeEnum = Derivation enum' "Enum"
 enum' dat = [instance_context [] "Enum" dat [FunD (mkName "toEnum") ((map (\(
     ctorInd,ctor) -> (Clause [(LitP (IntegerL ctorInd))] (NormalB ((flip

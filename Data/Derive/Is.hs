@@ -1,5 +1,8 @@
 {-# OPTIONS_GHC -fth -cpp #-}
 
+-- | A pseudo derivation.  For each constructor of the data type, @Is@
+-- generates @is@/CtorName/ which returns 'True' if given an object
+-- build using the appropriate constructor, and 'False' otherwise.
 module Data.Derive.Is(makeIs) where
 
 import Language.Haskell.TH.All
@@ -20,7 +23,7 @@ example = (,) "Is" [d|
 
 #endif
 
-
+makeIs :: Derivation
 makeIs = Derivation is' "Is"
 is' dat = ((map (\(ctorInd,ctor) -> (FunD (mkName ("is" ++ ctorName ctor)) [(
     Clause [((flip RecP []) (mkName ("" ++ ctorName ctor)))] (NormalB (ConE (

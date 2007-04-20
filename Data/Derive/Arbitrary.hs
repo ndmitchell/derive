@@ -1,5 +1,16 @@
 {-# OPTIONS_GHC -fth -fno-warn-missing-methods -cpp #-}
 
+-- | Derivation for 'Test.QuickCheck.Arbitrary'.
+--
+-- Things to note:
+--
+-- * The resulting instances do not implement @coarbitrary@, only
+-- @arbitrary@.
+--
+-- * The resulting instances of @arbitrary@ generate each constructor
+-- of the data type with equal probability.
+--
+-- * No form of size control is used.
 module Data.Derive.Arbitrary(makeArbitrary) where
 
 import Language.Haskell.TH.All
@@ -33,7 +44,7 @@ example = (,) "Arbitrary" [d|
 
 #endif
 
-
+makeArbitrary :: Derivation
 makeArbitrary = Derivation arbitrary' "Arbitrary"
 arbitrary' dat = [instance_context ["Arbitrary"] "Arbitrary" dat [(ValD (VarP (
     mkName "arbitrary")) (NormalB (DoE [(BindS (VarP (mkName "x")) (AppE (VarE

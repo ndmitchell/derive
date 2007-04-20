@@ -1,5 +1,11 @@
 {-# OPTIONS_GHC -fth -fno-warn-missing-methods -cpp #-}
 
+-- | Derivation for the @Serial@ class used by SmallCheck.  Following
+-- the guidelines in the SmallCheck README
+-- <http://www.cs.york.ac.uk/fp/darcs/smallcheck/README>, we implement
+-- both @series@ and @coseries@.  The generated instances use the
+-- SmallCheck instance combinators in the proscribed way.
+
 module Data.Derive.Serial(makeSerial) where
 
 import Language.Haskell.TH.All
@@ -33,7 +39,7 @@ example = (,) "Serial" [d|
 
 #endif
 
-
+makeSerial :: Derivation
 makeSerial = Derivation serial' "Serial"
 serial' dat = [instance_context ["Serial"] "Serial" dat [ValD (VarP (mkName
     "series")) (NormalB (foldl1With (VarE (mkName "\\/")) ((map (\(ctorInd,ctor

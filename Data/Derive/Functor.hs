@@ -1,5 +1,7 @@
 -- NOTE: Cannot be guessed as it relies on type information
 
+-- | Derives 'Functor', as discussed on the Haskell-prime mailing list:
+-- <http://www.mail-archive.com/haskell-prime@haskell.org/msg02116.html>.
 module Data.Derive.Functor(makeFunctor) where
 
 import Language.Haskell.TH.All

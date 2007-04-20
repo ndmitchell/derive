@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -fth -cpp #-}
 
+-- | Derivation for Neil Mitchell's BinaryDefer class.  XXX: do research, write useful haddock
 module Data.Derive.BinaryDefer(makeBinaryDefer) where
 
 import Language.Haskell.TH.All hiding (unit)
@@ -24,7 +25,7 @@ example = (,) "BinaryDefer" [d|
 
 #endif
 
-
+makeBinaryDefer :: Derivation
 makeBinaryDefer = Derivation binarydefer' "BinaryDefer"
 binarydefer' dat = [instance_context ["BinaryDefer"] "BinaryDefer" dat [ValD (
     VarP (mkName "bothDefer")) (NormalB (AppE (VarE (mkName "defer")) (ListE ((

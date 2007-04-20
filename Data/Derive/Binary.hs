@@ -1,5 +1,11 @@
 -- NOTE: Cannot be guessed as is not inductive because of getWordN
 
+-- | Derivation for Data.Binary's Binary class for serializing values.
+-- The generated instances implement a very simple tagged data format.
+-- First, the (0-based) constructor number is stored, in the smallest
+-- of 0, 1, 2, or 4 bytes that can represent the entire range.  Then,
+-- the constructor's arguments are stored, in order, using the Binary
+-- instances in scope.
 module Data.Derive.Binary(makeBinary) where
 
 import Language.Haskell.TH.All

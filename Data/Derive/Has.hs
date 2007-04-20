@@ -1,4 +1,8 @@
 
+-- | Has is a pseudo derivation.  For each field of any constructor of
+-- the data type, Has generates @has@/FieldName/ which returns 'True'
+-- if given the the given field is a member of the constructor of the
+-- passed object, and 'False' otherwise.
 module Data.Derive.Has(makeHas) where
 
 import Language.Haskell.TH.All
@@ -22,6 +26,7 @@ hasProcessor _ = False
 
 -}
 
+makeHas :: Derivation
 makeHas = Derivation has' "Has"
 
 has' dat = map f fields

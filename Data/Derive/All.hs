@@ -1,4 +1,5 @@
-
+-- | This module provides convenience re-exports of all the standard
+-- Data.Derive derivations.
 module Data.Derive.All (module D) where
 
 import Data.Derive.Arbitrary   as D

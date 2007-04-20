@@ -1,5 +1,10 @@
 {-# OPTIONS_GHC -fth -cpp #-}
 
+-- | Derive @Bounded@, as specified in the Haskell 98 Language Report.
+-- As an extension, we support deriving @Bounded@ for all data types.
+-- If the first or last constructor has non-zero arity, we call
+-- minBound (respectively, maxBound) recursively to fill in the
+-- fields.
 module Data.Derive.Bounded(makeBounded) where
 
 import Language.Haskell.TH.All
@@ -19,7 +24,7 @@ example = (,) "Bounded" [d|
 
 #endif
 
-
+makeBounded :: Derivation
 makeBounded = Derivation bounded' "Bounded"
 bounded' dat = [instance_context ["Bounded"] "Bounded" dat [(ValD (VarP (mkName
     "minBound")) (NormalB (AppE (VarE (mkName "head")) (ListE ((map (\(ctorInd,

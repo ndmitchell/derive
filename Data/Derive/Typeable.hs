@@ -1,5 +1,18 @@
 -- NOTE: Cannot be guessed as it inducts on the data type (not its constructors)
 
+-- | Derivation for the 'Typeable' class, as described in the Scrap
+-- Your Boilerplate papers.  This derivation only generates an
+-- instance for the highest-kinded TypeableK class, requiring the
+-- GHC-specific generic downkinding instances to provide lower kind
+-- instances.
+--
+-- The generated 'TypeRep' uses only the base name of the type, so
+-- identically named types in different modules can be treated as the
+-- same, with disasterous consequences.
+--
+-- Also reates a @typename_\<the type name\>@ value to hold the
+-- 'TypeRep'.
+
 module Data.Derive.Typeable(makeTypeable) where
 
 import Language.Haskell.TH.All
@@ -33,6 +46,7 @@ instance (Typeable a, Typeable b, Typeable c) => Typeable (tycon a b c) where { 
 -}
 
 
+makeTypeable :: Derivation
 makeTypeable = Derivation typeable' "Typeable"
 typeable' dat = (funN nam [sclause [] (l1 "mkTyCon" $ lit $ dataName dat)])
                 : map f [0..dataArity dat]

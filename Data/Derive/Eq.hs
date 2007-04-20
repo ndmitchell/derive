@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -fth -cpp #-}
 
+-- | Derive 'Eq', as specified in the Haskell 98 Language Report.
 module Data.Derive.Eq(makeEq) where
 
 import Language.Haskell.TH.All
@@ -22,7 +23,7 @@ example = (,) "Eq" [d|
 
 #endif
 
-
+makeEq :: Derivation
 makeEq = Derivation eq' "Eq"
 eq' dat = [instance_context ["Eq"] "Eq" dat [FunD (mkName "==") ((map (\(ctorInd
     ,ctor) -> (Clause [(ConP (mkName (ctorName ctor)) ((map (\field -> (VarP (

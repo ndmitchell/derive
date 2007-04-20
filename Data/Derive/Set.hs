@@ -1,4 +1,9 @@
 
+-- | A pseudo derivation.  For each field in the data type, deriving
+-- @Set@ generates @set@/FieldName/@ v x = x{@/fieldName/@ = v}@.
+-- This derivation is intended to work around the fact that in Haskell
+-- assigning to a field is not a first class object (although
+-- extracting from a field is).
 module Data.Derive.Set(makeSet) where
 
 import Language.Haskell.TH.All
@@ -17,6 +22,7 @@ setProcessor v x = x{process=v}
 
 -}
 
+makeSet :: Derivation
 makeSet = Derivation set' "Set"
 
 set' dat = map f fields

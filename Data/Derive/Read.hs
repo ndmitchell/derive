@@ -1,4 +1,9 @@
 
+-- | Derives @Read@.  This is as defined by the Haskell report, except
+-- there is no support for infix constructors.  If you attempt to
+-- derive @Read@ for a data type with infix constructors, the
+-- constructors are handled as if they were prefix constructors, using
+-- the @(@/consym/@)@ syntax.
 module Data.Derive.Read(makeRead) where
 
 import Language.Haskell.TH.All

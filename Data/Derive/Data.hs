@@ -1,5 +1,10 @@
 {-# OPTIONS_GHC -fth -fno-warn-missing-methods -cpp #-}
 
+-- | Derivation for the 'Data.Generics.Basics.Data' class, as
+-- described in the Scrap Your Boilerplate paper.  No type structure
+-- is abstracted; only gfoldl is implemented (notably, gunfold is
+-- not).
+
 module Data.Derive.Data(makeData) where
 
 import Language.Haskell.TH.All
@@ -24,7 +29,7 @@ example = (,) "Data" [d|
 
 #endif
 
-
+makeData :: Derivation
 makeData = Derivation data' "Data"
 
 data' dat = [instance_context ["Data","Typeable"] "Data" dat [FunD (mkName

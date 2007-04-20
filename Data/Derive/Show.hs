@@ -1,4 +1,9 @@
 
+-- | Derives @Show@.  This is as defined by the Haskell report, except
+-- there is no support for infix constructors.  If you attempt to
+-- derive @Show@ for a data type with infix constructors, the
+-- constructors are handled as if they were prefix constructors, using
+-- the @(@/consym/@)@ syntax.
 module Data.Derive.Show(makeShow) where
 
 import Language.Haskell.TH.All

@@ -1,5 +1,12 @@
 {-# OPTIONS_GHC -fth -cpp #-}
 
+-- | A pseudo derivation.  For each constructor in the data type,
+-- deriving @From@ generates @from@/CtorName/ which extracts the
+-- components if given the appropriate constructor, and crashes
+-- otherwise.  Unlike the DrIFT @\"From\"@ derivation, our version
+-- works for all constructors - zero-arity constructors always return
+-- @()@, arity-one constructors return the contained value, and all
+-- others return a tuple with all the components.
 module Data.Derive.From(makeFrom) where
 
 import Language.Haskell.TH.All
@@ -20,7 +27,7 @@ example = (,) "From" [d|
 
 #endif
 
-
+makeFrom :: Derivation
 makeFrom = Derivation from' "From"
 from' dat = ((map (\(ctorInd,ctor) -> (FunD (mkName ("from" ++ ctorName ctor))
     [(Clause [(ConP (mkName ("" ++ ctorName ctor)) ((map (\field -> (VarP (

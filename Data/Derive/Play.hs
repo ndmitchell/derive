@@ -1,5 +1,6 @@
 -- NOTE: Cannot be guessed as it relies on type information
 
+-- | Derive Play, implemented for tuples and lists.
 module Data.Derive.Play(makePlay) where
 
 import Language.Haskell.TH.All

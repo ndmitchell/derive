@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -fth -cpp #-}
 
+-- | Derive 'Ord', as specified in the Haskell 98 Language Report.
 module Data.Derive.Ord(makeOrd) where
 
 import Language.Haskell.TH.All
@@ -30,7 +31,7 @@ example = (,) "Ord" [d|
 
 #endif
 
-
+makeOrd :: Derivation
 makeOrd = Derivation ord' "Ord"
 ord' dat = [instance_context ["Ord"] "Ord" dat [FunD (mkName "compare") [(Clause
     [(VarP (mkName "a")),(VarP (mkName "b"))] (NormalB (applyWith (VarE (mkName

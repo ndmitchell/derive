@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -fth -fno-warn-missing-methods -cpp #-}
 
+-- | Derive NFData, from Control.Parallel.Strategies.
 module Data.Derive.NFData(makeNFData) where
 
 import Language.Haskell.TH.All
@@ -21,7 +22,7 @@ example = (,) "NFData" [d|
 
 #endif
 
-
+makeNFData :: Derivation
 makeNFData = Derivation nFData' "NFData"
 nFData' dat = [instance_context ["NFData"] "NFData" dat [(FunD (mkName "rnf") (
     (map (\(ctorInd,ctor) -> (Clause [(ConP (mkName ("" ++ ctorName ctor)) ((
