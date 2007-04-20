@@ -19,6 +19,7 @@ import Data.Derive.Monoid      as D
 import Data.Derive.NFData      as D
 import Data.Derive.Ord         as D
 import Data.Derive.Play        as D
+import Data.Derive.PlayAll     as D
 import Data.Derive.Read        as D
 import Data.Derive.Serial      as D
 import Data.Derive.Set         as D

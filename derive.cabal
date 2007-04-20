@@ -28,6 +28,7 @@ Exposed-Modules:
 	Data.Derive.NFData
 	Data.Derive.Ord
 	Data.Derive.Play
+	Data.Derive.PlayAll
 	Data.Derive.Serial
 	Data.Derive.Set
 	Data.Derive.TTypeable
