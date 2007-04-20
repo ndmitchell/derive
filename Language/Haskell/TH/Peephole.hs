@@ -64,9 +64,11 @@ replaceVar name with = replaceVars [(name,with)]
 -- based on the rewrite combinator in Play
 peep :: Exp -> Exp
 peep (ListE xs)
-    | all (\x -> case x of LitE (CharL _) -> True
-                           _ -> False) xs =
-      peep $ LitE $ StringL $ map (\(LitE (CharL x)) -> x) xs
+    | all (isJust . fromLitChar) xs =
+      peep $ LitE $ StringL $ map (fromJust . fromLitChar) xs
+    where
+        fromLitChar (LitE (CharL x)) = Just x
+        fromLitChar _ = Nothing
 
 peep (AppE x y)
     | x ~= "id" = y
