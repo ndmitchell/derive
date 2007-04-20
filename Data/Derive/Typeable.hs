@@ -10,7 +10,7 @@
 -- identically named types in different modules can be treated as the
 -- same, with disasterous consequences.
 --
--- Also reates a @typename_\<the type name\>@ value to hold the
+-- Also creates a @typename_\<the type name\>@ value to hold the
 -- 'TypeRep'.
 
 module Data.Derive.Typeable(makeTypeable) where
