@@ -142,6 +142,9 @@ instance LitC () where
 
 -- * Constructor abstraction
 
+dataVars :: DataDef -> [Type]
+dataVars dat = take (dataArity dat) $ map (VarT . mkName . return) ['a'..]
+
 -- | Common pattern: list of a familiy of variables
 vars :: Valcon a => Char -> Int -> [a]
 vars c n = map (vrn c) [1 .. n]
