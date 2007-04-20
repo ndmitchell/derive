@@ -55,7 +55,7 @@ typeable' dat = (funN nam [sclause [] (l1 "mkTyCon" $ lit $ dataName dat)])
 
         f n = InstanceD (map (l1 "Typeable") vars)
                         (l1 ("Typeable"++sn) $ lK (dataName dat) vars)
-                        [funN ("typeOf"++sn) [sclause [WildP] def]]
+                        [funN ("typeOf"++sn) [sclause [WildP | n == 0] def]]
             where
                 def = if n == 0 then l2 "mkTyConApp" (l0 nam) (lst [])
                                 else l0 ("typeOf" ++ sn ++ "Default")
