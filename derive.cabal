@@ -29,8 +29,10 @@ Exposed-Modules:
 	Data.Derive.Ord
 	Data.Derive.Play
 	Data.Derive.PlayAll
+  Data.Derive.Read
 	Data.Derive.Serial
 	Data.Derive.Set
+  Data.Derive.Show
 	Data.Derive.TTypeable
 	Data.Derive.Typeable
 	Language.Haskell.TH.All
