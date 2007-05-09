@@ -28,28 +28,28 @@ Sometimes the structure of a piece of code is dependent on the layout of the dat
 
 \section{Introduction}
 
-Haskell contained a type-class mechanism, to allow similar operations to be defined on different data structures. One such type class is \T{Eq}, defined as:
+Haskell contains a type-class mechanism, to allow similar operations to be defined on different data structures. One such type class is \T{Eq}, defined as:
 
 \begin{verbatim}
 class Eq a where
     (==) :: a -> a -> Bool
 \end{verbatim}
 
-This says that the \T{(==)} operator (equality) is defined for all types which have an \T{Eq} instance. We can define a Haskell data type, and an instance for Eq as:
+This classs says that the \T{(==)} operator (equality) is defined for all types which have an \T{Eq} instance. We can define a Haskell data type, and an instance for Eq as:
 
 \begin{verbatim}
-data Degree = MSc       -- someone doing an MSc
-            | PhD Int   -- PhD student, plus year of study
+data Degree  =  MSc       -- someone doing an MSc
+             |  PhD Int   -- PhD student, plus year of study
 
 instance Eq Degree where
-    MSc == MSc = True
-    PhD x == PhD y = x == y
-    _ == _ = False
+    MSc    == MSc    = True
+    PhD x  == PhD y  = x == y
+    _      == _      = False
 \end{verbatim}
 
-The data type we introduce is \T{Degree}. A value of type \T{Degree} takes one of two values, either \T{MSc}, or \T{PhD}. A \T{PhD} includes an integer field which records the year of study. We can define an \T{Eq} instance as above. The first line says that any two \T{MSc} values are equal. The second line says that for two \T{PhD} values to be equal, they must have the same year inside them. The final line says that for any remaining pairs of values, they are not equal.
+The data type we introduce is \T{Degree}. A value of type \T{Degree} can be constructed by either \T{MSc}, or \T{PhD}. A \T{PhD} includes an integer field which records the year of study. We can define an \T{Eq} instance as above. The first line says that any two \T{MSc} values are equal. The second line says that for two \T{PhD} values to be equal, they must have the same year inside them. The final line says that for any remaining pairs of values, they are not equal.
 
-The standard instance of \T{Eq} follows naturally from a data structure -- if two values are the same, and have equal fields, then they are equal -- otherwise they are not. So how can a user express this relationship? Using inductive instance generation, as described in this paper, they can simply write a single example instance:
+The standard instance of \T{Eq} follows naturally from a data structure -- if two values have the same constructor, and have equal fields, then they are equal -- otherwise they are not. This relationship is a function from a data structure, to a fragment of code. So how can a user express this relationship? Using inductive instance generation, as described in this paper, they can simply write a single example instance on the provided \T{DataName} type:
 
 \begin{verbatim}
 data DataName a = CtorZero
@@ -65,21 +65,95 @@ instance Eq a => Eq (DataName a) where
     _ == _ = False
 \end{verbatim}
 
-The data type \T{DataName} is supplied in a standard library, and merely the instance needs to be written. From this, the instance generation makes several \textit{hypothesises} as to the relationship between the data structure and the code, then \textit{tests} each hypothesis to find one which matches. With a valid hypothesis, the generator writes out a function which takes as input a data structure, and returns Haskell code.
+From this example, the instance generation makes several \textit{hypothesises} as to the relationship between the data structure and the code, then \textit{tests} each hypothesis to find one which matches. With a valid hypothesis, the generator writes out a function which takes as input a data structure, and returns Haskell code.
 
 \subsection{Roadmap}
 
 This paper first describes how manual instances must be written in \S0, including their disadvantages. In \S0 we look at how automatic hypothesises are generated and tested. \S0 look at which instances are applicable for this scheme, describing why some are not. \S0 presents related work, and \S0 concludes.
 
 
-\section{Manual Instances}
+\section{Generating Instances}
 
-This instance can be automatically derived by the compiler by adding \T{deriving Eq} at the end of the data structure. Unfortunately the addition of a \T{deriving} statement must be made at the same place as the declaration of the data structure -- if the declaration is in a library then the user of the library cannot add a \T{deriving}. The deriving mechanism is also provided only for six inbuilt Haskell classes.
+There are currently three mechanisms for generating new instances automatically -- each with disadvantages. We first discuss each briefly.
 
-A mechanism to derive additional classes was provided initially by DrIFT. A successor to DrIFT is the \derive{} tool, which handles more classes and works with various Haskell extensions in a more robust manner. These tools both allow simple annotations to be added to the source code to automatically derive classes.
+\subsection{Built in \T{deriving}}
 
-The problem of writing an instance generator can be seen as one which maps data structures to code segments. There two primary ways to generate code -- as an abstract syntax tree, or as a string.  
- 
+The \T{Eq} instance given above could have been automatically derived by the compiler, simply by adding \T{deriving Eq} at the end of the data structure. Unfortunately the addition of a \T{deriving} statement must be made at the same place as the declaration of the data structure -- if the declaration is in a library then the user of the library cannot add a \T{deriving}. The deriving mechanism is also provided only for six inbuilt Haskell classes, with no way to extend it further.
+
+\subsection{The DrIFT tool}
+
+A mechanism to derive additional classes was provided initially by DrIFT. By making annotations in the source code the DrIFT tool generates additional code, which can be appended to the current file. The DrIFT tool is limited to a fixed number of predetermined derivations, and while these can be added to, they require a modification to DrIFT itself. The DrIFT method also requires a preprocessor to be run on all files.
+
+The DrIFT approach to writing instances is to have a data structure representing the layout of data structures, with appropriate methods to query its structure. The author of an instance then manually writes a function that transforms from this input, to a Haskell code fragment produced using a pretty-printing combinator library. The author must become familiar with both the description of the data structure, and with the pretty-printers and additional functions required by DrIFT.
+
+\subsection{The Derive tool}
+
+A successor to DrIFT is the \derive{} tool. This tool handles more Haskell extensions, and is designed to allow the end user to add new instance derivations external to the tool. On the GHC compiler the derivations can be performed at compile time automatically -- without the need for a preprocessor. The way this is achieved is by making use of Template Haskell. Template Haskell allows the programmer to generate a syntax tree at compile time, which is spliced into the code being compiled. The Derive machinery takes care of many of the Template Haskell details, leaving the author of an instance to write a function from a data structure to a Haskell syntax tree.
+
+Unfortunately, the Haskell syntax tree is quite a large data type, and has a reasonably sharp learning curve. In order to write an instance generator requires lots of thought, and lots of examination of API's. While this approach has proved successful, it is still a barrier to entry to some users. This approach also requires some significant effort in testing that instances match their intended behaviour, and it is time consuming to add new instances.
+
+We have integrated our automatic instance derivation into the Derive tool, allow a user to either specify their derivation function, or have one automatically generated. To the user of the instance generator, there is no difference. To the author, the time saving can be considerable!
+
+
+\section{Automatic Derivation}
+
+The concept behind automatic derivation is that the code generated from a data structure must be \textit{inductive}. As additional constructors or fields are added, the code must expand in a standardised way. This insight then leads to the realisation that the hypothesis must look for these inductive patterns, and exploit them. There are four key concepts in our task: (1) generating and testing a hypothesis; (2) the environment in which a hypothesis exists; (3) induction on lists; (4) folds as lists.
+
+\subsection{Generation and Testing}
+
+In order to guess a data type \T{t}, we can define the following data types and function:
+
+\begin{verbatim}
+data Env = ... -- see later
+type Hypothesis t = Hypothesis Env (Env -> t) String
+
+guess :: t -> [Hypothesis t]
+\end{verbatim}
+
+The \T{guess} function takes a value of type \T{t}, and returns a list of hypothesises. Each hypothesis is an environment in which the value was found, a function to construct the value given an environment, and a string representing the code this represents. The idea is that given the current environment, the original value should be returned. The \T{guess} function returns a list of all hypothesises it thinks could be appropriate -- all must be appropriate to this particular value, but in a wider context only one may be correct.
+
+\subsection{Environments}
+
+The key idea in instance generation is an environment. An environment is defined as:
+
+\begin{verbatim}
+data Env = None | Ctor Int | Field Int
+\end{verbatim}
+
+The idea is that each term in the code either relates to the constructor that is being examined, the field, or is constant. For example, when encountering \T{CtorOne} the environment would be \T{Ctor 1}. When encountering the constant \T{True}, the environment would be \T{None}.
+
+The idea of an environment is that it allows a particular fragment to be parameterised by something, which allows a new fragment to be generated as the environment changes. The key idea is that when finding a constant, the program searches for a possible environment which matches. For example, upon finding a number the environment can be calculated as follows:
+
+\begin{verbatim}
+guessNum :: Int -> [Env]
+guessNum i = [Field i | i `elem` [1,2]]  ++ -- a field
+             [None    | i `elem` [1,2]]  ++ -- the number of constructors
+             [Ctor i | i `elem` [0..3]]  ++ -- the constructor index
+             [Ctor i | i `elem` [0..2]]  ++ -- the constructor arity
+             [Ctor 3 | i == 2]              -- the constructor arity
+\end{verbatim}
+
+Here if the number 2 is found, it could be the second field, the constructor at index 2 (\T{CtorTwo}), the arity of \T{CtorTwo}, or the arity of \T{CtorTwo'}. By returning many possible environments, the program can pick the appropriate one afterwards -- with full knowledge of all other items.
+
+\subsection{Induction on Environments}
+
+For most types, \T{guess} can be simply defined as guessing all the sub-components, then combining them back together. The one exception to this is a list. The list induction property relies on the ordering of environments. All the constructors may be present in a none environment. The appropriate fields may be present in a constructor environment. The idea can best be expressed with an example. Given the list whose environments are \T{[Field 1, Field 2]}, we can generalise this to the environment \T{Ctor 2} or \T{Ctor 3} -- assuming that the actual meaning is that all fields are present. This generalisation can then be applied to \T{Ctor 0} generating an empty list.
+
+To generate an enclosing environment, all possible combinations of environments are examined. Once a particular set of environments is available, they are all checked against all hypothesies that are present. If there is a particular hypothesis that satisfies all the elements of this list, it is promoted to a hypothesis on its enclosing environment.
+
+This list induction does the majority of the work, and is responsible for the inductive instances. By localising this induction principle to lists, we are able to induct over almost any aspect of a data structure. This gives a lot of power.
+
+\subsection{Inductive Folds}
+
+One common pattern in instance definitions is the \textit{fold}. Consider the \T{Eq} example from before. If we move to using prefix notation for \verb"(&&)" and explicit bracketing we obtain:
+
+\begin{verbatim}
+(CtorTwo x1 x2) == (CtorTwo y1 y2) = (&&) (x1 == y1) ((&&) (x2 == y2) True)
+\end{verbatim}
+
+This structure is not a list, and would not be inductively found by the list guess mechanism. However, we can see this as a fold. A fold takes a list, and replaces each join in the list by a function -- in this case \verb"(&&)". By spotting this fold pattern, it can be reversed to allow us to express it as a left fold, with \verb"(&&)" as the combining element, and \T{True} as the root.
+
+This aspect also explains the redundant \verb"&& True" at the end -- in order for the base case (\T{True}) to share the same fold pattern as the above case, we require a dummy argument in this one. In the code generated for instances this dummy operation will be removed, by using algebraic simplification provided by Derive.
 
 
 
