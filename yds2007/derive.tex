@@ -23,7 +23,9 @@
 \maketitle
 
 \begin{abstract}
-For certain functions, the implementation of the code is dependent on the structure of the data type which it operates on. Haskell provides such an abstraction using type-classes. In some cases it is possibly to automatically infer the relationship between the data structure and the code, merely by looking at a single example. This paper discusses how to perform the necessary inference, and what impact it can have on real derivations.
+For certain functions, the implementation is dependent on the structure of the data type upon which it operates. In some cases, it is possible to automatically infer the relationship between the data type and the code, merely by looking at a single example. This paper presents a mechanism for such an inference scheme.
+
+In Haskell, a type-class defines an operation which is parameterised by the data type. This pattern is common, and often can be computed by automatic inference. We have implemented such as scheme in the Derive tool, allowing over 60\% of instances to be inferred.
 \end{abstract}
 
 \section{Introduction}
@@ -216,6 +218,7 @@ Cite genetic algorithms.
 
 Discuss how this scheme can be adapted to other contexts.
 
+Proof system, by making induction.
 
 
 \section{Conclusion and Future Work}
