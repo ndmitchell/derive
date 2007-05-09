@@ -10,6 +10,7 @@
 %format :< = "\mbox{\ensuremath{<\hspace{-1em}-}}"
 %format :- = "\rightsquigarrow{}"
 %format :* = "\star{}"
+%format \/ = "\bigvee{}"
 %format :| = "\ddagger{}"
 %format `o` = "\bullet{}"
 %format ^. = "\cdot{}"
@@ -23,6 +24,8 @@
 %format `mergeVal` = "\sqcap{}"
 
 %format `mkQ` = "\;\textsf{\`{}\!mkQ\!\`{}}\;"
+%format `k` = "\;\hbox{\textsf{\`{}}}\hspace{-0.5mm}k\hbox{\textsf{\`{}}}\;"
+% "\;\textsf{\hbox{\`{}}\!k\!\hbox{\`{}}}\;"
 %format `cons` = "\;\textsf{\`{}\!cons\!\`{}}\;"
 
 %subst conid a = "\mathsf{" a "}"

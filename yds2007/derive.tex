@@ -23,7 +23,7 @@
 \maketitle
 
 \begin{abstract}
-Sometimes the structure of a piece of code is dependent on the layout of the data structure which it manipulates. Haskell provides such an abstraction using type-classes. In some cases it is possibly to automatically infer the relationship between the data structure and the code, merely by looking at a single example. This paper discusses how to perform the necessary inference, and what impact it can have on real derivations.
+For certain functions, the implementation of the code is dependent on the structure of the data type which it operates on. Haskell provides such an abstraction using type-classes. In some cases it is possibly to automatically infer the relationship between the data structure and the code, merely by looking at a single example. This paper discusses how to perform the necessary inference, and what impact it can have on real derivations.
 \end{abstract}
 
 \section{Introduction}
@@ -156,5 +156,72 @@ This structure is not a list, and would not be inductively found by the list gue
 This aspect also explains the redundant |&& True| at the end -- in order for the base case (|True|) to share the same fold pattern as the above case, we require a dummy argument in this one. In the code generated for instances this dummy operation will be removed, by using algebraic simplification provided by Derive.
 
 
+\section{Failures of Automatic Derivation}
+
+We have now defined a mechanism for inductive instances, the question now arises as to which instances can be automatically derived, and which ones must be written manually. Of the 24 instances provided by the Derive tool, 15 are able to be written by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate, which we list here:
+
+\subsection{Non-inductive definitions}
+
+One reason is that the definition does not follow inductively. Take for example the case of serialising a value to disk, which is achieved in Haskell using the |Binary| class. For a data type with one constructor, no tag needs to be written. For a data structure with less than 256 constructors, a single byte is written to indicate which constructor was encountered. For greater numbers of constructors, a larger sized tag must be given. These instances are not inductive -- the change from 1 constructor to 2 does not follow the same pattern.
+
+\subsection{Type-based definitions}
+
+Some definitions require knowledge of the type, for example the |Monoid| instance requires items of the same type to be written using |mappend|, but items of a different type to be |mempty|. The relationship between a type and the instance can be arbitrarily complex, and is required to derive |Play| and |Functor|.
+
+\subsection{Record-based definitions}
+
+Haskell provides a method for records, taking the |Degree| example:
+
+\begin{code}
+data Degree = MSc | PhD {years :: Int}
+\end{code}
+
+This automatically generates functions to retrieve and modify the |years| field within |PhD|. Some classes are defined which test whether a constructor has a particular field, and extract the relevant field. These cannot be automatically inferred.
+
+Fortunately, even with these restrictions, the majority of classes can be defined in a manner which allows the automatic derivation to succeed.
+
+\section{Successes of Generation}
+
+In this section we present a small number of successful examples, taken from various papers, including the example instance.
+
+
+\subsection{The Data class}
+
+The |Data| class was introduced in Scrap Your Boilerplate, and allows Haskell programmers to make use of short traversals and queries, even over complex data structures. The fundamental operation is |gfoldl|:
+
+\begin{code}
+instance (Data alpha, Typeable alpha) => Data (DataName alpha) where
+    gfoldl k r (CtorZero         )= r CtorZero
+    gfoldl k r (CtorOne   x1     ) = r CtorOne   `k` x1
+    gfoldl k r (CtorTwo   x1 x2  ) = r CtorTwo   `k` x1 `k` x2
+    gfoldl k r (CtorTwo'  x1 x2  ) = r CtorTwo'  `k` x1 `k` x2
+\end{code}
+
+Here the instances involve a fold over one data value, and the application of an argument to join the fields. This is all dealt with by the instance generator.
+
+\subsection{The Serial class}
+
+The |Serial| class is used by SmallCheck to automatically perform enumerative testing over Haskell programs. The definition relies on the arities of each constructor, and does not induct over the field names.
+
+\begin{code}
+instance Serial alpha => Serial (DataName alpha) where
+    series = cons0 CtorZero \/ cons1 CtorOne  \/ cons2 CtorTwo  \/ cons2 CtorTwo'
+\end{code}
+
+Once again, the inductive instances are able to automatically generate the required code.
+
+\section{Related Work}
+
+Cite genetic algorithms.
+
+Discuss how this scheme can be adapted to other contexts.
+
+
+
+\section{Conclusion and Future Work}
+
+We have presented a mechanism for automatically deriving instances for Haskell programs. Using our scheme, even a novice programmer, with no experience of the Derive framework, is able to define many classes they encounter simply by supplying examples. By removing the overhead of learning a new library, the number of potential users increases massively.
+
+Now that the computer is able to infer the rules required for constructing a type, the information never needs to be expressed again, even if the API's should change. This also leads to the advantage that alternative definitions could be given -- for example using Haskell's reflection capabilities instances could be derived at run-time, removing all overhead of separate preprocessors.
 
 \end{document}
