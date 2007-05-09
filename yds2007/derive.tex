@@ -1,0 +1,86 @@
+% Note:
+% I'm thinking of submitting this to the York Doctoral Symposium
+% http://www.cs.york.ac.uk/yds/
+%
+% Perhaps after it could be revamped as a The Monad.Reader article
+% with more on the Derive side of things?
+
+\documentclass{llncs}
+
+\usepackage{url}
+
+\newcommand{\derive}{\textsc{Derive}}
+\newcommand{\T}[1]{\texttt{#1}}
+
+\begin{document}
+
+\title{Deriving Inductive Instances by Example}
+\author{Neil Mitchell}
+
+\institute{University of York, UK\\
+\url{http://www.cs.york.ac.uk/~ndm/}}
+
+\maketitle
+
+\begin{abstract}
+Sometimes the structure of a piece of code is dependent on the layout of the data structure which it manipulates. Haskell provides such an abstraction using type-classes. In some cases it is possibly to automatically infer the relationship between the data structure and the code, merely by looking at a single example. This paper discusses how to perform the necessary inference, and what impact it can have on real derivations.
+\end{abstract}
+
+\section{Introduction}
+
+Haskell contained a type-class mechanism, to allow similar operations to be defined on different data structures. One such type class is \T{Eq}, defined as:
+
+\begin{verbatim}
+class Eq a where
+    (==) :: a -> a -> Bool
+\end{verbatim}
+
+This says that the \T{(==)} operator (equality) is defined for all types which have an \T{Eq} instance. We can define a Haskell data type, and an instance for Eq as:
+
+\begin{verbatim}
+data Degree = MSc       -- someone doing an MSc
+            | PhD Int   -- PhD student, plus year of study
+
+instance Eq Degree where
+    MSc == MSc = True
+    PhD x == PhD y = x == y
+    _ == _ = False
+\end{verbatim}
+
+The data type we introduce is \T{Degree}. A value of type \T{Degree} takes one of two values, either \T{MSc}, or \T{PhD}. A \T{PhD} includes an integer field which records the year of study. We can define an \T{Eq} instance as above. The first line says that any two \T{MSc} values are equal. The second line says that for two \T{PhD} values to be equal, they must have the same year inside them. The final line says that for any remaining pairs of values, they are not equal.
+
+The standard instance of \T{Eq} follows naturally from a data structure -- if two values are the same, and have equal fields, then they are equal -- otherwise they are not. So how can a user express this relationship? Using inductive instance generation, as described in this paper, they can simply write a single example instance:
+
+\begin{verbatim}
+data DataName a = CtorZero
+                | CtorOne  a
+                | CtorTwo  a a
+                | CtorTwo' a a
+
+instance Eq a => Eq (DataName a) where
+    CtorZero == CtorZero = True
+    (CtorOne x1) == (CtorOne y1) = x1 == y1 && True
+    (CtorTwo x1 x2) == (CtorTwo y1 y2) = x1 == y1 && x2 == y2 && True
+    (CtorTwo' x1 x2) == (CtorTwo' y1 y2) = x1 == y1 && x2 == y2 && True
+    _ == _ = False
+\end{verbatim}
+
+The data type \T{DataName} is supplied in a standard library, and merely the instance needs to be written. From this, the instance generation makes several \textit{hypothesises} as to the relationship between the data structure and the code, then \textit{tests} each hypothesis to find one which matches. With a valid hypothesis, the generator writes out a function which takes as input a data structure, and returns Haskell code.
+
+\subsection{Roadmap}
+
+This paper first describes how manual instances must be written in \S0, including their disadvantages. In \S0 we look at how automatic hypothesises are generated and tested. \S0 look at which instances are applicable for this scheme, describing why some are not. \S0 presents related work, and \S0 concludes.
+
+
+\section{Manual Instances}
+
+This instance can be automatically derived by the compiler by adding \T{deriving Eq} at the end of the data structure. Unfortunately the addition of a \T{deriving} statement must be made at the same place as the declaration of the data structure -- if the declaration is in a library then the user of the library cannot add a \T{deriving}. The deriving mechanism is also provided only for six inbuilt Haskell classes.
+
+A mechanism to derive additional classes was provided initially by DrIFT. A successor to DrIFT is the \derive{} tool, which handles more classes and works with various Haskell extensions in a more robust manner. These tools both allow simple annotations to be added to the source code to automatically derive classes.
+
+The problem of writing an instance generator can be seen as one which maps data structures to code segments. There two primary ways to generate code -- as an abstract syntax tree, or as a string.  
+ 
+
+
+
+\end{document}
