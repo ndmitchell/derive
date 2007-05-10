@@ -68,8 +68,6 @@ unQ x = everywhere (mkT g) $ everywhere (mkT f) $ map normData x
         g x = x
 
 
--- | Extract the module from a qualified name.
-dropModule = reverse . takeWhile (/= '.') . reverse
 -- | Drop the first _ and everything after it; used to trim GHC name
 -- uniques.
 dropUnder = reverse . drop 1 . dropWhile (/= '_') . reverse
