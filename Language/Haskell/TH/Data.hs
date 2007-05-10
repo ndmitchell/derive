@@ -64,11 +64,18 @@ ctorFields _ = []
 
 -- normalisation
 
+-- make sure you deal with "GHC.Base.."
+dropModule :: String -> String
+dropModule xs = case reverse xs of
+                    ('.':xs) -> takeWhile (== '.') xs
+                    xs -> reverse $ takeWhile (/= '.') xs
+
+
 normData :: DataDef -> DataDef
 normData = everywhere (mkT normType) . everywhere (mkT normName)
     where
         normName :: Name -> Name
-        normName = mkName . reverse . takeWhile (/= '.') . reverse . show
+        normName = mkName . dropModule . show
 
         normType :: Type -> Type
         normType (ConT x) | show x == "[]" = ListT
