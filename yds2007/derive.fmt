@@ -21,6 +21,7 @@
 %format `intersect` = "\cap{}"
 %format `and` = "\wedge{}"
 %format not = "\mathsf{not}"
+%format deriving = "\mathsf{deriving}"
 %format `mergeVal` = "\sqcap{}"
 
 %format `mkQ` = "\;\textsf{\`{}\!mkQ\!\`{}}\;"

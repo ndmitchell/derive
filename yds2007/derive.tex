@@ -30,14 +30,14 @@ In Haskell, a type-class defines an operation which is parameterised by the data
 
 \section{Introduction}
 
-Haskell contains a type-class mechanism, to allow similar operations to be defined on different data structures. One such type class is |Eq|, defined as:
+Haskell \cite{haskell} is a modern functional programming language. One of the novel features in Haskell is the ability to define one function which operates upon different types, but in a type specific manner -- known as type-classes \cite{wadler:type_classes}. One such type class is |Eq|, defined as:
 
 \begin{code}
 class Eq alpha where
     (==) :: alpha -> alpha -> Bool
 \end{code}
 
-This classs says that the |(==)| operator (equality) is defined for all types which have an |Eq| instance. We can define a Haskell data type, and an instance for |Eq| as:
+The |Eq| class has a member |(==)|. All types which provide an |Eq| instance have the |(==)| operator available. We can define a Haskell data type, along with an instance for |Eq|, as follows:
 
 \begin{code}
 data Degree  =  MSc        -- someone doing an MSc
@@ -49,16 +49,19 @@ instance Eq Degree where
     _          == _          = False
 \end{code}
 
-The data type we introduce is |Degree|. A value of type |Degree| can be constructed by either |MSc|, or |PhD|. A |PhD| includes an integer field which records the year of study. We can define an |Eq| instance as above. The first line says that any two |MSc| values are equal. The second line says that for two |PhD| values to be equal, they must have the same year inside them. The final line says that for any remaining pairs of values, they are not equal.
+The data type we introduce is |Degree|. A value of type |Degree| is either the constructor |MSc|, or the constructor |PhD| with an integer field. We can define an |Eq| instance as above. The first line says that any two |MSc| values are equal. The second line says that for two |PhD| values to be equal, their fields must be equal. The final line says that any remaining pairs of values are not equal.
 
-The standard instance of |Eq| follows naturally from a data structure -- if two values have the same constructor, and have equal fields, then they are equal -- otherwise they are not. This relationship is a function from a data structure, to a fragment of code. So how can a user express this relationship? Using inductive instance generation, as described in this paper, they can simply write a single example instance on the provided |DataName| type:
+\begin{figure}
+\begin{code}
+data DataName alpha = CtorZero | CtorOne alpha | CtorTwo alpha alpha | CtorTwo' alpha alpha
+\end{code}
+\caption{The |DataName| data type.}
+\label{fig:dataname}
+\end{figure}
+
+The standard instance of |Eq| follows naturally from a data structure: for two values to be equal they must have the same constructor, and the their fields must be equal. This relationship can be expressed as a mapping from a data type, to a fragment of code -- which we call an \textit{instance generator}. Using the techniques described in this paper, instance generators can be automatically inferred from a single example instance. To define \textit{all} |Eq| instances, an example must be given on the provided |DataName| type (see Figure \ref{fig:dataname}):
 
 \begin{code}
-data DataName alpha  =  CtorZero
-                     |  CtorOne   alpha
-                     |  CtorTwo   alpha alpha
-                     |  CtorTwo'  alpha alpha
-
 instance Eq alpha => Eq (DataName alpha) where
     (CtorZero         )  == (CtorZero         )  = True
     (CtorOne   x1     )  == (CtorOne   y1     )  = x1 == y1 && True
@@ -67,77 +70,92 @@ instance Eq alpha => Eq (DataName alpha) where
     _                    == _                    = False
 \end{code}
 
-From this example, the instance generation makes several \textit{hypothesises} as to the relationship between the data structure and the code, then \textit{tests} each hypothesis to find one which matches. With a valid hypothesis, the generator writes out a function which takes as input a data structure, and returns Haskell code.
+The automatic instance generation takes this example, and makes several \textit{hypotheses} as to the mapping from data type to code. Each hypothesis is then \textit{tested} against the supplied example. After finding a valid hypothesis, a specific instance generator is created.
 
 \subsection{Roadmap}
 
-This paper first describes how manual instances must be written in \S0, including their disadvantages. In \S0 we look at how automatic hypothesises are generated and tested. \S0 look at which instances are applicable for this scheme, describing why some are not. \S0 presents related work, and \S0 concludes.
+This paper first describes how manual instance generators must be written in \S\ref{sec:manual_instances}, including their disadvantages. In \S\ref{sec:automatic_instances} we look at how automatic instance generators are created. \S\ref{sec:automatic_failure} discusses which instances are applicable for this scheme, and \S\ref{sec:automatic_success} gives examples. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
 
 
-\section{Generating Instances}
+\section{Manual Instance Generators}
+\label{sec:manual_instances}
 
-There are currently three mechanisms for generating new instances automatically -- each with disadvantages. We first discuss each briefly.
+There are currently three mechanisms for specifying and invoking instance generators -- all offering different levels of compiler integration and extensibility.
 
-\subsection{Built in |deriving|}
+\subsection{Built in deriving}
 
-The |Eq| instance given above could have been automatically derived by the compiler, simply by adding |deriving Eq| at the end of the data structure. Unfortunately the addition of a |deriving| statement must be made at the same place as the declaration of the data structure -- if the declaration is in a library then the user of the library cannot add a |deriving|. The deriving mechanism is also provided only for six inbuilt Haskell classes, with no way to extend it further.
+The simplest instance generator is provided by Haskell itself, with the |deriving| keyword. The |Eq| instance given above could have been automatically derived by the compiler, simply by adding |deriving Eq| at the end of the data type declaration.
+ 
+Unfortunately this scheme has two primary disadvantages. Firstly, the deriving keyword \textit{must} appear after the data type declaration -- if the data type is declared in a library, a new instance may not be derived. Secondly, only six inbuilt type classes are supported -- there is no way to add more.
 
 \subsection{The DrIFT tool}
 
-A mechanism to derive additional classes was provided initially by DrIFT. By making annotations in the source code the DrIFT tool generates additional code, which can be appended to the current file. The DrIFT tool is limited to a fixed number of predetermined derivations, and while these can be added to, they require a modification to DrIFT itself. The DrIFT method also requires a preprocessor to be run on all files.
+The DrIFT tool \cite{drift} is a Haskell preprocessor -- which examines a source file for special annotations, and appends the code for requested instances. DrIFT has support for 29 instance generators, but adding more requires making modifications to DrIFT itself.
 
-The DrIFT approach to writing instances is to have a data structure representing the layout of data structures, with appropriate methods to query its structure. The author of an instance then manually writes a function that transforms from this input, to a Haskell code fragment produced using a pretty-printing combinator library. The author must become familiar with both the description of the data structure, and with the pretty-printers and additional functions required by DrIFT.
+To write an instance generator for DrIFT requires the implementation of a function, which takes a representation of a data type, and generates Haskell code. The code must be generated using special functions to ensure it has the correct layout. The author of an instance generator must be familiar with both the representation of the data structure, and with the code-generation functions.
 
 \subsection{The Derive tool}
 
-A successor to DrIFT is the Derive tool. This tool handles more Haskell extensions, and is designed to allow the end user to add new instance derivations external to the tool. On the GHC compiler the derivations can be performed at compile time automatically -- without the need for a preprocessor. The way this is achieved is by making use of Template Haskell. Template Haskell allows the programmer to generate a syntax tree at compile time, which is spliced into the code being compiled. The Derive machinery takes care of many of the Template Haskell details, leaving the author of an instance to write a function from a data structure to a Haskell syntax tree.
+The Derive tool \cite{derive} is a competitor to DrIFT, designed to alleviate some of the disadvantages. The first advantage is that instance generators can added easily, without modifying the Derive tool. Secondly, by using the Template Haskell \cite{template_haskell} extension, no preprocessing phase is required. In order to integrate with Template Haskell, an instance generator now takes a representation of a data type, and generates a Haskell syntax tree.
 
-Unfortunately, the Haskell syntax tree is quite a large data type, and has a reasonably sharp learning curve. In order to write an instance generator requires lots of thought, and lots of examination of API's. While this approach has proved successful, it is still a barrier to entry to some users. This approach also requires some significant effort in testing that instances match their intended behaviour, and it is time consuming to add new instances.
+Writing an instance generator requires knowledge of the representation of both the data type, and the Haskell syntax tree. Unfortunately, the Haskell syntax tree is represented by a large data type, which takes time to learn. After writing an instance generator, the user must check that the generator matches their intention, by testing on a suitable range of data types. Both of these factors increase the time required to write an instance generator.
 
-We have integrated our automatic instance derivation into the Derive tool, allow a user to either specify their derivation function, or have one automatically generated. To the user of the instance generator, there is no difference. To the author, the time saving can be considerable!
+We have integrated automatic derivation of an instance generator, from an example, into the Derive tool. In order to specify a new instance generator, the user can \textit{either} specify a derivation function, \textit{or} have one automatically generated from an example.
 
 
-\section{Automatic Derivation}
+\section{Automatic Instance Generator Derivation}
+\label{sec:automatic_instances}
 
-The concept behind automatic derivation is that the code generated from a data structure must be \textit{inductive}. As additional constructors or fields are added, the code must expand in a standardised way. This insight then leads to the realisation that the hypothesis must look for these inductive patterns, and exploit them. There are four key concepts in our task: (1) generating and testing a hypothesis; (2) the environment in which a hypothesis exists; (3) induction on lists; (4) folds as lists.
+This section describes how to derive an instance generator, given an example instance. There are four key concepts in our task: \S\ref{sec:generation} generating and testing a hypothesis; \S\ref{sec:environment} the environment in which a hypothesis exists; \S\ref{sec:induction} induction on lists; \S\ref{sec:folds} induction on folds.
 
-\subsection{Generation and Testing}
+\subsection{Hypothesis Generation and Testing}
+\label{sec:generation}
+
+The idea behind hypothesis generation is that given a value, a hypothesis determines both an environment, and a mapping from an environment to the original value. An environment captures the aspects that are particular to a data type, and would change given a different data type. This technique of introducing an environment allows the hypothesis to be parameterised by the data type.
 
 In order to guess a data type |tau|, we can define the following data types and function:
 
 \begin{code}
-data Env = ... -- see later
-type Hypothesis tau = Hypothesis Env (Env -> tau) String
+data Env = ... -- see \ref{sec:environment}
+data Hypothesis tau = Hypothesis Env (Env -> tau) String
 
 guess :: tau -> [Hypothesis tau]
 \end{code}
 
-The |guess| function takes a value of type |tau|, and returns a list of hypothesises. Each hypothesis is an environment in which the value was found, a function to construct the value given an environment, and a string representing the code this represents. The idea is that given the current environment, the original value should be returned. The |guess| function returns a list of all hypothesises it thinks could be appropriate -- all must be appropriate to this particular value, but in a wider context only one may be correct.
+The |guess| function takes a value of type |tau|, and returns a list of hypotheses. Each hypothesis is an environment in which the value was found, a function to construct the value given an environment, and a string representing of the instance generator. Applying the returned environment to the value generator should return the original value.
 
-\subsection{Environments}
 
-The key idea in instance generation is an environment. An environment is defined as:
+\subsection{The Enclosing Environment}
+\label{sec:environment}
+
+An environment represents the parameterisable aspects of a hypothesis. There are three different types of environment. The empty environment provides a value which is constant. The constructor environment uses information from a particular constructor -- for example the constructor name, the arity or the 0-based index. The field environment provides the index of a field within a constructor. The |Env| data type is defined as:
 
 \begin{code}
-data Env = None | Ctor Int | Field Int
+data Env = Empty | Ctor Int | Field Int
 \end{code}
 
-The idea is that each term in the code either relates to the constructor that is being examined, the field, or is constant. For example, when encountering |CtorOne| the environment would be |Ctor 1|. When encountering the constant |True|, the environment would be |None|.
+For each terminal value in the syntax tree, an environment is produced, which generates the value. If the name |CtorOne| was encountered this would be assigned the environment |Ctor 1| -- being the constructor name for the appropriate constructor. If the name |True| was encountered the environment would be |Empty| -- no constructors or fields relate to the value |True|. If a terminal ends in a number, i.e. |x1|, then the number is separately assigned an environment. 
 
-The idea of an environment is that it allows a particular fragment to be parameterised by something, which allows a new fragment to be generated as the environment changes. The key idea is that when finding a constant, the program searches for a possible environment which matches. For example, upon finding a number the environment can be calculated as follows:
-
+\begin{figure}[t]
 \begin{code}
 guessNum :: Int -> [Env]
 guessNum i  =        [Field i  | i `elem` [1..2]  ]  -- a field
-            `union`  [None     | i `elem` [1..2]  ]  -- the number of constructors
+            `union`  [Empty    | i `elem` [3..4]  ]  -- the number of constructors
             `union`  [Ctor i   | i `elem` [0..3]  ]  -- the constructor index
             `union`  [Ctor i   | i `elem` [0..2]  ]  -- the constructor arity
             `union`  [Ctor 3   | i == 2           ]  -- the constructor arity
 \end{code}
+\caption{The function |guessNum|, which guesses an environment from a number.}
+\label{fig:guessnum}
+\end{figure}
 
-Here if the number 2 is found, it could be the second field, the constructor at index 2 (|CtorTwo|), the arity of |CtorTwo|, or the arity of |CtorTwo'|. By returning many possible environments, the program can pick the appropriate one afterwards -- with full knowledge of all other items.
+The terminal with most possible environments is a number. Take for instance the number 2 -- within |DataName| (Figure \ref{fig:dataname}) this could correspond to the field in position 2, the arity of |CtorTwo| or |CtorTwo'|, the index of |CtorTwo|, or simply a constant. The code to guess the environment from a number is given in Figure \ref{fig:guessnum}. A list of many possible environments is returned, allowing many possible hypotheses to be generated for a single terminal.
 
-\subsection{Induction on Environments}
+
+\subsection{List Induction on Environments}
+\label{sec:induction}
+
+GOT TO HERE
 
 For most types, |guess| can be simply defined as guessing all the sub-components, then combining them back together. The one exception to this is a list. The list induction property relies on the ordering of environments. All the constructors may be present in a none environment. The appropriate fields may be present in a constructor environment. The idea can best be expressed with an example. Given the list whose environments are |[Field 1, Field 2]|, we can generalise this to the environment |Ctor 2| or |Ctor 3| -- assuming that the actual meaning is that all fields are present. This generalisation can then be applied to |Ctor 0| generating an empty list.
 
@@ -145,7 +163,8 @@ To generate an enclosing environment, all possible combinations of environments 
 
 This list induction does the majority of the work, and is responsible for the inductive instances. By localising this induction principle to lists, we are able to induct over almost any aspect of a data structure. This gives a lot of power.
 
-\subsection{Inductive Folds}
+\subsection{Fold Induction on Environments}
+\label{sec:folds}
 
 One common pattern in instance definitions is the \textit{fold}. Consider the |Eq| example from before. If we move to using prefix notation for |(&&)| and explicit bracketing we obtain:
 
@@ -159,6 +178,7 @@ This aspect also explains the redundant |&& True| at the end -- in order for the
 
 
 \section{Failures of Automatic Derivation}
+\label{sec:automatic_failure}
 
 We have now defined a mechanism for inductive instances, the question now arises as to which instances can be automatically derived, and which ones must be written manually. Of the 24 instances provided by the Derive tool, 15 are able to be written by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate, which we list here:
 
@@ -183,6 +203,7 @@ This automatically generates functions to retrieve and modify the |years| field 
 Fortunately, even with these restrictions, the majority of classes can be defined in a manner which allows the automatic derivation to succeed.
 
 \section{Successes of Generation}
+\label{sec:automatic_success}
 
 In this section we present a small number of successful examples, taken from various papers, including the example instance.
 
@@ -213,6 +234,7 @@ instance Serial alpha => Serial (DataName alpha) where
 Once again, the inductive instances are able to automatically generate the required code.
 
 \section{Related Work}
+\label{sec:related}
 
 Cite genetic algorithms.
 
@@ -222,9 +244,14 @@ Proof system, by making induction.
 
 
 \section{Conclusion and Future Work}
+\label{sec:conclusion}
 
 We have presented a mechanism for automatically deriving instances for Haskell programs. Using our scheme, even a novice programmer, with no experience of the Derive framework, is able to define many classes they encounter simply by supplying examples. By removing the overhead of learning a new library, the number of potential users increases massively.
 
 Now that the computer is able to infer the rules required for constructing a type, the information never needs to be expressed again, even if the API's should change. This also leads to the advantage that alternative definitions could be given -- for example using Haskell's reflection capabilities instances could be derived at run-time, removing all overhead of separate preprocessors.
+
+
+\bibliographystyle{plain}
+\bibliography{derive}
 
 \end{document}
