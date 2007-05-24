@@ -12,6 +12,7 @@ Exposed-Modules:
 	Data.DeriveTH
 	Data.Derive.All
 	Data.Derive.Arbitrary
+	Data.Derive.Arbitrary2
 	Data.Derive.Binary
 	Data.Derive.BinaryDefer
 	Data.Derive.Bounded
