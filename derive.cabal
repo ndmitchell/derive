@@ -1,6 +1,8 @@
 Name:           derive
 Version:        0.1
 Copyright:      2006-7, Neil Mitchell
+Maintainer:     ndmitchell@gmail.com
+Homepage:       http://www-users.cs.york.ac.uk/~ndm/derive/
 Build-Depends:  base, template-haskell, filepath, mtl
 License:        BSD3
 License-File:   LICENSE
