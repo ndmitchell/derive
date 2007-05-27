@@ -15,7 +15,7 @@ Description:
     We see this tool as a competitor to DrIFT.
 Category:       Development
 Extensions:     CPP
-Data-Files:
+Extra-Source-Files:
     derive.htm
 Exposed-Modules:
     Data.DeriveGuess
