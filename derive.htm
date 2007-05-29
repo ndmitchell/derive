@@ -263,7 +263,7 @@ module ModuleName where
 </p>
 
 <pre>
-import Data.Derive.TH
+import Data.DeriveTH
 import Data.Derive.Eq
 import Data.Derive.Binary
 
@@ -276,7 +276,7 @@ $( derive makeBinary ''Color )
 </pre>
 
 <p>
-	Note two things.  First, we need to import the derivations.  By convention, a derivation for a class <tt>FooBar</tt> is located in module <tt>Data.Derive.FooBar</tt> (nota bene: this need not be in package "derive") and is exported with the name <tt>makeFooBar</tt>.  Secondly, we need to tell the compiler to insert the instance using the TH <em>splice</em> construct, <tt>$( ... )</tt> (the spaces are optional).  The splice causes the compiler to run the function <tt>derive</tt> (exported from <tt>Data.Derive.TH</tt>), passing arguments <tt>makeFooBar</tt> and <tt>''Color</tt>.  The second argument deserves more explanation; it is a quoted symbol, somewhat like a quoted symbol in Lisp and with deliberately similar syntax.  (Two apostrophes are used to specify that this name is to be resolved as a type constructor; just <tt>'Color</tt> would look for a <i>data</i> constructor named <tt>Color</tt>.)
+	Note two things.  First, we need to import the derivations.  By convention, a derivation for a class <tt>FooBar</tt> is located in module <tt>Data.Derive.FooBar</tt> (nota bene: this need not be in package "derive") and is exported with the name <tt>makeFooBar</tt>.  Secondly, we need to tell the compiler to insert the instance using the TH <em>splice</em> construct, <tt>$( ... )</tt> (the spaces are optional).  The splice causes the compiler to run the function <tt>derive</tt> (exported from <tt>Data.DeriveTH</tt>), passing arguments <tt>makeFooBar</tt> and <tt>''Color</tt>.  The second argument deserves more explanation; it is a quoted symbol, somewhat like a quoted symbol in Lisp and with deliberately similar syntax.  (Two apostrophes are used to specify that this name is to be resolved as a type constructor; just <tt>'Color</tt> would look for a <i>data</i> constructor named <tt>Color</tt>.)
 </p>
 
 <h2>Writing a New Derivation</h2>
