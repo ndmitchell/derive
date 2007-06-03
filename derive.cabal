@@ -38,7 +38,7 @@ Exposed-Modules:
     Data.Derive.Monoid
     Data.Derive.NFData
     Data.Derive.Ord
-    Data.Derive.Play
+    Data.Derive.Uniplate
     Data.Derive.PlateTypeable
     Data.Derive.Read
     Data.Derive.Ref
