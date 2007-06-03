@@ -29,7 +29,7 @@ typeToContainer active t =
         else if all (== None) rest2 then None
         else if name == ListT then List (head rest2)
         else if isTupleT name then Tuple rest2
-        else error $ "Play derivation on unknown type: " ++ show t
+        else error $ "Uniplate derivation on unknown type: " ++ show t
     where
         (name,rest) = typeApp t
         rest2 = map (typeToContainer active) rest
@@ -50,7 +50,7 @@ runVar x = evalState x Map.empty
 
 
 uniplate' dat =
-        [instance_default "Play" dat [funN "getChildren" gbody, funN "replaceChildren" rbody]]
+        [instance_default "Uniplate" dat [funN "replaceChildren" rbody]]
     where
         ctors :: [(CtorDef,[Container])]
         ctors = [(c, map (typeToContainer (dataName dat)) (ctorTypes c)) | c <- dataCtors dat]
