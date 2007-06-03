@@ -39,7 +39,7 @@ Exposed-Modules:
     Data.Derive.NFData
     Data.Derive.Ord
     Data.Derive.Play
-    Data.Derive.PlayAll
+    Data.Derive.PlateTypeable
     Data.Derive.Read
     Data.Derive.Ref
     Data.Derive.Serial
