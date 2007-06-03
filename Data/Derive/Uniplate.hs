@@ -186,3 +186,47 @@ uniplate' dat =
                 f (AppE x y) = appE x y
                 f (LamE x y) = lamE x y
                 f x = x
+
+
+{-
+-- ATTEMPT BASED ON THE RULES IN THE PAPER
+-- GOT BORED TOO QUICKLY...
+
+
+data Env = Env {prefix :: String, unit_ :: Exp, target_ :: Type -> Maybe Exp, join_ :: [Exp] -> Exp}
+
+-- RULES FROM THE PAPER
+d_ :: Env -> Dec -> Dec
+d_ e (NewtypeD x1 x2 x3 x4 x5) = d_ e (DataD x1 x2 x3 [x4] x5)
+d_ e (DataD _ name targs cs _) =
+    FunD (mkName $ prefix e ++ show name) (map (c_ e (map VarP targs)) cs)
+
+c_ :: Env -> [Pat] -> Con -> Clause
+c_ e ps (NormalC name fields) = Clause (ps ++ [ConP name $ map (VarP . mkName) vs])
+        (NormalB $ join_ e (AppE (unit_ e) (ConE name) : fs))
+        []
+    where
+        vs = map (('v':) . show) [1..length fields]
+        fs = zipWith AppE (map (t_ e . snd) fields) (map (VarE . mkName) vs)
+
+t_ :: Env -> Type -> Exp
+t_ e (VarT x) = VarE x
+
+
+test = do
+    i <- runQ dec
+    putStrLn $ pprint $ uniplate' $ head i
+
+env = Env "prefix_" (VarE $ mkName "unit") (const Nothing) ListE
+
+dec = [d| data Foo a = FooM a | FooN |]
+
+
+uniplate' dat = [instance_default "Uniplate" dat
+        [FunD (mkName "replaceChildren") bod]]
+    where
+        bod = [Clause [vr "x"] (NormalB $ tup [l0 "getChildren", l0 "setChildren"]) [getC,setC]]
+        
+        getC = funN "getChildren" [sclause [] (vr "x")]
+        setC = funN "setChildren" [sclause [] (vr "x")]
+-}
