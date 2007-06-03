@@ -41,6 +41,7 @@ Exposed-Modules:
     Data.Derive.Play
     Data.Derive.PlayAll
     Data.Derive.Read
+    Data.Derive.Ref
     Data.Derive.Serial
     Data.Derive.Set
     Data.Derive.Show
