@@ -18,7 +18,7 @@ import Data.Derive.LazySet          as D
 import Data.Derive.Monoid           as D
 import Data.Derive.NFData           as D
 import Data.Derive.Ord              as D
-import Data.Derive.Uniplate         as D
+import Data.Derive.PlateDirect      as D
 import Data.Derive.PlateTypeable    as D
 import Data.Derive.Read             as D
 import Data.Derive.Ref              as D
@@ -27,3 +27,4 @@ import Data.Derive.Set              as D
 import Data.Derive.Show             as D
 import Data.Derive.TTypeable        as D
 import Data.Derive.Typeable         as D
+import Data.Derive.Uniplate         as D

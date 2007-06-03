@@ -38,7 +38,7 @@ Exposed-Modules:
     Data.Derive.Monoid
     Data.Derive.NFData
     Data.Derive.Ord
-    Data.Derive.Uniplate
+    Data.Derive.PlateDirect
     Data.Derive.PlateTypeable
     Data.Derive.Read
     Data.Derive.Ref
@@ -47,6 +47,7 @@ Exposed-Modules:
     Data.Derive.Show
     Data.Derive.TTypeable
     Data.Derive.Typeable
+    Data.Derive.Uniplate
     Language.Haskell.TH.All
     Language.Haskell.TH.Data
     Language.Haskell.TH.FixedPpr
