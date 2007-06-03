@@ -10,7 +10,7 @@ import Language.Haskell.TH.All
 import Data.List
 
 makeShow :: Derivation
-makeShow = Derivation show' "Show"
+makeShow = derivation show' "Show"
 
 show' dat = [instance_default "Show" dat [funN "showsPrec" body]]
     where

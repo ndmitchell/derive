@@ -23,7 +23,7 @@ example = (,) "NFData" [d|
 #endif
 
 makeNFData :: Derivation
-makeNFData = Derivation nFData' "NFData"
+makeNFData = derivation nFData' "NFData"
 nFData' dat = [instance_context ["NFData"] "NFData" dat [(FunD (mkName "rnf") (
     (map (\(ctorInd,ctor) -> (Clause [(ConP (mkName ("" ++ ctorName ctor)) ((
     map (\field -> (VarP (mkName ("x" ++ show field)))) (id [1..ctorArity ctor]

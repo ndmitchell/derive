@@ -18,7 +18,7 @@ instance Monoid a => Monoid (Foo a) where
 -}
 
 makeMonoid :: Derivation
-makeMonoid = Derivation monoid' "Monoid"
+makeMonoid = derivation monoid' "Monoid"
 
 monoid' dat | length (dataCtors dat) == 1
          = [instance_default "Monoid" dat [funN "mempty" [empty],funN "mappend" [append]]]

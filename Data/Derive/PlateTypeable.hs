@@ -28,7 +28,7 @@ example = (,) "PlateTypeable" [d|
 
 
 makePlateTypeable :: Derivation
-makePlateTypeable = Derivation plateTypeable' "PlateTypeable"
+makePlateTypeable = derivation plateTypeable' "PlateTypeable"
 plateTypeable' dat = [InstanceD (concat ([(map (\tdat -> (AppT (AppT (ConT (
     mkName "PlateAll")) tdat) (lK (dataName dat) (dataVars dat)))) (dataVars
     dat)),(map (\tdat -> (AppT (ConT (mkName "Typeable")) tdat)) (dataVars dat)

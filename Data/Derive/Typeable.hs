@@ -47,7 +47,7 @@ instance (Typeable a, Typeable b, Typeable c) => Typeable (tycon a b c) where { 
 
 
 makeTypeable :: Derivation
-makeTypeable = Derivation typeable' "Typeable"
+makeTypeable = derivation typeable' "Typeable"
 typeable' dat = (funN nam [sclause [] (l1 "mkTyCon" $ lit $ dataName dat)])
                 : map f [0..dataArity dat]
     where

@@ -27,7 +27,7 @@ hasProcessor _ = False
 -}
 
 makeHas :: Derivation
-makeHas = Derivation has' "Has"
+makeHas = derivation has' "Has"
 
 has' dat = map f fields
     where

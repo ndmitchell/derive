@@ -29,7 +29,7 @@ setY a0 b0 = State (x b0) a0
 -}
 
 makeLazySet :: Derivation
-makeLazySet = Derivation lazyset' "LazySet"
+makeLazySet = derivation lazyset' "LazySet"
 
 lazyset' dat = map f fields
     where

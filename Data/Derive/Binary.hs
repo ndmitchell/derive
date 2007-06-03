@@ -12,7 +12,7 @@ import Language.Haskell.TH.All
 import Data.List
 
 makeBinary :: Derivation
-makeBinary = Derivation derive "Binary"
+makeBinary = derivation derive "Binary"
 
 derive dat =
         simple_instance "Binary" dat [funN "put" pbody, funN "get" gbody]

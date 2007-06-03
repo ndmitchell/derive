@@ -14,7 +14,7 @@ import Debug.Trace
 
 
 makeUniplate :: Derivation
-makeUniplate = Derivation uniplate' "Uniplate"
+makeUniplate = derivation uniplate' "Uniplate"
 
 
 data Container = None | Target

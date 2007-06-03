@@ -11,7 +11,7 @@ import Data.List
 import Data.Char
 
 makeRead :: Derivation
-makeRead = Derivation read' "Read"
+makeRead = derivation read' "Read"
 
 read' dat = [instance_default "Read" dat [funN "readsPrec" [sclause [vr "p0", vr "r0"] body]]]
     where

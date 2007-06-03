@@ -24,7 +24,7 @@ example = (,) "Is" [d|
 #endif
 
 makeIs :: Derivation
-makeIs = Derivation is' "Is"
+makeIs = derivation is' "Is"
 is' dat = ((map (\(ctorInd,ctor) -> (FunD (mkName ("is" ++ ctorName ctor)) [(
     Clause [((flip RecP []) (mkName ("" ++ ctorName ctor)))] (NormalB (ConE (
     mkName "True"))) []),(Clause [WildP] (NormalB (ConE (mkName "False"))) [])]

@@ -30,7 +30,7 @@ example = (,) "Data" [d|
 #endif
 
 makeData :: Derivation
-makeData = Derivation data' "Data"
+makeData = derivation data' "Data"
 
 data' dat = [instance_context ["Data","Typeable"] "Data" dat [FunD (mkName
     "gfoldl") ((map (\(ctorInd,ctor) -> (Clause [(VarP (mkName "k")),(VarP (

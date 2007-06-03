@@ -22,13 +22,13 @@ import Language.Haskell.TH.All
 -- | Derive an instance of some class. @derive@ only derives instances
 -- for the type of the argument.
 derive :: Derivation -> Name -> Q [Dec]
-derive (Derivation f _) = liftM f . deriveOne
+derive (Derivation f _) nm = f =<< deriveOne nm
 
 -- | Derive for a type and print the code to standard output.  This is
 -- a internal hook for the use of the Derive executable.
 _derive_string_instance :: Derivation -> Name -> Q Exp
 _derive_string_instance (Derivation f s) nm =
-    return . LitE . StringL . blankLine . show . ppr . peephole . f =<< deriveOne nm
+    return . LitE . StringL . blankLine . show . ppr . peephole =<< f =<< deriveOne nm
     where
         blankLine "" = "-- Cannot derive " ++ s ++ " for " ++ show nm
         blankLine xs = xs

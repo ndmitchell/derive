@@ -32,7 +32,7 @@ example = (,) "Ord" [d|
 #endif
 
 makeOrd :: Derivation
-makeOrd = Derivation ord' "Ord"
+makeOrd = derivation ord' "Ord"
 ord' dat = [instance_context ["Ord"] "Ord" dat [FunD (mkName "compare") [(Clause
     [(VarP (mkName "a")),(VarP (mkName "b"))] (NormalB (applyWith (VarE (mkName
     "check")) [(VarE (mkName "a")),(VarE (mkName "b"))])) [FunD (mkName "check"

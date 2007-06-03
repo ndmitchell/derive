@@ -26,7 +26,7 @@ example = (,) "BinaryDefer" [d|
 #endif
 
 makeBinaryDefer :: Derivation
-makeBinaryDefer = Derivation binarydefer' "BinaryDefer"
+makeBinaryDefer = derivation binarydefer' "BinaryDefer"
 binarydefer' dat = [instance_context ["BinaryDefer"] "BinaryDefer" dat [ValD (
     VarP (mkName "bothDefer")) (NormalB (AppE (VarE (mkName "defer")) (ListE ((
     map (\(ctorInd,ctor) -> (LamE [(TildeP (ConP (mkName (ctorName ctor)) ((map

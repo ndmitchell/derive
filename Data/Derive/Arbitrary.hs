@@ -23,7 +23,6 @@ import Data.DeriveGuess
 
 example = (,) "Arbitrary" [d|
 
-
     instance Arbitrary a => Arbitrary (DataName a) where
         arbitrary = do
             x <- choose (0,3)
@@ -47,7 +46,7 @@ example = (,) "Arbitrary" [d|
 #endif
 
 makeArbitrary :: Derivation
-makeArbitrary = Derivation arbitrary' "Arbitrary"
+makeArbitrary = derivation arbitrary' "Arbitrary"
 arbitrary' dat = [InstanceD (concat ([(map (\tdat -> (AppT (ConT (mkName
     "Arbitrary")) tdat)) (dataVars dat))])) (head [(AppT (ConT (mkName
     "Arbitrary")) (lK (dataName dat) (dataVars dat)))])[(ValD (VarP (mkName

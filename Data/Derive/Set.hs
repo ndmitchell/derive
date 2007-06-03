@@ -23,7 +23,7 @@ setProcessor v x = x{process=v}
 -}
 
 makeSet :: Derivation
-makeSet = Derivation set' "Set"
+makeSet = derivation set' "Set"
 
 set' dat = map f fields
     where

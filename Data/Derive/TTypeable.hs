@@ -14,7 +14,7 @@ import Data.Char
 import Data.Bits
 
 makeTTypeable :: Derivation
-makeTTypeable = Derivation ttypeable' "TTypeable"
+makeTTypeable = derivation ttypeable' "TTypeable"
 ttypeable' dat = [InstanceD ctx hd []]
     where
         bits x = [ if x .&. mask /= 0 then hSucc' hZero' else hZero' | mask <- [1,2,4,8,16,32,64,128] ]

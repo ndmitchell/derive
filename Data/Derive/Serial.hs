@@ -40,7 +40,7 @@ example = (,) "Serial" [d|
 #endif
 
 makeSerial :: Derivation
-makeSerial = Derivation serial' "Serial"
+makeSerial = derivation serial' "Serial"
 serial' dat = [instance_context ["Serial"] "Serial" dat [ValD (VarP (mkName
     "series")) (NormalB (foldl1With (VarE (mkName "\\/")) ((map (\(ctorInd,ctor
     ) -> (AppE (VarE (mkName ("cons" ++ show (ctorArity ctor)))) (ConE (mkName

@@ -13,7 +13,7 @@ import Data.Char
 import Data.List
 
 makeRef :: Derivation
-makeRef = Derivation ref' "Ref"
+makeRef = derivation ref' "Ref"
 
 ref' dat = map f fields
     where

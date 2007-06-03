@@ -28,7 +28,7 @@ example = (,) "From" [d|
 #endif
 
 makeFrom :: Derivation
-makeFrom = Derivation from' "From"
+makeFrom = derivation from' "From"
 from' dat = ((map (\(ctorInd,ctor) -> (FunD (mkName ("from" ++ ctorName ctor))
     [(Clause [(ConP (mkName ("" ++ ctorName ctor)) ((map (\field -> (VarP (
     mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++[]))] (NormalB (

@@ -40,7 +40,7 @@ example = (,) "EnumCyclic" [d|
 #endif
 
 makeEnumCyclic :: Derivation
-makeEnumCyclic = Derivation enumCyclic' "EnumCyclic"
+makeEnumCyclic = derivation enumCyclic' "EnumCyclic"
 enumCyclic' dat = [instance_context [] "Enum" dat [(FunD (mkName "toEnum") ((
     map (\(ctorInd,ctor) -> (Clause [(LitP (IntegerL ctorInd))] (NormalB ((flip
     RecConE []) (mkName ("" ++ ctorName ctor)))) [])) (id (zip [0..] (dataCtors

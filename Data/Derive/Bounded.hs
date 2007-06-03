@@ -25,7 +25,7 @@ example = (,) "Bounded" [d|
 #endif
 
 makeBounded :: Derivation
-makeBounded = Derivation bounded' "Bounded"
+makeBounded = derivation bounded' "Bounded"
 bounded' dat = [instance_context ["Bounded"] "Bounded" dat [(ValD (VarP (mkName
     "minBound")) (NormalB (AppE (VarE (mkName "head")) (ListE ((map (\(ctorInd,
     ctor) -> (applyWith (ConE (mkName ("" ++ ctorName ctor))) (replicate (

@@ -9,7 +9,7 @@ import Data.List
 
 
 makeFunctor :: Derivation
-makeFunctor = Derivation derive "Functor"
+makeFunctor = derivation derive "Functor"
 
 derive dat
  | dataArity dat == 0 = []

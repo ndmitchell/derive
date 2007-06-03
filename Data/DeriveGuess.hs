@@ -21,7 +21,7 @@ guess :: (String, Q [Dec]) -> IO ()
 guess (name,x) = runQ x >>= putStr . (++) line0. widthify . (++) line1 . guessStr . unQ
     where
         line0 = "make" ++ name ++ " :: Derivation\n" ++
-                "make" ++ name ++ " = Derivation " ++ lname ++ "' \"" ++ name ++ "\"\n"
+                "make" ++ name ++ " = derivation " ++ lname ++ "' \"" ++ name ++ "\"\n"
         line1 = lname ++ "' dat = "
         lname = toLower (head name) : tail name
 

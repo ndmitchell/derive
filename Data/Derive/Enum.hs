@@ -32,7 +32,7 @@ example = (,) "Enum" [d|
 #endif
 
 makeEnum :: Derivation
-makeEnum = Derivation enum' "Enum"
+makeEnum = derivation enum' "Enum"
 enum' dat = [instance_context [] "Enum" dat [FunD (mkName "toEnum") ((map (\(
     ctorInd,ctor) -> (Clause [(LitP (IntegerL ctorInd))] (NormalB ((flip
     RecConE []) (mkName (ctorName ctor)))) [])) (id (zip [0..] (dataCtors dat))
