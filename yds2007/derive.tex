@@ -30,7 +30,7 @@ In Haskell, a type-class defines an operation which is parameterised by the data
 
 \section{Introduction}
 
-Haskell \cite{haskell} is a modern functional programming language. One of the novel features in Haskell is the ability to define one function which operates upon different types, but in a type specific manner -- known as type-classes \cite{wadler:type_classes}. One such type class is |Eq|, defined as:
+Haskell \cite{haskell} is a modern functional programming language. One of the novel features in Haskell is the ability to define one function which operates upon many different types, but in a type specific manner -- known as type-classes \cite{wadler:type_classes}. The programmer defines the general function using a type class (the |class| keyword), then provides type specific instances (the |instance| keyword). One type class in the standard library is |Eq|, representing equality, defined as:
 
 \begin{code}
 class Eq alpha where
@@ -74,7 +74,7 @@ The automatic instance generation takes this example, and makes several \textit{
 
 \subsection{Roadmap}
 
-This paper first describes how manual instance generators must be written in \S\ref{sec:manual_instances}, including their disadvantages. In \S\ref{sec:automatic_instances} we look at how automatic instance generators are created. \S\ref{sec:automatic_failure} discusses which instances are applicable for this scheme, and \S\ref{sec:automatic_success} gives examples. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
+This paper first describes how manual instance generators must be written in \S\ref{sec:manual_instances}, including restrictions to their form. In \S\ref{sec:automatic_instances} we look at how automatic instance generators are created. \S\ref{sec:automatic_failure} discusses which instances are applicable for this scheme, and \S\ref{sec:automatic_success} gives more complex examples. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
 
 
 \section{Manual Instance Generators}
@@ -85,7 +85,7 @@ There are currently three mechanisms for specifying and invoking instance genera
 \subsection{Built in deriving}
 
 The simplest instance generator is provided by Haskell itself, with the |deriving| keyword. The |Eq| instance given above could have been automatically derived by the compiler, simply by adding |deriving Eq| at the end of the data type declaration.
- 
+
 Unfortunately this scheme has two primary disadvantages. Firstly, the deriving keyword \textit{must} appear after the data type declaration -- if the data type is declared in a library, a new instance may not be derived. Secondly, only six inbuilt type classes are supported -- there is no way to add more.
 
 \subsection{The DrIFT tool}
@@ -134,7 +134,7 @@ An environment represents the parameterisable aspects of a hypothesis. There are
 data Env = Empty | Ctor Int | Field Int
 \end{code}
 
-For each terminal value in the syntax tree, an environment is produced, which generates the value. If the name |CtorOne| was encountered this would be assigned the environment |Ctor 1| -- being the constructor name for the appropriate constructor. If the name |True| was encountered the environment would be |Empty| -- no constructors or fields relate to the value |True|. If a terminal ends in a number, i.e. |x1|, then the number is separately assigned an environment. 
+For each terminal value in the syntax tree, an environment is produced, which generates the value. If the name |CtorOne| was encountered this would be assigned the environment |Ctor 1| -- being the constructor name for the appropriate constructor. If the name |True| was encountered the environment would be |Empty| -- no constructors or fields relate to the value |True|. If a terminal ends in a number, i.e. |x1|, then the number is separately assigned an environment.
 
 \begin{figure}[t]
 \begin{code}
@@ -177,7 +177,7 @@ This structure is not a list, and would not be inductively found by the list gue
 This aspect also explains the redundant |&& True| at the end -- in order for the base case (|True|) to share the same fold pattern as the above case, we require a dummy argument in this one. In the code generated for instances this dummy operation will be removed, by using algebraic simplification provided by Derive.
 
 
-\section{Failures of Automatic Derivation}
+\section{Limitations of Automatic Derivation}
 \label{sec:automatic_failure}
 
 We have now defined a mechanism for inductive instances, the question now arises as to which instances can be automatically derived, and which ones must be written manually. Of the 24 instances provided by the Derive tool, 15 are able to be written by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate, which we list here:
