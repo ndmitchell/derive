@@ -14,7 +14,7 @@ import Data.Typeable
 example = (,) "PlateTypeable" [d|
 
     instance (PlateAll a (DataName a), Typeable a) => Uniplate (DataName a) where
-        replaceChildren = replaceChildrenAll
+        uniplate = uniplateAll
 
     instance (Typeable t, Typeable a, Uniplate t, PlateAll a t) => PlateAll (DataName a) t where
         plateAll CtorZero         = plate CtorZero
