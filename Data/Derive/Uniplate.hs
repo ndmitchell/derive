@@ -50,7 +50,7 @@ runVar x = evalState x Map.empty
 
 
 uniplate' dat =
-        [instance_default "Uniplate" dat [funN "replaceChildren" rbody]]
+        [instance_default "Uniplate" dat [funN "uniplate" rbody]]
     where
         ctors :: [(CtorDef,[Container])]
         ctors = [(c, map (typeToContainer (dataName dat)) (ctorTypes c)) | c <- dataCtors dat]
