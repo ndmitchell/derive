@@ -96,6 +96,8 @@ class Valcon a where
       -- | Listing
       lst :: [a] -> a
 instance Valcon Exp where
+      lK "[]" [] = ConE (mkName "[]")
+      lK "[]" xs = lst xs
       lK nm@(x:_) args | isUpper x || x == ':' = foldl AppE (ConE (mkName nm)) args
       lK nm@(x:_) [a,b] | isOper x = InfixE (Just a) (VarE (mkName nm)) (Just b)
          where isOper x = not (isAlpha x || x == '_')
