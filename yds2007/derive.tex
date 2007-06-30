@@ -74,7 +74,7 @@ The automatic instance generation takes this example, and makes several \textit{
 
 \subsection{Roadmap}
 
-This paper first describes how manual instance generators must be written in \S\ref{sec:manual_instances}, including restrictions to their form. In \S\ref{sec:automatic_instances} we look at how automatic instance generators are created. \S\ref{sec:automatic_failure} discusses which instances are applicable for this scheme, and \S\ref{sec:automatic_success} gives more complex examples. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
+This paper first describes how manual instance generators must be written in \S\ref{sec:manual_instances}. In \S\ref{sec:automatic_instances} we look at how automatic instances are derived. \S\ref{sec:automatic_failure} discusses which instances are applicable for this scheme, and \S\ref{sec:automatic_success} gives more complex examples. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
 
 
 \section{Manual Instance Generators}
@@ -96,17 +96,17 @@ To write an instance generator for DrIFT requires the implementation of a functi
 
 \subsection{The Derive tool}
 
-The Derive tool \cite{derive} is a competitor to DrIFT, designed to alleviate some of the disadvantages. The first advantage is that instance generators can added easily, without modifying the Derive tool. Secondly, by using the Template Haskell \cite{template_haskell} extension, no preprocessing phase is required. In order to integrate with Template Haskell, an instance generator now takes a representation of a data type, and generates a Haskell syntax tree.
+The Derive tool \cite{derive} is a competitor to DrIFT, designed to alleviate some of the disadvantages. The first advantage is that instance generators can added easily, without modifying the Derive tool. Secondly, by using the Template Haskell \cite{template_haskell} extension, no preprocessing phase is required. In order to integrate with Template Haskell, an instance generator takes a representation of a data type, and generates a Haskell syntax tree.
 
 Writing an instance generator requires knowledge of the representation of both the data type, and the Haskell syntax tree. Unfortunately, the Haskell syntax tree is represented by a large data type, which takes time to learn. After writing an instance generator, the user must check that the generator matches their intention, by testing on a suitable range of data types. Both of these factors increase the time required to write an instance generator.
 
-We have integrated automatic derivation of an instance generator, from an example, into the Derive tool. In order to specify a new instance generator, the user can \textit{either} specify a derivation function, \textit{or} have one automatically generated from an example.
+We have integrated automatic derivation of an instance generator, following the scheme in this paper, into the Derive tool. In order to specify a new instance generator, the user can \textit{either} specify a derivation function, \textit{or} have one automatically generated from an example.
 
 
 \section{Automatic Instance Generator Derivation}
 \label{sec:automatic_instances}
 
-This section describes how to derive an instance generator, given an example instance. There are four key concepts in our task: \S\ref{sec:generation} generating and testing a hypothesis; \S\ref{sec:environment} the environment in which a hypothesis exists; \S\ref{sec:induction} induction on lists; \S\ref{sec:folds} induction on folds.
+This section describes how to derive an instance generator, given an example instance. There are four key aspects: \S\ref{sec:generation} generating and testing a hypothesis; \S\ref{sec:environment} the environment in which a hypothesis exists; \S\ref{sec:induction} induction on lists; \S\ref{sec:folds} induction on folds.
 
 \subsection{Hypothesis Generation and Testing}
 \label{sec:generation}
@@ -128,13 +128,15 @@ The |guess| function takes a value of type |tau|, and returns a list of hypothes
 \subsection{The Enclosing Environment}
 \label{sec:environment}
 
-An environment represents the parameterisable aspects of a hypothesis. There are three different types of environment. The empty environment provides a value which is constant. The constructor environment uses information from a particular constructor -- for example the constructor name, the arity or the 0-based index. The field environment provides the index of a field within a constructor. The |Env| data type is defined as:
+An environment represents the parameterisable aspects of a hypothesis. The |Env| data type is defined as:
 
 \begin{code}
 data Env = Empty | Ctor Int | Field Int
 \end{code}
 
-For each terminal value in the syntax tree, an environment is produced, which generates the value. If the name |CtorOne| was encountered this would be assigned the environment |Ctor 1| -- being the constructor name for the appropriate constructor. If the name |True| was encountered the environment would be |Empty| -- no constructors or fields relate to the value |True|. If a terminal ends in a number, i.e. |x1|, then the number is separately assigned an environment.
+There are three different types of environment. The empty environment (|Empty|) provides a value which is constant. The constructor environment (|Ctor|) uses information from a particular constructor -- for example the constructor name, the arity or the 0-based index. The field environment (|Field|) provides the index of a field within a constructor.
+
+For each terminal value in the syntax tree, an environment is produced, which generates the value. If the name |CtorOne| was encountered this would be assigned the environment |Ctor 1| -- being the constructor name for the appropriate constructor. If the name |True| was encountered the environment would be |Empty| -- no constructors or fields relate to the value |True|. If a variable ends in a number, i.e. |x1|, then the number is separately assigned an environment.
 
 \begin{figure}[t]
 \begin{code}
@@ -149,106 +151,101 @@ guessNum i  =        [Field i  | i `elem` [1..2]  ]  -- a field
 \label{fig:guessnum}
 \end{figure}
 
-The terminal with most possible environments is a number. Take for instance the number 2 -- within |DataName| (Figure \ref{fig:dataname}) this could correspond to the field in position 2, the arity of |CtorTwo| or |CtorTwo'|, the index of |CtorTwo|, or simply a constant. The code to guess the environment from a number is given in Figure \ref{fig:guessnum}. A list of many possible environments is returned, allowing many possible hypotheses to be generated for a single terminal.
+The value with most possible environments is a number. Take for instance the number 2 -- within |DataName| (Figure \ref{fig:dataname}) this could correspond to the field in position 2, the arity of |CtorTwo| or |CtorTwo'|, the index of |CtorTwo|, or simply a constant. The code to compute the possible environments from a number is given in Figure \ref{fig:guessnum}. The list of environments allows many possible hypotheses to be generated for a single value.
 
 
 \subsection{List Induction on Environments}
 \label{sec:induction}
 
-GOT TO HERE
+For most types, |guess| is defined as guessing all the sub-components, then combining these guesses back together. Lists are treated differently -- by finding an inductive relationship over the list, the hypothesis can be made more generally applicable. Each element of the list is first guessed, then, if possible, the generated environments are merged. A few examples of how environments may be merged:
 
-For most types, |guess| can be simply defined as guessing all the sub-components, then combining them back together. The one exception to this is a list. The list induction property relies on the ordering of environments. All the constructors may be present in a none environment. The appropriate fields may be present in a constructor environment. The idea can best be expressed with an example. Given the list whose environments are |[Field 1, Field 2]|, we can generalise this to the environment |Ctor 2| or |Ctor 3| -- assuming that the actual meaning is that all fields are present. This generalisation can then be applied to |Ctor 0| generating an empty list.
+\begin{code}
+[Field 0, Field 1]                => Ctor 2 {-" \;\; or \;\; "-} Ctor 3
+[Ctor 0, Ctor 1, Ctor 2, Ctor 3]  => None
+\end{code}
 
-To generate an enclosing environment, all possible combinations of environments are examined. Once a particular set of environments is available, they are all checked against all hypotheses that are present. If there is a particular hypothesis that satisfies all the elements of this list, it is promoted to a hypothesis on its enclosing environment.
+If the environments are of the same type, and are consecutive, they can be placed in an enclosing environment. A list of consecutive fields can be generalised into a constructor which contains those fields. A list of all constructors can be combined into the empty environment, since operating over all constructors is entirely independent of the constructors present.
 
-This list induction does the majority of the work, and is responsible for the inductive instances. By localising this induction principle to lists, we are able to induct over almost any aspect of a data structure. This gives a lot of power.
+The generalisation of an environment is not correct if the individual hypotheses are incompatible. Before returning a new environment, it is necessary to \textit{test} all the values against one of the generation functions. If a suitable generator is found, it is applied to all elements in the list to form a new generator.
+
+List induction is key, without it instances would not generalise from a specific data type to all data types.
 
 \subsection{Fold Induction on Environments}
 \label{sec:folds}
 
-One common pattern in instance definitions is the \textit{fold}. Consider the |Eq| example from before. If we move to using prefix notation for |(&&)| and explicit bracketing we obtain:
+One common pattern in instance definitions is the \textit{fold} \cite{hutton:folds}. Consider the |Eq| example from before. If we move to using prefix notation for |(&&)| and explicit bracketing we obtain:
 
 \begin{code}
 (CtorTwo x1 x2) == (CtorTwo y1 y2) = (&&) (x1 == y1) ((&&) (x2 == y2) True)
+ -- or, expressed as a fold
+(CtorTwo x1 x2) == (CtorTwo y1 y2) = foldr (&&) True [x1 == y1, x2 == y2]
 \end{code}
 
-This structure is not a list, and would not be inductively found by the list guess mechanism. However, we can see this as a fold. A fold takes a list, and replaces each join in the list by a function -- in this case |(&&)|. By spotting this fold pattern, it can be reversed to allow us to express it as a left fold, with |(&&)| as the combining element, and |True| as the root.
+This structure is not a list, and would not be found by list induction. However, we can convert this function to a fold, recovering the list structure. A fold takes a list, and replaces each cons in the list by a function (i.e. |(&&)|) and the nil by a value (i.e. |True|). By automatically converting the code to use fold, the list induction is able to work.
 
-This aspect also explains the redundant |&& True| at the end -- in order for the base case (|True|) to share the same fold pattern as the above case, we require a dummy argument in this one. In the code generated for instances this dummy operation will be removed, by using algebraic simplification provided by Derive.
+The fold encoding explains the redundant |&& True| at the end -- in order for the base case (|True|) to share the same fold definition as above, we require a redundant conjunct. In the code generated for instances |&& True| is be removed, using algebraic simplification.
 
 
 \section{Limitations of Automatic Derivation}
 \label{sec:automatic_failure}
 
-We have now defined a mechanism for inductive instances, the question now arises as to which instances can be automatically derived, and which ones must be written manually. Of the 24 instances provided by the Derive tool, 15 are able to be written by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate, which we list here:
+We have now defined a mechanism for inductive instances, the question now arises as to which instances can be automatically derived, and which must be written manually. Of the 24 instances provided by the Derive tool, 15 are able to be written by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate:
 
-\subsection{Non-inductive definitions}
+\begin{description}
 
-One reason is that the definition does not follow inductively. Take for example the case of serialising a value to disk, which is achieved in Haskell using the |Binary| class. For a data type with one constructor, no tag needs to be written. For a data structure with less than 256 constructors, a single byte is written to indicate which constructor was encountered. For greater numbers of constructors, a larger sized tag must be given. These instances are not inductive -- the change from 1 constructor to 2 does not follow the same pattern.
+\item[Non-inductive definitions:] The |Binary| class serialises a value to disk. For each value a tag is written to indicate the constructor. If a data type only has one constructor the tag is omitted. These instances are not inductive -- the change from one constructor to two does not follow the same pattern.
 
-\subsection{Type-based definitions}
+\item[Typebased definitions:] The |Monoid| class requires items of the same type to be processed using |mappend|, but items of a different type use |mempty|. Automatic derivation has no notion of type-specific behaviour.
 
-Some definitions require knowledge of the type, for example the |Monoid| instance requires items of the same type to be written using |mappend|, but items of a different type to be |mempty|. The relationship between a type and the instance can be arbitrarily complex, and is required to derive |Play| and |Functor|.
+\item [Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour.
 
-\subsection{Record-based definitions}
+\end{description}
 
-Haskell provides a method for records, taking the |Degree| example:
-
-\begin{code}
-data Degree = MSc | PhD {years :: Int}
-\end{code}
-
-This automatically generates functions to retrieve and modify the |years| field within |PhD|. Some classes are defined which test whether a constructor has a particular field, and extract the relevant field. These cannot be automatically inferred.
-
-Fortunately, even with these restrictions, the majority of classes can be defined in a manner which allows the automatic derivation to succeed.
+Even with these restrictions, the majority of classes can be defined in a manner which allows the automatic derivation to succeed.
 
 \section{Successes of Generation}
 \label{sec:automatic_success}
 
-In this section we present a small number of successful examples, taken from various papers, including the example instance.
-
+In this section we present a small number of example instances, all from pre-existing libraries, which are derived by example.
 
 \subsection{The Data class}
 
-The |Data| class was introduced in Scrap Your Boilerplate, and allows Haskell programmers to make use of short traversals and queries, even over complex data structures. The fundamental operation is |gfoldl|:
+The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over one data value, and the application of an argument to join the fields.
 
 \begin{code}
 instance (Data alpha, Typeable alpha) => Data (DataName alpha) where
-    gfoldl k r (CtorZero         )= r CtorZero
+    gfoldl k r (CtorZero         ) = r CtorZero
     gfoldl k r (CtorOne   x1     ) = r CtorOne   `k` x1
     gfoldl k r (CtorTwo   x1 x2  ) = r CtorTwo   `k` x1 `k` x2
     gfoldl k r (CtorTwo'  x1 x2  ) = r CtorTwo'  `k` x1 `k` x2
 \end{code}
 
-Here the instances involve a fold over one data value, and the application of an argument to join the fields. This is all dealt with by the instance generator.
-
 \subsection{The Serial class}
 
-The |Serial| class is used by SmallCheck to automatically perform enumerative testing over Haskell programs. The definition relies on the arities of each constructor, and does not induct over the field names.
+The |Serial| class is used by SmallCheck \cite{runciman:smallcheck} to automatically perform enumerative testing. The definition relies on the arities of each constructor, and does not induct over the field names.
 
 \begin{code}
 instance Serial alpha => Serial (DataName alpha) where
     series = cons0 CtorZero \/ cons1 CtorOne  \/ cons2 CtorTwo  \/ cons2 CtorTwo'
 \end{code}
 
-Once again, the inductive instances are able to automatically generate the required code.
-
 \section{Related Work}
 \label{sec:related}
 
-Cite genetic algorithms.
+The purpose of this work is to find a pattern, and generalise the pattern to other situations. Genetic algorithms are often used to automatically find a pattern in a wide variety of circumstances. They typically work by making evolving a description of a hypothesis (a gene sequence) and testing on a sample problem. Genetic algorithms are well suited to search problems where the utility function is continuous -- close hypothesises have similar fitness. The main difference from genetic algorithms is that the hypothesis is not random, it is strongly directed by the shape of the example.
 
-Discuss how this scheme can be adapted to other contexts.
+The area of visual recognition has similar characteristics -- a scene is analysed to look for common patterns, which can be analysed further. The example of detecting fold (\S\ref{sec:fold}) is similar to this, the pattern occurs repeatedly and is detected. The difference would be that visual recognition works on image data, which does not have the same precision as concrete code.
 
-Proof system, by making induction.
+The closest work we are aware of is that in the theorem proving community. Induction is a very common tactic for writing proofs, and well supported. Using a system such as HOL Light \cite{hol_light} it is possible to instruct the prover to try the induction tactic. Typically the induction proof must be supplied initially, and is then checked for validity. Automatic inference of an induction argument has been tried \cite{minchev}, but is rarely successful.
 
+While the concepts in this paper have been developed within the framework of instances in Haskell, they apply equally to any construct or programming language that exhibit some degree of uniformity within definitions. The object-orientated community have embraced design patterns \cite{design patterns}, which may benefit from automatic definition.
 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
-We have presented a mechanism for automatically deriving instances for Haskell programs. Using our scheme, even a novice programmer, with no experience of the Derive framework, is able to define many classes they encounter simply by supplying examples. By removing the overhead of learning a new library, the number of potential users increases massively.
+We have presented a mechanism for automatically deriving instances for Haskell programs. Using our scheme, even a novice programmer is able to define many classes, simply by supplying examples. By removing the overhead of learning a new library, the number of potential users increases massively.
 
-Now that the computer is able to infer the rules required for constructing a type, the information never needs to be expressed again, even if the API's should change. This also leads to the advantage that alternative definitions could be given -- for example using Haskell's reflection capabilities instances could be derived at run-time, removing all overhead of separate preprocessors.
+Now that the computer is able to infer the rules required for constructing a type, this information could be put to other uses. If the Derive API changed, the new instances can be regenerated with no effort. Using Haskell's reflection capabilities instances could be derived at run-time, removing the inconvenience of separate preprocessors.
 
 
 \bibliographystyle{plain}
