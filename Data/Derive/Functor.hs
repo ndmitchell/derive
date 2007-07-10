@@ -1,3 +1,13 @@
+{-
+    This module is not written/maintained by the usual Data.Derive author.
+
+    MAINTAINER: Twan van Laarhoven 
+    EMAIL: "twanvl" ++ "@" ++ "gmail" ++ "." ++ "com"
+
+    Please send all patches to this module to Neil (ndmitchell -at- gmail),
+    and CC Twan.
+-}
+
 -- NOTE: Cannot be guessed as it relies on type information
 
 -- | Derives 'Functor', as discussed on the Haskell-prime mailing list:
