@@ -171,9 +171,9 @@ The generalisation of an environment is not correct if the individual hypotheses
 List induction is key, without it instances would not generalise from a specific data type to all data types.
 
 \subsection{Fold Induction on Environments}
-\label{sec:folds}
+\label{sec:fold}
 
-One common pattern in instance definitions is the \textit{fold} \cite{hutton:folds}. Consider the |Eq| example from before. If we move to using prefix notation for |(&&)| and explicit bracketing we obtain:
+One common pattern in instance definitions is the \textit{fold} \cite{hutton:fold}. Consider the |Eq| example from before. If we move to using prefix notation for |(&&)| and explicit bracketing we obtain:
 
 \begin{code}
 (CtorTwo x1 x2) == (CtorTwo y1 y2) = (&&) (x1 == y1) ((&&) (x2 == y2) True)
@@ -232,13 +232,13 @@ instance Serial alpha => Serial (DataName alpha) where
 \section{Related Work}
 \label{sec:related}
 
-The purpose of this work is to find a pattern, and generalise the pattern to other situations. Genetic algorithms are often used to automatically find a pattern in a wide variety of circumstances. They typically work by making evolving a description of a hypothesis (a gene sequence) and testing on a sample problem. Genetic algorithms are well suited to search problems where the utility function is continuous -- close hypothesises have similar fitness. The main difference from genetic algorithms is that the hypothesis is not random, it is strongly directed by the shape of the example.
+The purpose of this work is to find a pattern, and generalise the pattern to other situations. Genetic algorithms \cite{genetic:algorithms} are often used to automatically find a pattern in a wide variety of circumstances. They typically work by making evolving a description of a hypothesis (a gene sequence) and testing on a sample problem. Genetic algorithms are well suited to search problems where the utility function is continuous -- close hypothesises have similar fitness. The main difference from genetic algorithms is that the hypothesis is not random, it is strongly directed by the shape of the example.
 
 The area of visual recognition has similar characteristics -- a scene is analysed to look for common patterns, which can be analysed further. The example of detecting fold (\S\ref{sec:fold}) is similar to this, the pattern occurs repeatedly and is detected. The difference would be that visual recognition works on image data, which does not have the same precision as concrete code.
 
-The closest work we are aware of is that in the theorem proving community. Induction is a very common tactic for writing proofs, and well supported. Using a system such as HOL Light \cite{hol_light} it is possible to instruct the prover to try the induction tactic. Typically the induction proof must be supplied initially, and is then checked for validity. Automatic inference of an induction argument has been tried \cite{minchev}, but is rarely successful.
+The closest work we are aware of is that in the theorem proving community. Induction is a very common tactic for writing proofs, and well supported. Using a system such as HOL Light \cite{hol_light} it is possible to instruct the prover to try the induction tactic. Typically the induction proof must be supplied initially, and is then checked for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful.
 
-While the concepts in this paper have been developed within the framework of instances in Haskell, they apply equally to any construct or programming language that exhibit some degree of uniformity within definitions. The object-orientated community have embraced design patterns \cite{design patterns}, which may benefit from automatic definition.
+While the concepts in this paper have been developed within the framework of instances in Haskell, they apply equally to any construct or programming language that exhibit some degree of uniformity within definitions. The object-orientated community have embraced design patterns \cite{design_patterns}, which may benefit from automatic definition.
 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
