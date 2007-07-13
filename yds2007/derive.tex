@@ -25,7 +25,7 @@
 \begin{abstract}
 For certain functions, the implementation is dependent on the structure of the data type upon which it operates. In some cases, it is possible to automatically infer the relationship between the data type and the code, merely by looking at a single example. This paper presents a mechanism for such an inference scheme.
 
-In Haskell, a type-class defines an operation which is parameterised by the data type. This pattern is common, and often can be computed by automatic inference. We have implemented such as scheme in the Derive tool, allowing over 60\% of instances to be inferred.
+In Haskell, a type-class defines an operation which is parameterised by a data type. This pattern is common, and often can be computed by automatic inference. We have implemented our scheme in the Derive tool, allowing over 60\% of instances to be inferred.
 \end{abstract}
 
 \section{Introduction}
@@ -40,20 +40,23 @@ class Eq alpha where
 The |Eq| class has a member |(==)|. All types which provide an |Eq| instance have the |(==)| operator available. We can define a Haskell data type, along with an instance for |Eq|, as follows:
 
 \begin{code}
-data Degree  =  MSc        -- someone doing an MSc
-             |  PhD Int    -- PhD student, plus year of study
+data WritingImplement  =  Pencil       -- a pencil
+                       |  Pen Colour   -- a pen, plus its colour
 
-instance Eq Degree where
-    (MSc    )  == (MSc    )  = True
-    (PhD x  )  == (PhD y  )  = x == y
-    _          == _          = False
+instance Eq WritingImplement where
+    (Pencil     )  == (Pencil     )  = True
+    (Pen     x  )  == (Pen     y  )  = x == y
+    _              == _              = False
 \end{code}
 
-The data type we introduce is |Degree|. A value of type |Degree| is either the constructor |MSc|, or the constructor |PhD| with an integer field. We can define an |Eq| instance as above. The first line says that any two |MSc| values are equal. The second line says that for two |PhD| values to be equal, their fields must be equal. The final line says that any remaining pairs of values are not equal.
+The data type we introduce is |WritingImplement|. A value of this type is either the constructor |Pencil|, or the constructor |Pen| with a colour field. We can define an |Eq| instance as above. The first line says that any two |Pencil| values are equal. The second line says that for two |Pen| values to be equal, their fields must be equal. The final line says that any remaining pairs of values are not equal.
 
 \begin{figure}
 \begin{code}
-data DataName alpha = CtorZero | CtorOne alpha | CtorTwo alpha alpha | CtorTwo' alpha alpha
+data DataName alpha  =  CtorZero
+                     |  CtorOne   alpha
+                     |  CtorTwo   alpha  alpha
+                     |  CtorTwo'  alpha  alpha
 \end{code}
 \caption{The |DataName| data type.}
 \label{fig:dataname}
@@ -106,23 +109,22 @@ We have integrated automatic derivation of an instance generator, following the 
 \section{Automatic Instance Generator Derivation}
 \label{sec:automatic_instances}
 
-This section describes how to derive an instance generator, given an example instance. There are four key aspects: \S\ref{sec:generation} generating and testing a hypothesis; \S\ref{sec:environment} the environment in which a hypothesis exists; \S\ref{sec:induction} induction on lists; \S\ref{sec:folds} induction on folds.
+This section describes how to derive an instance generator, given an example instance. There are four key aspects: \S\ref{sec:generation} generating and testing a hypothesis; \S\ref{sec:environment} the environment in which a hypothesis exists; \S\ref{sec:induction} induction on lists; \S\ref{sec:fold} induction on folds.
 
 \subsection{Hypothesis Generation and Testing}
 \label{sec:generation}
 
 The idea behind hypothesis generation is that given a value, a hypothesis determines both an environment, and a mapping from an environment to the original value. An environment captures the aspects that are particular to a data type, and would change given a different data type. This technique of introducing an environment allows the hypothesis to be parameterised by the data type.
 
-In order to guess a data type |tau|, we can define the following data types and function:
+In order to guess a data type |tau|, we can define:
 
 \begin{code}
-data Env = ... -- see \ref{sec:environment}
 data Hypothesis tau = Hypothesis Env (Env -> tau) String
 
 guess :: tau -> [Hypothesis tau]
 \end{code}
 
-The |guess| function takes a value of type |tau|, and returns a list of hypotheses. Each hypothesis is an environment in which the value was found, a function to construct the value given an environment, and a string representing of the instance generator. Applying the returned environment to the value generator should return the original value.
+The |guess| function takes a value of type |tau|, and returns a list of hypotheses. Each hypothesis is an environment in which the value was found, a function to construct the value given an environment, and a string representation of the instance generator. Applying the returned environment to the value generator must return the original value.
 
 
 \subsection{The Enclosing Environment}
@@ -164,7 +166,7 @@ For most types, |guess| is defined as guessing all the sub-components, then comb
 [Ctor 0, Ctor 1, Ctor 2, Ctor 3]  => None
 \end{code}
 
-If the environments are of the same type, and are consecutive, they can be placed in an enclosing environment. A list of consecutive fields can be generalised into a constructor which contains those fields. A list of all constructors can be combined into the empty environment, since operating over all constructors is entirely independent of the constructors present.
+If the environments are of the same type, and are consecutive, they can be placed in an enclosing environment. A list of consecutive fields can be generalised into a constructor which contains those fields. A list of all constructors can be combined into the empty environment, since operating over all constructors can be done independently of the constructors present.
 
 The generalisation of an environment is not correct if the individual hypotheses are incompatible. Before returning a new environment, it is necessary to \textit{test} all the values against one of the generation functions. If a suitable generator is found, it is applied to all elements in the list to form a new generator.
 
@@ -183,13 +185,13 @@ One common pattern in instance definitions is the \textit{fold} \cite{hutton:fol
 
 This structure is not a list, and would not be found by list induction. However, we can convert this function to a fold, recovering the list structure. A fold takes a list, and replaces each cons in the list by a function (i.e. |(&&)|) and the nil by a value (i.e. |True|). By automatically converting the code to use fold, the list induction is able to work.
 
-The fold encoding explains the redundant |&& True| at the end -- in order for the base case (|True|) to share the same fold definition as above, we require a redundant conjunct. In the code generated for instances |&& True| is be removed, using algebraic simplification.
+The fold encoding explains the redundant |&& True| at the end -- in order for the base case (|True|) to share the same fold definition as above, we require a redundant conjunct. In the code generated for instances |&& True| is removed, using algebraic simplification.
 
 
 \section{Limitations of Automatic Derivation}
 \label{sec:automatic_failure}
 
-We have now defined a mechanism for inductive instances, the question now arises as to which instances can be automatically derived, and which must be written manually. Of the 24 instances provided by the Derive tool, 15 are able to be written by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate:
+Having defined a mechanism for inductive instances, it is useful to determine which instances can be automatically derived, and which must be written manually. Of the 24 instances provided by the Derive tool, 15 are expressed by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate:
 
 \begin{description}
 
@@ -201,16 +203,16 @@ We have now defined a mechanism for inductive instances, the question now arises
 
 \end{description}
 
-Even with these restrictions, the majority of classes can be defined in a manner which allows the automatic derivation to succeed.
+Even with these restrictions, the majority of classes can be expressed in a manner which allows the automatic derivation to succeed.
 
 \section{Successes of Generation}
 \label{sec:automatic_success}
 
-In this section we present a small number of example instances, all from pre-existing libraries, which are derived by example.
+In this section we present a small number of example instances, from pre-existing libraries, which are derived by example.
 
 \subsection{The Data class}
 
-The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over one data value, and the application of an argument to join the fields.
+The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over each value, and the application of an argument to join the fields.
 
 \begin{code}
 instance (Data alpha, Typeable alpha) => Data (DataName alpha) where
@@ -222,7 +224,7 @@ instance (Data alpha, Typeable alpha) => Data (DataName alpha) where
 
 \subsection{The Serial class}
 
-The |Serial| class is used by SmallCheck \cite{runciman:smallcheck} to automatically perform enumerative testing. The definition relies on the arities of each constructor, and does not induct over the field names.
+The |Serial| class is used by SmallCheck \cite{smallcheck} to automatically perform enumerative testing. The definition relies on the arities of each constructor, and does not induct over the field names.
 
 \begin{code}
 instance Serial alpha => Serial (DataName alpha) where
@@ -232,21 +234,24 @@ instance Serial alpha => Serial (DataName alpha) where
 \section{Related Work}
 \label{sec:related}
 
-The purpose of this work is to find a pattern, and generalise the pattern to other situations. Genetic algorithms \cite{genetic:algorithms} are often used to automatically find a pattern in a wide variety of circumstances. They typically work by making evolving a description of a hypothesis (a gene sequence) and testing on a sample problem. Genetic algorithms are well suited to search problems where the utility function is continuous -- close hypothesises have similar fitness. The main difference from genetic algorithms is that the hypothesis is not random, it is strongly directed by the shape of the example.
+The purpose of this work is to find a pattern, and generalise the pattern to other situations. Genetic algorithms \cite{genetic_algorithms} are often used to automatically find a pattern in a data set. Genetic algorithms work by evolving a hypothesis (a gene sequence) and testing on a sample problem. They are well suited to search problems where the utility function is continuous -- close hypothesises have similar fitness. The main difference from this paper is that the hypothesis is random, whereas ours is strongly directed by the shape of the example.
 
-The area of visual recognition has similar characteristics -- a scene is analysed to look for common patterns, which can be analysed further. The example of detecting fold (\S\ref{sec:fold}) is similar to this, the pattern occurs repeatedly and is detected. The difference would be that visual recognition works on image data, which does not have the same precision as concrete code.
+The area of optical character recognition \cite{ocr} has some similar characteristics -- a page is analysed to look for common patterns (pictures or text passages), which can be analysed further. This is related to the process of detecting fold (\S\ref{sec:fold}), where a repeating pattern is detected. The difference is that character recognition works on image data, which does not have the same precision as program code.
 
 The closest work we are aware of is that in the theorem proving community. Induction is a very common tactic for writing proofs, and well supported. Using a system such as HOL Light \cite{hol_light} it is possible to instruct the prover to try the induction tactic. Typically the induction proof must be supplied initially, and is then checked for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful.
 
-While the concepts in this paper have been developed within the framework of instances in Haskell, they apply equally to any construct or programming language that exhibit some degree of uniformity within definitions. The object-orientated community have embraced design patterns \cite{design_patterns}, which may benefit from automatic definition.
+The concepts in this paper are applicable outside the domain of instances in Haskell. Any programming language operation that exhibits some degree of uniformity could be automated. To take one example: the object-orientated community have embraced design patterns \cite{design_patterns}, which involve a many common recurring patterns.
 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
-We have presented a mechanism for automatically deriving instances for Haskell programs. Using our scheme, even a novice programmer is able to define many classes, simply by supplying examples. By removing the overhead of learning a new library, the number of potential users increases massively.
+We have presented a mechanism for automatically deriving instances for Haskell programs. Using our scheme, even a novice programmer is able to define many classes, simply by supplying examples. To define a class does not require learning a new library, increasing the user base.
 
-Now that the computer is able to infer the rules required for constructing a type, this information could be put to other uses. If the Derive API changed, the new instances can be regenerated with no effort. Using Haskell's reflection capabilities instances could be derived at run-time, removing the inconvenience of separate preprocessors.
+Now that the computer is able to infer the rules required for constructing a type, this information could be put to other uses. If the Derive API changed, the new instances would be regenerated with no effort. Using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of separate preprocessors.
 
+It may be possible by modifying the example data type (Figure \ref{fig:dataname}) to allow additional instances to be inferred. While we suspect that instances depending on record names can be inferred, we have yet to determine how to do so without complicating the data type for all instances.
+
+Computers are ideally suited for applying repetitive patterns, but specifying those patterns can be tiresome. We hope that this work goes some way towards alleviating the specification burden. The Derive tool has been released, and makes extensive use automatic instance derivation. By lowering the barrier to defining instance generators, we have already benefited from several external contributions of new classes.
 
 \bibliographystyle{plain}
 \bibliography{derive}
