@@ -23,14 +23,14 @@
 \maketitle
 
 \begin{abstract}
-For certain functions, the implementation is dependent on the structure of the data type upon which it operates. In some cases, it is possible to automatically infer the relationship between the data type and the code, merely by looking at a single example. This paper presents a mechanism for such an inference scheme.
+A function is said to be \textit{generic} if it operates over values of \textit{any} data type. For example, a generic equality function can test pairs of values of any datatype, including booleans, integers, lists, trees etc. For some generic functions, the implementation is entirely dependent on the structure of the data type upon which it is operating. Manually specifying the implementation for each data type is tedious, while specifying the relationship between a data type and the implementation can be complex.
 
-In Haskell, a type-class defines an operation which is parameterised by a data type. This pattern is common, and often can be computed by automatic inference. We have implemented our scheme in the Derive tool, allowing over 60\% of instances to be inferred.
+This paper describes a scheme to infer the relationship between a data type and the implementation of a generic function, given a single example. We have implemented our method in the Derive tool, allowing the implementation of 60\% of generic functions to be inferred.
 \end{abstract}
 
 \section{Introduction}
 
-Haskell \cite{haskell} is a modern functional programming language. One of the novel features in Haskell is the ability to define one function which operates upon many different types, but in a type specific manner -- known as type-classes \cite{wadler:type_classes}. The programmer defines the general function using a type class (the |class| keyword), then provides type specific instances (the |instance| keyword). One type class in the standard library is |Eq|, representing equality, defined as:
+Haskell \cite{haskell} is a modern functional programming language. In Haskell a generic function can be defined using a type class \cite{wadler:type_classes} (the |class| keyword), and implementations can be provided for specific types (the |instance| keyword). Generic equality is defined in the standard library by the |Eq| class:
 
 \begin{code}
 class Eq alpha where
@@ -49,28 +49,30 @@ instance Eq WritingImplement where
     _              == _              = False
 \end{code}
 
-The data type we introduce is |WritingImplement|. A value of this type is either the constructor |Pencil|, or the constructor |Pen| with a colour field. We can define an |Eq| instance as above. The first line says that any two |Pencil| values are equal. The second line says that for two |Pen| values to be equal, their fields must be equal. The final line says that any remaining pairs of values are not equal.
+The data type we introduce is |WritingImplement|. A value of this type is either the constructor |Pencil|, or the constructor |Pen| with a colour field. We can define an |Eq| instance as above. The first line says that any two |Pencil| values are equal. The second line says that for two |Pen| values to be equal, their fields must be equal. The final line says that any remaining pairs of values are not equal. Any instance of |Eq| follows naturally from the data structure: for two values to be equal they must have the same constructor, and the their fields must be equal.
+
+Writing an |Eq| instance for one data type is not an undue burden. However, as the complexity and number of data types increases, so does the effort required. The solution is to express the relationship between a data type and its instance once, which we call an \textit{instance generator}. In standard tools such as DrIFT \cite{drift}, the author of an instance generator must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is a complex process. 
 
 \begin{figure}
 \begin{code}
 data DataName alpha  =  CtorZero
-                     |  CtorOne   alpha
-                     |  CtorTwo   alpha  alpha
-                     |  CtorTwo'  alpha  alpha
+                     |  CtorOne    alpha
+                     |  CtorTwo    alpha  alpha
+                     |  CtorThree  alpha  alpha
 \end{code}
 \caption{The |DataName| data type.}
 \label{fig:dataname}
 \end{figure}
 
-The standard instance of |Eq| follows naturally from a data structure: for two values to be equal they must have the same constructor, and the their fields must be equal. This relationship can be expressed as a mapping from a data type, to a fragment of code -- which we call an \textit{instance generator}. Using the techniques described in this paper, instance generators can be automatically inferred from a single example instance. To define \textit{all} |Eq| instances, an example must be given on the provided |DataName| type (see Figure \ref{fig:dataname}):
+Using the techniques described in this paper, instance generators can be automatically inferred from a single example instance. To define \textit{all} |Eq| instances, an example must be given on the provided |DataName| type (see Figure \ref{fig:dataname}):
 
 \begin{code}
 instance Eq alpha => Eq (DataName alpha) where
-    (CtorZero         )  == (CtorZero         )  = True
-    (CtorOne   x1     )  == (CtorOne   y1     )  = x1 == y1 && True
-    (CtorTwo   x1 x2  )  == (CtorTwo   y1 y2  )  = x1 == y1 && x2 == y2 && True
-    (CtorTwo'  x1 x2  )  == (CtorTwo'  y1 y2  )  = x1 == y1 && x2 == y2 && True
-    _                    == _                    = False
+    (CtorZero          )  == (CtorZero          )  = True
+    (CtorOne    x1     )  == (CtorOne    y1     )  = x1 == y1 && True
+    (CtorTwo    x1 x2  )  == (CtorTwo    y1 y2  )  = x1 == y1 && x2 == y2 && True
+    (CtorThree  x1 x2  )  == (CtorThree  y1 y2  )  = x1 == y1 && x2 == y2 && True
+    _                     == _                     = False
 \end{code}
 
 The automatic instance generation takes this example, and makes several \textit{hypotheses} as to the mapping from data type to code. Each hypothesis is then \textit{tested} against the supplied example. After finding a valid hypothesis, a specific instance generator is created.
@@ -80,6 +82,7 @@ The automatic instance generation takes this example, and makes several \textit{
 This paper first describes how manual instance generators must be written in \S\ref{sec:manual_instances}. In \S\ref{sec:automatic_instances} we look at how automatic instances are derived. \S\ref{sec:automatic_failure} discusses which instances are applicable for this scheme, and \S\ref{sec:automatic_success} gives more complex examples. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
 
 
+\begin{comment}
 \section{Manual Instance Generators}
 \label{sec:manual_instances}
 
@@ -104,6 +107,15 @@ The Derive tool \cite{derive} is a competitor to DrIFT, designed to alleviate so
 Writing an instance generator requires knowledge of the representation of both the data type, and the Haskell syntax tree. Unfortunately, the Haskell syntax tree is represented by a large data type, which takes time to learn. After writing an instance generator, the user must check that the generator matches their intention, by testing on a suitable range of data types. Both of these factors increase the time required to write an instance generator.
 
 We have integrated automatic derivation of an instance generator, following the scheme in this paper, into the Derive tool. In order to specify a new instance generator, the user can \textit{either} specify a derivation function, \textit{or} have one automatically generated from an example.
+\end{comment}
+
+\section{Parameterised Hypothesises}
+
+The central idea to the automatic inference of instance generators is that an instance generator is merely a set hypothesises, parameterised by a data type. The hypothesis specifies how, given a data type, an implementation would be generated. By splitting the task of finding a suitable hypothesis on the entire implementation, into the task of finding a hypothesis for a sub-part of the implementation, parameterised by a sub-part of the data type, they can be recombined.
+
+
+ Any given instance can be specified 
+
 
 
 \section{Automatic Instance Generator Derivation}
