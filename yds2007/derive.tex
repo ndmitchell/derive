@@ -8,6 +8,7 @@
 \documentclass{llncs}
 
 \usepackage{url}
+\usepackage{comment}
 
 %include polycode.fmt
 %include derive.fmt
@@ -51,7 +52,7 @@ instance Eq WritingImplement where
 
 The data type we introduce is |WritingImplement|. A value of this type is either the constructor |Pencil|, or the constructor |Pen| with a colour field. We can define an |Eq| instance as above. The first line says that any two |Pencil| values are equal. The second line says that for two |Pen| values to be equal, their fields must be equal. The final line says that any remaining pairs of values are not equal. Any instance of |Eq| follows naturally from the data structure: for two values to be equal they must have the same constructor, and the their fields must be equal.
 
-Writing an |Eq| instance for one data type is not an undue burden. However, as the complexity and number of data types increases, so does the effort required. The solution is to express the relationship between a data type and its instance once, which we call an \textit{instance generator}. In standard tools such as DrIFT \cite{drift}, the author of an instance generator must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is a complex process. 
+Writing an |Eq| instance for one data type is not an undue burden. However, as the complexity and number of data types increases, so does the effort required. The solution is to express the relationship between a data type and its instance once, which we call an \textit{instance generator}. In standard tools such as DrIFT \cite{drift}, the author of an instance generator must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is a complex process.
 
 \begin{figure}
 \begin{code}
@@ -111,10 +112,26 @@ We have integrated automatic derivation of an instance generator, following the 
 
 \section{Parameterised Hypothesises}
 
+The central idea to the automatic inference of instance generators is that an instance generator is merely a hypothesis, parameterised by a data type. By applying a specific data type to the hypothesis, the appropriate code will be generated. In order to infer hypothesises in a manageable way, it is necessary infer a hypothesis on each fragment of code individually, then combining them afterwards.
+
+In order to compose many hypothesises into a single hypothesis, it is necessary to parameterise them by more than just a data type. We allow a hypothesis to be parameterised by any of:
+
+\paragraph{A data type} In the first example the whole code is parameterised by the data type. One particular place where the parameterisation by data type shows up is |Eq (DataName alpha)|. Here the text |DataName| is the name of the data type.
+
+\paragraph{A constructor} The sample |CtorTwo x1 x2| is parameterised by the constructor |CtorTwo|. This parameterisation is responsible both for the name |CtorTwo|, and for the number of fields, namely two.
+
+\paragraph{A number}
+
+\paragraph{A constant}
+
+
+This fact necessitates parameterising hypothesises by 
+
+
 The central idea to the automatic inference of instance generators is that an instance generator is merely a set hypothesises, parameterised by a data type. The hypothesis specifies how, given a data type, an implementation would be generated. By splitting the task of finding a suitable hypothesis on the entire implementation, into the task of finding a hypothesis for a sub-part of the implementation, parameterised by a sub-part of the data type, they can be recombined.
 
 
- Any given instance can be specified 
+ Any given instance can be specified
 
 
 
