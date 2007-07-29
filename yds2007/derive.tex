@@ -56,10 +56,10 @@ Writing an |Eq| instance for one data type is not an undue burden. However, as t
 
 \begin{figure}
 \begin{code}
-data DataName alpha  =  CtorZero
-                     |  CtorOne    alpha
-                     |  CtorTwo    alpha  alpha
-                     |  CtorThree  alpha  alpha
+data DataName  =  CtorZero
+               |  CtorOne    Any
+               |  CtorTwo    Any  Any
+               |  CtorThree  Any  Any
 \end{code}
 \caption{The |DataName| data type.}
 \label{fig:dataname}
@@ -68,7 +68,7 @@ data DataName alpha  =  CtorZero
 Using the techniques described in this paper, instance generators can be automatically inferred from a single example instance. To define \textit{all} |Eq| instances, an example must be given on the provided |DataName| type (see Figure \ref{fig:dataname}):
 
 \begin{code}
-instance Eq alpha => Eq (DataName alpha) where
+instance Eq DataName where
     (CtorZero          )  == (CtorZero          )  = True
     (CtorOne    x1     )  == (CtorOne    y1     )  = x1 == y1 && True
     (CtorTwo    x1 x2  )  == (CtorTwo    y1 y2  )  = x1 == y1 && x2 == y2 && True
@@ -112,20 +112,33 @@ We have integrated automatic derivation of an instance generator, following the 
 
 \section{Parameterised Hypothesises}
 
-The central idea to the automatic inference of instance generators is that an instance generator is merely a hypothesis, parameterised by a data type. By applying a specific data type to the hypothesis, the appropriate code will be generated. In order to infer hypothesises in a manageable way, it is necessary infer a hypothesis on each fragment of code individually, then combining them afterwards.
+The central idea to the automatic inference of instance generators is that an instance generator is merely a hypothesis, parameterised by a data type. By applying a specific data type to the hypothesis, the appropriate code will be generated. In order to infer hypothesises in a manageable way, it is necessary infer a hypothesis on each fragment of code individually, then combining them afterwards. When parameterising a fragment of the implementation, it is necessary to parameterise by things other than the data type.
 
-In order to compose many hypothesises into a single hypothesis, it is necessary to parameterise them by more than just a data type. We allow a hypothesis to be parameterised by any of:
+\subsection{Parameter types}
 
-\paragraph{A data type} In the first example the whole code is parameterised by the data type. One particular place where the parameterisation by data type shows up is |Eq (DataName alpha)|. Here the text |DataName| is the name of the data type.
+We allow a fragment of the implementation to be parameterised by several types. We outline the types of parameter, along with examples of the fragments which are assigned that parameter.
 
-\paragraph{A constructor} The sample |CtorTwo x1 x2| is parameterised by the constructor |CtorTwo|. This parameterisation is responsible both for the name |CtorTwo|, and for the number of fields, namely two.
+\begin{description}
+\item[A constant:] A fragment of the implementation can be a constant, meaning that in all cases it will generate the same value. In the original example things such as |True|, |instance|, |(==)|, |(&&)| etc. are constant. Anything which does not have an alternative parameterisable hypothesis is assumed to be constant.
 
-\paragraph{A number}
+\item[A number:] The fragment |x1| is parameterised by the number |1|, with the hypothesis that the result is simply the number. We use the notation |x <|| i ||>| to denote the hypothesis, where |i| is the parameterised number.
 
-\paragraph{A constant}
+\item[A constructor:] The fragment |CtorTwo| is parameterised by the constructor |CtorTwo|, being the name of the constructor. We use the notation | <|| ctorname ||> | to denote this hypothesis.
+
+\item[A data type:] In the first example the whole code is parameterised by the data type. One particular place where the parameterisation by data type shows up is |Eq DataName|. Here the text |DataName| is the name of the data type. Because this fragment is parameterised by the data type, if the name of the data type changes (to say |WritingImplement|), then the hypothesis would change appropriately.
+\end{description}
+
+\subsection{Maps}
+
+\subsection{Folds}
+
+\subsection{Composition}
+
+The fragment |CtorTwo x1 x2| is also parameterised by |CtorTwo|, in This parameterisation is responsible both for the name |CtorTwo|, and for the number of fields, namely two. If the constructor in question was |Pen|, then the hypothesis would generate |Pen x1|.
 
 
-This fact necessitates parameterising hypothesises by 
+
+This fact necessitates parameterising hypothesises by
 
 
 The central idea to the automatic inference of instance generators is that an instance generator is merely a set hypothesises, parameterised by a data type. The hypothesis specifies how, given a data type, an implementation would be generated. By splitting the task of finding a suitable hypothesis on the entire implementation, into the task of finding a hypothesis for a sub-part of the implementation, parameterised by a sub-part of the data type, they can be recombined.
@@ -133,6 +146,21 @@ The central idea to the automatic inference of instance generators is that an in
 
  Any given instance can be specified
 
+
+
+\subsection{The Result}
+
+After all this work, the resultant infered thingy is:
+
+\begin{code}
+instance Eq \? <| dataname |> where
+    <| MAP ctors (
+        (<| ctorname |> \? <| MAP fields (x <| index |> ) ) ==
+        (<| ctorname |> \? <| MAP fields (x <| index |> ) ) =
+        <| FOLDR fields (&&) True (x <| index |> == y <| index |> |>
+    |>
+    _ == _ = False
+\end{code}
 
 
 \section{Automatic Instance Generator Derivation}
