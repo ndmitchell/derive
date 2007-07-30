@@ -24,9 +24,9 @@
 \maketitle
 
 \begin{abstract}
-A function is said to be \textit{generic} if it operates over values of \textit{any} data type. For example, a generic equality function can test pairs of values of any datatype, including booleans, integers, lists, trees etc. Manually specifying the implementation for each data type is tedious, while specifying the relationship between a data type and the implementation can be complex.
+A function is said to be \textit{generic} if it operates over values of \textit{any} data type. For example, a generic equality function can test pairs of booleans, integers, lists, trees etc. In most languages programmers must define generic functions multiple times, specialised for each data type. Alternatively, a tool could be used to specify the relationship between the data type and the implementation, but this relationship may be complex.
 
-This paper describes a scheme to infer the relationship between a data type and the implementation of a generic function, given a single example. We have implemented our method in the Derive tool, allowing the implementation of 60\% of generic functions to be inferred.
+This paper describes a solution: given a single example of the generic function on one data type, we can infer the relationship between a data type and the implementation. We have used our method in the Derive tool, allowing the implementation of 60\% of generic functions to be inferred.
 \end{abstract}
 
 \section{Introduction}
