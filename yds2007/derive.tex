@@ -15,7 +15,7 @@
 
 \begin{document}
 
-\title{Deriving Inductive Instances by Example}
+\title{Deriving Generic Functions by Example}
 \author{Neil Mitchell}
 
 \institute{University of York, UK\\
@@ -24,14 +24,14 @@
 \maketitle
 
 \begin{abstract}
-A function is said to be \textit{generic} if it operates over values of \textit{any} data type. For example, a generic equality function can test pairs of values of any datatype, including booleans, integers, lists, trees etc. For some generic functions, the implementation is entirely dependent on the structure of the data type upon which it is operating. Manually specifying the implementation for each data type is tedious, while specifying the relationship between a data type and the implementation can be complex.
+A function is said to be \textit{generic} if it operates over values of \textit{any} data type. For example, a generic equality function can test pairs of values of any datatype, including booleans, integers, lists, trees etc. Manually specifying the implementation for each data type is tedious, while specifying the relationship between a data type and the implementation can be complex.
 
 This paper describes a scheme to infer the relationship between a data type and the implementation of a generic function, given a single example. We have implemented our method in the Derive tool, allowing the implementation of 60\% of generic functions to be inferred.
 \end{abstract}
 
 \section{Introduction}
 
-Haskell \cite{haskell} is a modern functional programming language. In Haskell a generic function can be defined using a type class \cite{wadler:type_classes} (the |class| keyword), and implementations can be provided for specific types (the |instance| keyword). Generic equality is defined in the standard library by the |Eq| class:
+Haskell \cite{haskell} is a modern functional programming language. In Haskell a generic function can be defined using a type class \cite{wadler:type_classes} (the |class| keyword), and implementations can be provided for specific types (the |instance| keyword). Generic equality is defined by the |Eq| class:
 
 \begin{code}
 class Eq alpha where
@@ -54,7 +54,7 @@ The data type we introduce is |WritingImplement|. A value of this type is either
 
 Writing an |Eq| instance for one data type is not an undue burden. However, as the complexity and number of data types increases, so does the effort required. The solution is to express the relationship between a data type and its instance once, which we call an \textit{instance generator}. In standard tools such as DrIFT \cite{drift}, the author of an instance generator must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is a complex process.
 
-\begin{figure}
+\begin{figure}[tbp]
 \begin{code}
 data DataName  =  CtorZero
                |  CtorOne    Any
@@ -76,11 +76,11 @@ instance Eq DataName where
     _                     == _                     = False
 \end{code}
 
-The automatic instance generation takes this example, and makes several \textit{hypotheses} as to the mapping from data type to code. Each hypothesis is then \textit{tested} against the supplied example. After finding a valid hypothesis, a specific instance generator is created.
+This paper contributes a practical method for inferring a relationship between two pieces of program code, without resorting to search. In particular, the notion that the relationship is \textit{parameterised} is central.
 
 \subsection{Roadmap}
 
-This paper first describes how manual instance generators must be written in \S\ref{sec:manual_instances}. In \S\ref{sec:automatic_instances} we look at how automatic instances are derived. \S\ref{sec:automatic_failure} discusses which instances are applicable for this scheme, and \S\ref{sec:automatic_success} gives more complex examples. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
+This paper first describes how to derive instance generators automatically in \S\ref{sec:automatic_instances}. \S\ref{sec:automatic_failure} discusses which generic functions are applicable for this scheme, and \S\ref{sec:automatic_success} gives more complex examples. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
 
 
 \begin{comment}
@@ -111,6 +111,7 @@ We have integrated automatic derivation of an instance generator, following the 
 \end{comment}
 
 \section{The Method}
+\label{sec:automatic_instances}
 
 The central idea of automatic inference of instance generators is that an instance generator is merely a function from data types to code fragments. By applying a specific data type to the function, the appropriate code will be generated. In order to infer generation functions in a practical way, it is necessary infer a function on each fragment of code separately, then combine them.
 
@@ -125,12 +126,13 @@ The instance generator is parameterised by a data type. Smaller fragments of the
 
 \item[A constructor:] The fragment |CtorTwo| is parameterised by the constructor |CtorTwo|, being the name of the constructor. We use the notation |CtorTwo ->> <|| ctorname ||> | to denote this function.
 
-\item[A data type:] In the first example the whole code is parameterised by the data type. One particular place where the parameterisation by data type shows up is |Eq DataName|. Here the text |DataName| is the name of the data type. Because this fragment is parameterised by the data type, if the name of the data type changes (to say |WritingImplement|), then the hypothesis would change appropriately.
+\item[A data type:] In the first example the whole code is parameterised by the data type. One particular place parameterised directly on the data type is |Eq DataName|, which becomes |DataName ->> Eq <|| dataname ||>|. If the name of the data type changes (to say |WritingImplement|), then the function would generate |Eq WritingImplement|.
 \end{description}
 
 \subsection{The Map Pattern}
+\label{sec:induction}
 
-The examples shown previously map values to constant-sized code fragments. But consider the pattern |CtorTwo x1 x2|, we require |n| variables, where |n| is the arity of the constructor. To solve this problem, when dealing with a list of fragments, if (1) any item has a function which is is correct on all fragments, and (2) their parameter values are sequential, then a generalised map is constructed. In the above example:
+The examples shown previously map values to constant-sized code fragments. But consider the pattern |CtorTwo x1 x2|, we require |n| variables, where |n| is the arity of the constructor. To solve this problem, we can construct a generalised map from a list of fragments. This construction requires two conditions: (1) any item has a function which is is correct on all fragments; (2) their parameter values are sequential.
 
 \begin{code}
 [1 ->> x <| i |>, 2 ->> x <| i |>]
@@ -152,6 +154,9 @@ To give two examples of sequences which cannot be generalised to a |MAP|:
 \end{code}
 
 In the first the parameters are not sequential. In the second, no function applies to both fragments.
+
+The |MAP| pattern provides the key power to generalising an example from one specific type, to any type. In order to increase the chance of finding a suitable generalisation, we allow each fragment of code to be represented by a list of possible parameterised functions \cite{wadler:list_successes}.
+
 
 \subsection{The Fold Pattern}
 \label{sec:fold}
@@ -175,7 +180,7 @@ The |FOLDR| rule is simply a |foldr| function, but applied at generation time. T
 
 \subsection{Eliminating Number Parameters}
 
-Initially functions may be parameterised by the whole data type, constructors and numbers. The |MAP| rule converts functions parameterised on constructors to the whole data type, but leaves numbers parameterised by numbers. There is a final rule which is used to eliminate numbers, promotion into another parameter type. The idea is that a number is replaced with a constructor with a relationship to that number, taking the example of |x1 x2| from earlier, we can write any of:
+Initially functions may be parameterised by the whole data type, constructors and numbers. The |MAP| rule converts functions parameterised on constructors to the whole data type, but leaves numbers parameterised by numbers. There is a final rule which is used to eliminate numbers, namely promotion into another parameter type. The idea is that a number is replaced with a constructor with a relationship to that number, taking the example of |x1 x2| from earlier, we can write any of:
 
 \begin{code}
 2          ->> <| MAP [1..i          ] (x <| i |> ) |>
@@ -186,8 +191,6 @@ CtorThree  ->> <| MAP [1..ctorarity  ] (x <| i |> ) |>
 
 Instead of parameterising by a number, we can parameterise by |CtorTwo|, and use its arity. The number 2 can be constructed in many ways: it is both the arity, and zero-based index of |CtorTwo|, and also the arity of |CtorThree|.
 
-The multiple ways that a number may be realised means that the generation of functions operates on a list of possible functions \cite{wadler:list_successes}. By using many possible functions, when applying the |MAP| rule, it is more likely that one of the functions will be applicable to all the elements of the list.
-
 \subsection{The Result}
 
 After all this work, the resultant function for the |Eq| example is:
@@ -197,7 +200,7 @@ instance Eq \? <| dataname |> where
     <| MAP ctors (
         (<| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) ) ==
         (<| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) ) =
-        <| FOLDR fields (&&) True \? <| MAP [1..i] (x <| i |> == y <| i |>) |> |>
+        <| FOLDR (&&) True \? <| MAP [1..ctorarity] (x <| i |> == y <| i |>) |> |>
     ) |>
     _ == _ = False
 \end{code}
@@ -265,7 +268,6 @@ The value with most possible environments is a number. Take for instance the num
 
 
 \subsection{List Induction on Environments}
-\label{sec:induction}
 
 For most types, |guess| is defined as guessing all the sub-components, then combining these guesses back together. Lists are treated differently -- by finding an inductive relationship over the list, the hypothesis can be made more generally applicable. Each element of the list is first guessed, then, if possible, the generated environments are merged. A few examples of how environments may be merged:
 
@@ -281,7 +283,6 @@ The generalisation of an environment is not correct if the individual hypotheses
 List induction is key, without it instances would not generalise from a specific data type to all data types.
 
 \subsection{Fold Induction on Environments}
-\label{sec:fold}
 
 One common pattern in instance definitions is the \textit{fold} \cite{hutton:fold}. Consider the |Eq| example from before. If we move to using prefix notation for |(&&)| and explicit bracketing we obtain:
 
@@ -359,7 +360,11 @@ Now that the computer is able to infer the rules required for constructing a typ
 
 It may be possible by modifying the example data type (Figure \ref{fig:dataname}) to allow additional instances to be inferred. While we suspect that instances depending on record names can be inferred, we have yet to determine how to do so without complicating the data type for all instances.
 
-Computers are ideally suited for applying repetitive patterns, but specifying those patterns can be tiresome. We hope that this work goes some way towards alleviating the specification burden. The Derive tool has been released, and makes extensive use automatic instance derivation. By lowering the barrier to defining instance generators, we have already benefited from several external contributions of new classes.
+Computers are ideally suited for applying repetitive patterns, but specifying those patterns can be tiresome. We hope that this work goes some way towards alleviating the specification burden. The Derive tool has been released, and makes extensive use automatic instance derivation. By lowering the barrier to defining instance generators, we have already benefited from several external contributions of new generic functions.
+
+\paragraph{Acknowledgements}
+
+Thanks to Matt Naylor for helpful suggestions on the presentation of this work. Thanks to Stefan O'Rear for work on the Derive tool.
 
 \bibliographystyle{plain}
 \bibliography{derive}
