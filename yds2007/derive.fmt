@@ -37,6 +37,11 @@
 %format \? = "\;"
 %format \! = "\!"
 
+%format MAP = "\textsc{map}"
+%format FOLDR = "\textsc{foldr}"
+
+%format ->> = "\mapsto{}"
+
 %format |- = "\mathsf{\hspace{1mm}|\hspace{-0.5mm}\hbox{-\!-}\;}"
 %format |+ = "\mathsf{\hspace{1mm}|\hspace{-0.5mm}\hbox{\small{+}}\;}"
 %format |* = "\mathsf{\hspace{1mm}|\hspace{-0.65mm}*\;}"

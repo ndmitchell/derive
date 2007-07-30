@@ -110,64 +110,110 @@ Writing an instance generator requires knowledge of the representation of both t
 We have integrated automatic derivation of an instance generator, following the scheme in this paper, into the Derive tool. In order to specify a new instance generator, the user can \textit{either} specify a derivation function, \textit{or} have one automatically generated from an example.
 \end{comment}
 
-\section{Parameterised Hypothesises}
+\section{The Method}
 
-The central idea to the automatic inference of instance generators is that an instance generator is merely a hypothesis, parameterised by a data type. By applying a specific data type to the hypothesis, the appropriate code will be generated. In order to infer hypothesises in a manageable way, it is necessary infer a hypothesis on each fragment of code individually, then combining them afterwards. When parameterising a fragment of the implementation, it is necessary to parameterise by things other than the data type.
+The central idea of automatic inference of instance generators is that an instance generator is merely a function from data types to code fragments. By applying a specific data type to the function, the appropriate code will be generated. In order to infer generation functions in a practical way, it is necessary infer a function on each fragment of code separately, then combine them.
 
 \subsection{Parameter types}
 
-We allow a fragment of the implementation to be parameterised by several types. We outline the types of parameter, along with examples of the fragments which are assigned that parameter.
+The instance generator is parameterised by a data type. Smaller fragments of the code may be parameterised by constructors, numbers, or have no parameter. We outline the types of parameter, along with examples of the fragments which are assigned that parameter.
 
 \begin{description}
-\item[A constant:] A fragment of the implementation can be a constant, meaning that in all cases it will generate the same value. In the original example things such as |True|, |instance|, |(==)|, |(&&)| etc. are constant. Anything which does not have an alternative parameterisable hypothesis is assumed to be constant.
+\item[A constant:] A fragment of the implementation can be a constant, meaning that in all cases it will generate the same value. In the original example things such as |True|, |instance|, |(==)|, |(&&)| etc. are constant. Anything which does not have an alternative parameterisable function is assumed to be constant.
 
-\item[A number:] The fragment |x1| is parameterised by the number |1|, with the hypothesis that the result is simply the number. We use the notation |x <|| i ||>| to denote the hypothesis, where |i| is the parameterised number.
+\item[A number:] The fragment |x1| is parameterised by the number |1|, with the hypothesis that the result is simply the number. We use the notation |1 ->> x <|| i ||> | to denote the function, where |i| is the parameterised number, and |1| is the parameter. Any detected number is either a parameterised value, or a constant.
 
-\item[A constructor:] The fragment |CtorTwo| is parameterised by the constructor |CtorTwo|, being the name of the constructor. We use the notation | <|| ctorname ||> | to denote this hypothesis.
+\item[A constructor:] The fragment |CtorTwo| is parameterised by the constructor |CtorTwo|, being the name of the constructor. We use the notation |CtorTwo ->> <|| ctorname ||> | to denote this function.
 
 \item[A data type:] In the first example the whole code is parameterised by the data type. One particular place where the parameterisation by data type shows up is |Eq DataName|. Here the text |DataName| is the name of the data type. Because this fragment is parameterised by the data type, if the name of the data type changes (to say |WritingImplement|), then the hypothesis would change appropriately.
 \end{description}
 
-\subsection{Maps}
+\subsection{The Map Pattern}
+
+The examples shown previously map values to constant-sized code fragments. But consider the pattern |CtorTwo x1 x2|, we require |n| variables, where |n| is the arity of the constructor. To solve this problem, when dealing with a list of fragments, if (1) any item has a function which is is correct on all fragments, and (2) their parameter values are sequential, then a generalised map is constructed. In the above example:
+
+\begin{code}
+[1 ->> x <| i |>, 2 ->> x <| i |>]
+\end{code}
+
+Picking either function, when applying it to the other parameter, we obtain the correct value. The parameters are clearly sequential. We can rewrite this fragment using a |MAP| as:
+
+\begin{code}
+2 ->> <| MAP [1..i] (x <| i |> ) |>
+\end{code}
+
+|MAP| takes two arguments, a range of items to use as the parameter, and an expression to apply to each. Within the second argument, |i| is bound to the number currently being operated over. The function is now parameterised by the highest number in the sequence. We can also have a |MAP| which operates over constructors, in which case the resultant |MAP| is parameterised by the entire data type.
+
+To give two examples of sequences which cannot be generalised to a |MAP|:
+
+\begin{code}
+[1 ->> x <| i |>, 3 ->> x <| i |>]
+[1 ->> x <| i |>, 2 ->> y <| i |>]
+\end{code}
+
+In the first the parameters are not sequential. In the second, no function applies to both fragments.
+
+\subsection{The Fold Pattern}
+\label{sec:fold}
+
+One common pattern in programming is the \textit{fold} \cite{hutton:fold}. Consider the |Eq| example from before. If we move to using prefix notation for |(&&)| and explicit bracketing we obtain:
+
+\begin{code}
+(CtorTwo x1 x2) == (CtorTwo y1 y2) = (&&) (x1 == y1) ((&&) (x2 == y2) True)
+ -- or, expressed as a fold
+(CtorTwo x1 x2) == (CtorTwo y1 y2) = foldr (&&) True [x1 == y1, x2 == y2]
+\end{code}
+
+This structure is not a list, and would not be found as a |MAP|. However, we can convert this function to a fold, recovering the list structure. A fold takes a list, and replaces each cons in the list by a function (i.e. |(&&)|) and the nil by a value (i.e. |True|). By automatically converting the code to use fold, a |MAP| is recovered. Using a |FOLDR| rule, the result is:
+
+\begin{code}
+2 ->> <| FOLDR (&&) True \? <| MAP [1..i] (x <| i |> == y <| i |>) |> |>
+\end{code}
+
+The |FOLDR| rule is simply a |foldr| function, but applied at generation time. The fold encoding explains the redundant |&& True| at the end -- in order for the base case (|True|) to share the same fold definition as above, we require a redundant conjunct. In the code generated for instances |&& True| is removed, using algebraic simplification.
 
 
+\subsection{Eliminating Number Parameters}
 
+Initially functions may be parameterised by the whole data type, constructors and numbers. The |MAP| rule converts functions parameterised on constructors to the whole data type, but leaves numbers parameterised by numbers. There is a final rule which is used to eliminate numbers, promotion into another parameter type. The idea is that a number is replaced with a constructor with a relationship to that number, taking the example of |x1 x2| from earlier, we can write any of:
 
-The fragment |CtorTwo x1 x2| is paramterised by the constructor |CtorTwo|, to give the name 
+\begin{code}
+2          ->> <| MAP [1..i          ] (x <| i |> ) |>
+CtorTwo    ->> <| MAP [1..ctorarity  ] (x <| i |> ) |>
+CtorTwo    ->> <| MAP [1..ctorindex  ] (x <| i |> ) |>
+CtorThree  ->> <| MAP [1..ctorarity  ] (x <| i |> ) |>
+\end{code}
 
-\subsection{Folds}
+Instead of parameterising by a number, we can parameterise by |CtorTwo|, and use its arity. The number 2 can be constructed in many ways: it is both the arity, and zero-based index of |CtorTwo|, and also the arity of |CtorThree|.
 
-\subsection{Composition}
-
-The fragment |CtorTwo x1 x2| is also parameterised by |CtorTwo|, in This parameterisation is responsible both for the name |CtorTwo|, and for the number of fields, namely two. If the constructor in question was |Pen|, then the hypothesis would generate |Pen x1|.
-
-
-
-This fact necessitates parameterising hypothesises by
-
-
-The central idea to the automatic inference of instance generators is that an instance generator is merely a set hypothesises, parameterised by a data type. The hypothesis specifies how, given a data type, an implementation would be generated. By splitting the task of finding a suitable hypothesis on the entire implementation, into the task of finding a hypothesis for a sub-part of the implementation, parameterised by a sub-part of the data type, they can be recombined.
-
-
- Any given instance can be specified
-
-
+The multiple ways that a number may be realised means that the generation of functions operates on a list of possible functions \cite{wadler:list_successes}. By using many possible functions, when applying the |MAP| rule, it is more likely that one of the functions will be applicable to all the elements of the list.
 
 \subsection{The Result}
 
-After all this work, the resultant infered thingy is:
+After all this work, the resultant function for the |Eq| example is:
 
 \begin{code}
 instance Eq \? <| dataname |> where
     <| MAP ctors (
-        (<| ctorname |> \? <| MAP fields (x <| index |> ) ) ==
-        (<| ctorname |> \? <| MAP fields (x <| index |> ) ) =
-        <| FOLDR fields (&&) True (x <| index |> == y <| index |> |>
-    |>
+        (<| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) ) ==
+        (<| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) ) =
+        <| FOLDR fields (&&) True \? <| MAP [1..i] (x <| i |> == y <| i |>) |> |>
+    ) |>
     _ == _ = False
 \end{code}
 
+Applying this function to |WritingImplement| will give us the instance we manually specified. Writing this function directly would pose a number of difficulties:
 
+\begin{enumerate}
+\item There is no language in which to write such a function. A library could be written facilitating this (and indeed, this has been done \cite{drift}), but it is merely an encoding of this form.
+\item Details such as the associativity of |(&&)| can be omitted from an example, but are required when expressing a |FOLDR|.
+\item There is no guarantee that this generator produces type-safe instances.
+\item The generated code would have to be tested, probably on several data types, to check it has the required behaviour.
+\item The complexity, compared to a single example, is much higher.
+\end{enumerate}
+
+
+\begin{comment}
 \section{Automatic Instance Generator Derivation}
 \label{sec:automatic_instances}
 
@@ -248,12 +294,12 @@ One common pattern in instance definitions is the \textit{fold} \cite{hutton:fol
 This structure is not a list, and would not be found by list induction. However, we can convert this function to a fold, recovering the list structure. A fold takes a list, and replaces each cons in the list by a function (i.e. |(&&)|) and the nil by a value (i.e. |True|). By automatically converting the code to use fold, the list induction is able to work.
 
 The fold encoding explains the redundant |&& True| at the end -- in order for the base case (|True|) to share the same fold definition as above, we require a redundant conjunct. In the code generated for instances |&& True| is removed, using algebraic simplification.
-
+\end{comment}
 
 \section{Limitations of Automatic Derivation}
 \label{sec:automatic_failure}
 
-Having defined a mechanism for inductive instances, it is useful to determine which instances can be automatically derived, and which must be written manually. Of the 24 instances provided by the Derive tool, 15 are expressed by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate:
+Having defined a mechanism for inductive instances, it is useful to determine which instances can be automatically derived, and which must be written manually. Of the 24 instances provided by the Derive tool \cite{derive}, 15 are expressed by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate:
 
 \begin{description}
 
@@ -278,19 +324,19 @@ The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and
 
 \begin{code}
 instance (Data alpha, Typeable alpha) => Data (DataName alpha) where
-    gfoldl k r (CtorZero         ) = r CtorZero
-    gfoldl k r (CtorOne   x1     ) = r CtorOne   `k` x1
-    gfoldl k r (CtorTwo   x1 x2  ) = r CtorTwo   `k` x1 `k` x2
-    gfoldl k r (CtorTwo'  x1 x2  ) = r CtorTwo'  `k` x1 `k` x2
+    gfoldl k r (CtorZero          ) = r CtorZero
+    gfoldl k r (CtorOne    x1     ) = r CtorOne    `k` x1
+    gfoldl k r (CtorTwo    x1 x2  ) = r CtorTwo    `k` x1 `k` x2
+    gfoldl k r (CtorThree  x1 x2  ) = r CtorThree  `k` x1 `k` x2
 \end{code}
 
 \subsection{The Serial class}
 
-The |Serial| class is used by SmallCheck \cite{smallcheck} to automatically perform enumerative testing. The definition relies on the arities of each constructor, and does not induct over the field names.
+The |Serial| class is used by SmallCheck \cite{smallcheck} to automatically perform enumerative testing. The definition relies on the arities of each constructor, and does not induct over the the components of a constructor.
 
 \begin{code}
 instance Serial alpha => Serial (DataName alpha) where
-    series = cons0 CtorZero \/ cons1 CtorOne  \/ cons2 CtorTwo  \/ cons2 CtorTwo'
+    series = cons0 CtorZero \/ cons1 CtorOne  \/ cons2 CtorTwo  \/ cons2 CtorThree
 \end{code}
 
 \section{Related Work}
@@ -317,5 +363,6 @@ Computers are ideally suited for applying repetitive patterns, but specifying th
 
 \bibliographystyle{plain}
 \bibliography{derive}
+
 
 \end{document}
