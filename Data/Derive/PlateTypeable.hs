@@ -33,16 +33,16 @@ plateTypeable' dat = [InstanceD (concat ([(map (\tdat -> (AppT (AppT (ConT (
     mkName "PlateAll")) tdat) (lK (dataName dat) (dataVars dat)))) (dataVars
     dat)),(map (\tdat -> (AppT (ConT (mkName "Typeable")) tdat)) (dataVars dat)
     )])) (head [(AppT (ConT (mkName "Uniplate")) (lK (dataName dat) (dataVars
-    dat)))])[(ValD (VarP (mkName "replaceChildren")) (NormalB (VarE (mkName
-    "replaceChildrenAll"))) [])],InstanceD (concat ([[(AppT (ConT (mkName
-    "Typeable")) (VarT (mkName "t")))],(map (\tdat -> (AppT (ConT (mkName
-    "Typeable")) tdat)) (dataVars dat)),[(AppT (ConT (mkName "Uniplate")) (VarT
-    (mkName "t")))],(map (\tdat -> (AppT (AppT (ConT (mkName "PlateAll")) tdat)
-    (VarT (mkName "t")))) (dataVars dat))])) (head [(AppT (AppT (ConT (mkName
-    "PlateAll")) (lK (dataName dat) (dataVars dat))) (VarT (mkName "t")))])[(
-    FunD (mkName "plateAll") ((map (\(ctorInd,ctor) -> (Clause [(ConP (mkName (
-    "" ++ ctorName ctor)) ((map (\field -> (VarP (mkName ("x" ++ show field))))
-    (id [1..ctorArity ctor]))++[]))] (NormalB (foldr1With (VarE (mkName "|+"))
-    ((map (\field -> (VarE (mkName ("x" ++ show field)))) (reverse [1..
-    ctorArity ctor]))++[(AppE (VarE (mkName "plate")) (ConE (mkName ("" ++
-    ctorName ctor))))]++[]))) [])) (id (zip [0..] (dataCtors dat))))++[]))]]
+    dat)))])[(ValD (VarP (mkName "uniplate")) (NormalB (VarE (mkName
+    "uniplateAll"))) [])],InstanceD (concat ([[(AppT (ConT (mkName "Typeable"))
+    (VarT (mkName "t")))],(map (\tdat -> (AppT (ConT (mkName "Typeable")) tdat)
+    ) (dataVars dat)),[(AppT (ConT (mkName "Uniplate")) (VarT (mkName "t")))],(
+    map (\tdat -> (AppT (AppT (ConT (mkName "PlateAll")) tdat) (VarT (mkName
+    "t")))) (dataVars dat))])) (head [(AppT (AppT (ConT (mkName "PlateAll")) (
+    lK (dataName dat) (dataVars dat))) (VarT (mkName "t")))])[(FunD (mkName
+    "plateAll") ((map (\(ctorInd,ctor) -> (Clause [(ConP (mkName ("" ++
+    ctorName ctor)) ((map (\field -> (VarP (mkName ("x" ++ show field)))) (id [
+    1..ctorArity ctor]))++[]))] (NormalB (foldr1With (VarE (mkName "|+")) ((map
+    (\field -> (VarE (mkName ("x" ++ show field)))) (reverse [1..ctorArity ctor
+    ]))++[(AppE (VarE (mkName "plate")) (ConE (mkName ("" ++ ctorName ctor))))]
+    ++[]))) [])) (id (zip [0..] (dataCtors dat))))++[]))]]
