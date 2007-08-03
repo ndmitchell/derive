@@ -26,9 +26,9 @@ showit ctr = case ctorFields ctr of [] -> norm
         flds f = (.::) (ssl (pname ++ " {") : fields f ++ [scl '}'])
 
         fields [] = []
-        fields fs = scl ' ' : concat (intersperse [ssl ", "] (map field (zip [0..] fs))) ++ [scl ' ']
+        fields fs = scl ' ' : concat (intersperse [ssl ", "] (map field (zip (ctv ctr 'x') fs))) ++ [scl ' ']
 
-        field (n,f) = [ ssl (f ++ " = ") , l2 "showsPrec" (lit (0::Integer)) (vrn 'x' n) ]
+        field (v,f) = [ ssl (f ++ " = ") , l2 "showsPrec" (lit (0::Integer)) v ]
 
         ssl = l1 "showString" . lit ; scl = l1 "showChar" . lit
 
