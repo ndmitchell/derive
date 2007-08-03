@@ -21,12 +21,19 @@ import Data.List
 makeFunctor :: Derivation
 makeFunctor = derivation derive "Functor"
 
-derive dat
+derive = deriveFunctor (Arg False 1) -- Dervive "Functor1", a.k.a. Functor
+
+deriveFunctor :: Arg -> DataDef -> [Dec]
+deriveFunctor arg dat
  | dataArity dat == 0 = []
- | otherwise          = generic_instance (classFor arg) dat [] [funN (fmapFor arg) body]
+ | otherwise          = [InstanceD ctx hed [funN (fmapFor arg) body]]
     where
         arg  = Arg False 1 -- Dervive "Functor1", a.k.a. Functor
         body = map (deriveFunctorCtor dat arg) (dataCtors dat)
+        vrs = vars 't' (dataArity dat)
+        (vrsBefore,(_:vrsAfter)) = splitAt (length vrs - position arg) vrs
+        hed = lK (classFor arg) (lK (dataName dat) vrsBefore : vrsAfter)
+        ctx = [] -- todo, see deriveFunctorTyApp
 
 -- | Derive Functor over a given argument number for a type
 --   return (derived function, required instances)
