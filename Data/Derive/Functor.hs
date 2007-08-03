@@ -68,23 +68,13 @@ deriveFunctorType i (VarT n)         -- a
   | co $ fmapPos i                          = error "tyvar used in covariant position"
   | otherwise                               = l0 "fun"
 
--- | Derive Functor for an application type, (T a b c)
+-- | Find all arguments to an application, then derive functor
 deriveFunctorApp :: DeriveInfo -> Type -> [Type] -> Exp
 deriveFunctorApp i (ForallT _ _ _) _  = error "forall not supported yet in Functor deriving"
 deriveFunctorApp i (AppT a b) args = deriveFunctorApp i a (b : args)
-deriveFunctorApp i (TupleT n) args -- tuple: (a,b,c)
-  | n /= length args    = error "incorrect number of arguments for tuple type constructor"
-  | otherwise           = deriveFunctorTuple i args
-deriveFunctorApp i (ConT n) args -- apparantly TupleT is not actually used, this hacks around that
-  | "(," `isPrefixOf` showName n = deriveFunctorTuple i args
 deriveFunctorApp i tycon args -- T a b c
-    = foldl (.:) (deriveFunctorType i tycon)
-                 (reverse  -- number in reverse, the last argument is fmap, the one before fmap2, etc.
-                   [ fmapAp (Arg False n) (deriveFunctorType i a)
-                   | (n,a) <- zip [1..] (reverse args)
-                   ]
-                 )
-       -- TODO: if tycon is a VarT, we need some kind of (Functor a) context on the instance
+  | isTupleT tycon = deriveFunctorTuple i args
+  | otherwise      = deriveFunctorTyApp i tycon args
 
 -- | Derive Functor for a tuple type (a,b,...)
 --   The result takes the form:
@@ -96,6 +86,16 @@ deriveFunctorTuple i args
                           (TupE [ AppE a (vr ("t" ++ show i))
                                 | (a,i) <- zip fArgs [1..] ])
   where fArgs = map (deriveFunctorType i) args
+
+-- | Derive Functor for the application type (T a b c)
+--   TODO: if tycon is a VarT, we need some kind of (Functor a) context on the instance
+deriveFunctorTyApp i tycon args
+    = foldl (.:) (deriveFunctorType i tycon)
+                 (reverse  -- number in reverse, the last argument is fmap, the one before fmap2, etc.
+                   [ fmapAp (Arg False n) (deriveFunctorType i a)
+                   | (n,a) <- zip [1..] (reverse args)
+                   ]
+                 )
 
 
 -- | Is a function the identity function?
