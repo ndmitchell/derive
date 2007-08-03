@@ -1,10 +1,13 @@
-DERIVE=../dist/build/derive/derive
+DERIVE=derive
 
-all: small big
+all: warn small big
+
+warn:
+	@echo make sure you have installed the derive you wish to test!
 
 small:
-	$(DERIVE) -mSmallInstancess -iSmall -iData.Generics -o Small.out.hs \
-		Small.hs
+	$(DERIVE) -mSmallInstancess -iSmall -iData.Generics -iData.Monoid \
+	        -o Small.out.hs Small.hs
 	diff -u Small.expected.hs Small.out.hs
 	ghc --make -c Small.out.hs
 
