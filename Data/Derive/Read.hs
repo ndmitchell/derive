@@ -13,21 +13,25 @@ import Data.Char
 makeRead :: Derivation
 makeRead = derivation read' "Read"
 
-read' dat = [instance_default "Read" dat [funN "readsPrec" [sclause [vr "p0", vr "r0"] body]]]
+read' dat = [instance_default "Read" dat [funN "readsPrec" [sclause [vr "p0", vr "r"] body]]]
     where
         body = (++::) [ readit ctr | ctr <- dataCtors dat ]
 
 readit ctr = case ctorFields ctr of [] -> norm
                                     fl -> flds fl
     where
-        norm = l2 "readParen" (vr "p0" >: lit (10::Integer))
-               (runComp (pName . foldr (.) id (map (pRead 11) (ctv ctr 'x'))) (ctp ctr 'x'))
+        norm = lK "readParen"
+               [vr "p0" >: lit (10::Integer),
+                "r0" ->: runComp (pName . foldr (.) id (map (pRead 11) (ctv ctr 'x'))) (ctp ctr 'x'),
+                l0 "r"]
 
-        flds f = l2 "readParen" false
-                 (runComp (pName . pLex "{" .
-                           foldr (.) id (intersperse (pLex ",")
-                                         (zipWith pField (ctv ctr 'x') f)) .
-                           pLex "}") (ctp ctr 'x'))
+        flds f = lK "readParen" 
+                 [false,
+                  "r0" ->: runComp (pName . pLex "{" .
+                                    foldr (.) id (intersperse (pLex ",")
+                                                  (zipWith pField (ctv ctr 'x') f)) .
+                                    pLex "}") (ctp ctr 'x'),
+                  l0 "r"]
 
         runComp fn ex = CompE $ fn (\k -> [ NoBindS (tup [ex, vrn 'r' k]) ]) 0
 
