@@ -1,3 +1,4 @@
+
 {-# OPTIONS_GHC -fth -cpp #-}
 
 -- | A pseudo derivation.  For each constructor of the data type, @Is@

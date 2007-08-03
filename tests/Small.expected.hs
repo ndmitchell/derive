@@ -56,6 +56,17 @@ instance (Data t1, Typeable t1) => Data (Expr t1)
           gfoldl k r (EAp x1 x2) = k (k (r EAp) x1) x2
           gfoldl k r (EVar x1) = k (r EVar) x1
 
+fromELambda (ELambda x1 x2) = (x1, x2)
+fromEAp (EAp x1 x2) = (x1, x2)
+fromEVar (EVar x1) = x1
+
+isELambda (ELambda {}) = True
+isELambda _ = False
+isEAp (EAp {}) = True
+isEAp _ = False
+isEVar (EVar {}) = True
+isEVar _ = False
+
 instance Eq Primary
     where (==) (Red) (Red) = True
           (==) (Green) (Green) = True
@@ -108,6 +119,17 @@ instance Data Primary
           gfoldl k r (Green) = r Green
           gfoldl k r (Blue) = r Blue
 
+fromRed (Red) = ()
+fromGreen (Green) = ()
+fromBlue (Blue) = ()
+
+isRed (Red {}) = True
+isRed _ = False
+isGreen (Green {}) = True
+isGreen _ = False
+isBlue (Blue {}) = True
+isBlue _ = False
+
 instance Eq t1 => Eq (BinTree t1)
     where (==) (Leaf) (Leaf) = True
           (==) (Branch x1 x2 x3) (Branch y1
@@ -154,6 +176,9 @@ instance (Data t1, Typeable t1) => Data (BinTree t1)
     where gfoldl k r (Leaf) = r Leaf
           gfoldl k r (Branch x1 x2 x3) = k (k (k (r Branch) x1) x2) x3
 
+fromLeaf (Leaf) = ()
+fromBranch (Branch x1 x2 x3) = (x1, x2, x3)
+
 instance Eq t1 => Eq (Id t1)
     where (==) (Id x1) (Id y1) = (==) x1 y1
           (==) _ _ = False
@@ -190,9 +215,64 @@ instance Typeable a => Typeable (Id a)
 instance (Data t1, Typeable t1) => Data (Id t1)
     where gfoldl k r (Id x1) = k (r Id) x1
 
-instance Functor (Id t1)
-    where fmap fun (Id a) = Id a
+instance Functor Id
+    where fmap fun (Id a) = Id (fun a)
 
 instance Monoid t1 => Monoid (Id t1)
     where mempty = Id mempty
           mappend (Id x1) (Id y1) = Id (mappend x1 y1)
+
+fromId (Id x1) = x1
+
+instance Eq t1 => Eq (Id2 t1)
+    where (==) (Id2 x1) (Id2 y1) = (==) x1 y1
+          (==) _ _ = False
+
+instance Ord t1 => Ord (Id2 t1)
+    where compare a b = check a b
+                      where check (Id2 x1) (Id2 y1) = compare x1 y1
+                            check a b = compare (tag a) (tag b)
+                            tag (Id2 {}) = 0
+
+instance Enum (Id2 t1)
+    where toEnum 0 = Id2{}
+          toEnum n = error ((++) "toEnum " ((++) (show n) ", not defined for Id2"))
+          fromEnum (Id2 {}) = 0
+
+instance Bounded t1 => Bounded (Id2 t1)
+    where minBound = Id2 minBound
+          maxBound = Id2 maxBound
+
+instance Read t1 => Read (Id2 t1)
+    where readsPrec p0 r = readParen False (\r0 -> [(Id2 x1,
+                                                     r6) | ("Id2", r1) <- lex r0,
+                                                           ("{", r2) <- lex r1,
+                                                           ("runId", r3) <- lex r2,
+                                                           ("=", r4) <- lex r3,
+                                                           (x1, r5) <- readsPrec 0 r4,
+                                                           ("}", r6) <- lex r5]) r
+
+instance Show t1 => Show (Id2 t1)
+    where showsPrec p (Id2 x1) = showString "Id2 {" . (showChar ' ' . (showString "runId = " . (showsPrec 0 x1 . (showChar ' ' . showChar '}'))))
+
+typename_Id2 = mkTyCon "Id2"
+instance Typeable1 Id2
+    where typeOf1 _ = mkTyConApp typename_Id2 []
+instance Typeable a => Typeable (Id2 a)
+    where typeOf = typeOfDefault
+
+instance (Data t1, Typeable t1) => Data (Id2 t1)
+    where gfoldl k r (Id2 x1) = k (r Id2) x1
+
+instance Functor Id2
+    where fmap fun (Id2 a) = Id2 (fun a)
+
+instance Monoid t1 => Monoid (Id2 t1)
+    where mempty = Id2 mempty
+          mappend (Id2 x1) (Id2 y1) = Id2 (mappend x1 y1)
+
+setRunId v x = x{runId = v}
+
+setRunId a0 b0 = Id2 a0
+
+fromId2 (Id2 x1) = x1
