@@ -17,12 +17,12 @@ test args bool pd lbi = do
     cur <- getCurrentDirectory
     setCurrentDirectory "tests"
     
-    b <- doesFileExist "Small.out"
-    when b $ removeFile "Small.out"
+    b <- doesFileExist "Small.out.hs"
+    when b $ removeFile "Small.out.hs"
     i <- system $ "derive -mSmallInstancess -iSmall -iData.Generics -iData.Monoid " ++
                   "-o Small.out.hs Small.hs"
 
-    b <- doesFileExist "Small.out"
+    b <- doesFileExist "Small.out.hs"
     if b then system "diff -u Small.expected.hs Small.out.hs" >> return ()
          else putStrLn "Error: Failed to generate the output file"
     
