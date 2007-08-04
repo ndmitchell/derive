@@ -125,13 +125,14 @@ dropAppend xs = f 0 xs
 
 
 mainFile flags file = do
-    (fileflags,modname,datas,reqs) <- parseFile flags file
+    (fileflags,pragmas,modname,datas,reqs) <- parseFile flags file
     let tmpfile = "Temp.hs"
     
         devs = ["'\\n': $( _derive_string_instance make" ++ cls ++ " ''" ++ ctor ++ " )"
                | (ctor,cls) <- reqs]
 
         hscode x = "{-# OPTIONS_GHC -fth -fglasgow-exts -w #-}\n" ++
+                   unlines pragmas ++
                    "module " ++ modname ++ " where\n" ++
                    "import Data.DeriveTH\n" ++
                    concat [ "import Data.Derive." ++ cls ++ "\n" | (_, cls) <- reqs ] ++
@@ -186,16 +187,23 @@ mainFile flags file = do
 -- group lines so every line starts at column 1
 -- look for newtype, data etc.
 -- look for deriving
-parseFile :: [Flag] -> FilePath -> IO ([Flag], String, String, [(String,String)])
+parseFile :: [Flag] -> FilePath -> IO ([Flag], [String], String, String, [(String,String)])
 parseFile flags file = do
         src <- liftM lines $ readFile file
         options <- if NoOpts `elem` flags then return [] else parseOptions src
+        pragmas <- return $ parsePragmas src
         modname <- parseModname src
         let deriv = concat [x | Derive x <- flags ++ options]
         (decl,req) <- return $ unzip $ concatMap (checkData deriv) $ joinLines $
                                map dropComments $ filter (not . isBlank) src
-        return (options, modname, unlines decl, concat req)
+        return (options, pragmas, modname, unlines decl, concat req)
     where
+        parsePragmas (x:xs)
+            | "{-#" `isPrefixOf` x2 && "#-}" `isSuffixOf` x2 = x2 : parsePragmas xs
+            | null x2 = parsePragmas xs
+            where x2 = reverse $ dropWhile isSpace $ reverse $ dropWhile isSpace x
+        parsePragmas _ = []
+
         parseOptions (x:xs)
             | "{-# OPTIONS_DERIVE " `isPrefixOf` x = do
                     a <- readOptions $ takeWhile (/= '#') $ drop 19 x
