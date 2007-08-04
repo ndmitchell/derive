@@ -20,6 +20,7 @@ Extra-Source-Files:
 Exposed-Modules:
     Data.DeriveGuess
     Data.DeriveTH
+    Data.DeriveTraversal
     Data.Derive.All
     Data.Derive.Arbitrary
     Data.Derive.Arbitrary2
