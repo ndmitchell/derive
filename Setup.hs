@@ -11,7 +11,7 @@ import Control.Monad
 main = defaultMainWithHooks defaultUserHooks{runTests=test}
 
 
-test :: Args -> Bool -> PackageDescription -> LocalBuildInfo -> IO ()
+test :: CabalBreaksTheAPI_Grr grr => Args -> Bool -> PackageDescription -> LocalBuildInfo -> IO grr
 test args bool pd lbi = do
     putStrLn "Make sure you have installed the derive you wish to test!"
     cur <- getCurrentDirectory
@@ -30,4 +30,14 @@ test args bool pd lbi = do
     -- it would be nice if we made the generated code compile without warnings
     system "ghc --make -c -w Small.out.hs"
     setCurrentDirectory cur
+    return grr
 
+
+class CabalBreaksTheAPI_Grr a where
+    grr :: a
+
+instance CabalBreaksTheAPI_Grr () where
+    grr = ()
+
+instance CabalBreaksTheAPI_Grr ExitCode where
+    grr = ExitSuccess
