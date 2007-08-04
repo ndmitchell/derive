@@ -10,6 +10,7 @@ import Data.Derive.Data             as D
 import Data.Derive.Enum             as D
 import Data.Derive.EnumCyclic       as D
 import Data.Derive.Eq               as D
+import Data.Derive.Foldable         as D
 import Data.Derive.From             as D
 import Data.Derive.Functor          as D
 import Data.Derive.Has              as D
@@ -25,6 +26,7 @@ import Data.Derive.Ref              as D
 import Data.Derive.Serial           as D
 import Data.Derive.Set              as D
 import Data.Derive.Show             as D
+import Data.Derive.Traversable      as D
 import Data.Derive.TTypeable        as D
 import Data.Derive.Typeable         as D
 import Data.Derive.Uniplate         as D

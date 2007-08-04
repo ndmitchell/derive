@@ -31,6 +31,7 @@ Exposed-Modules:
     Data.Derive.EnumCyclic
     Data.Derive.Eq
     Data.Derive.From
+    Data.Derive.Foldable
     Data.Derive.Functor
     Data.Derive.Has
     Data.Derive.Is
@@ -45,6 +46,7 @@ Exposed-Modules:
     Data.Derive.Serial
     Data.Derive.Set
     Data.Derive.Show
+    Data.Derive.Traversable
     Data.Derive.TTypeable
     Data.Derive.Typeable
     Data.Derive.Uniplate
