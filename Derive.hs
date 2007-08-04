@@ -135,7 +135,7 @@ mainFile flags file = do
                    unlines pragmas ++
                    "module " ++ modname ++ " where\n" ++
                    "import Data.DeriveTH\n" ++
-                   concat [ "import Data.Derive." ++ cls ++ "\n" | (_, cls) <- reqs ] ++
+                   "import Data.Derive.All\n" ++
                    datas ++ "\n" ++
                    "main = writeFile " ++ show x ++ " $\n" ++
                    "    unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
