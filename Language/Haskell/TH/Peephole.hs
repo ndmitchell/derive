@@ -109,6 +109,12 @@ peep (AppE (AppE bind (AppE ret x)) y)
 peep (InfixE (Just (AppE ret x)) bind (Just y))
     | bind ~= ">>=" && ret ~= "return" = peep $ AppE y x
 
+peep (InfixE (Just (AppE pure x)) ap y)
+    | ap ~= "<*>" && pure ~= "pure" = peep $ InfixE (Just x) (l0 "<$>") y
+
+peep (InfixE (Just x) fmap (Just (AppE pure y)))
+    | fmap ~= "<$>" && pure ~= "pure" = peep $ AppE pure (peep $ AppE x y)
+
 peep (AppE append (ListE [x]))
     | append ~= "++" = peep $ AppE (l0 ":") x
 
@@ -117,6 +123,17 @@ peep (InfixE (Just (ListE [x])) append y)
 
 peep (InfixE (Just x) cons (Just (ListE xs)))
     | cons ~= ":" = peep $ ListE (x:xs)
+
+peep (AppE (AppE (AppE comp f) g) x)
+    | comp ~= "."  = peep $ AppE f (peep $ AppE g x)
+peep (AppE (InfixE (Just f) comp (Just g)) x)
+    | comp ~= "."  = peep $ AppE f (peep $ AppE g x)
+
+peep (AppE (AppE (AppE flip f) x) y)
+    | flip ~= "flip"  = peep $ AppE (AppE f y) x
+
+peep (AppE (InfixE (Just x) op Nothing) y) = peep $ InfixE (Just x) op (Just y)
+peep (AppE (InfixE Nothing op (Just y)) x) = peep $ InfixE (Just x) op (Just y)
 
 peep (AppE f (LamE x (ListE [y])))
     | f ~= "concatMap" = peep $ AppE (l0 "map") (peep $ LamE x y)
@@ -135,6 +152,11 @@ peep (CaseE (LitE x) (Match (LitP y) (NormalB z) [] : _))
     | x == y = z
 
 peep (TupE [x]) = x
+
+peep (AppE (LamE [pat] x) e) = CaseE e [Match pat (NormalB x) []]
+
+peep (AppE (CaseE e [Match p (NormalB x) []]) y)
+       = CaseE e [Match p (NormalB $ peep $ AppE x y) []]
 
 -- allow easy flip to tracing mode
 peep x | traceMode = trace (show x) x
