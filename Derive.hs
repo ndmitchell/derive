@@ -142,7 +142,7 @@ mainFile flags file = do
     -- note: Wrong on Hugs on Windows
     tmpdir <- getTemporaryDirectory
     b <- doesDirectoryExist tmpdir
-    tmpdir <- return $ if b then tmpdir else ""
+    tmpdir <- return $ if b && KeepTemp `notElem` flags then tmpdir else ""
     
     (hsfile, hshndl) <- openTempFileLocal tmpdir "Temp.hs"
     (txfile, txhndl) <- openTempFileLocal tmpdir "Temp.txt"
