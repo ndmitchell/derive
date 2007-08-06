@@ -216,6 +216,7 @@ instance Guess a => Guess [a] where
                     domain = if ctorEnv then [0..3] else [1..maxField]
                     getDomain (Ctor i) = take 2 [1..i]
                     getDomain None = [0..3]
+                    getDomain _ = []
                     strDomain = if ctorEnv then "(zip [0..] (dataCtors dat))" else "[1..ctorArity ctor]"
                     
                     construct = if ctorEnv then Ctor else Field
