@@ -151,6 +151,9 @@ peep (AppE (AppE sq o@(AppE rnf x)) (TupE []))
 peep (CaseE (LitE x) (Match (LitP y) (NormalB z) [] : _))
     | x == y = z
 
+peep (AppE len (ListE xs))
+    | len ~= "length" = LitE $ IntegerL $ toInteger $ length xs
+
 peep (TupE [x]) = x
 
 peep (AppE (LamE [pat] x) e) = CaseE e [Match pat (NormalB x) []]
