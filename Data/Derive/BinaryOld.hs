@@ -36,7 +36,7 @@ example = (,) "BinaryOld" [d|
                 useTag = length [CtorZero{}, CtorOne{}, CtorTwo{}, CtorTwo'{}] > 1
 
         get bh = do
-            h <- if useTag then getByte bh else 0
+            h <- if useTag then getByte bh else return 0
             case h of
                 0 -> do
                     return CtorZero
@@ -78,16 +78,16 @@ binaryOld' dat = [InstanceD (concat ([(map (\tdat -> (AppT (ConT (mkName
     (zip [0..] (dataCtors dat))))++[]))),(LitE (IntegerL 1))])) [])])]),(FunD (
     mkName "get") [(Clause [(VarP (mkName "bh"))] (NormalB (DoE [(BindS (VarP (
     mkName "h")) (CondE (VarE (mkName "useTag")) (AppE (VarE (mkName "getByte")
-    ) (VarE (mkName "bh"))) (LitE (IntegerL 0)))),(NoBindS (CaseE (VarE (mkName
-    "h")) ((map (\(ctorInd,ctor) -> (Match (LitP (IntegerL ctorInd)) (NormalB (
-    DoE ((map (\field -> (BindS (VarP (mkName ("x" ++ show field))) (AppE (VarE
-    (mkName "get")) (VarE (mkName "bh"))))) (id [1..ctorArity ctor]))++[(
-    NoBindS (AppE (VarE (mkName "return")) (applyWith (ConE (mkName ("" ++
-    ctorName ctor))) ((map (\field -> (VarE (mkName ("x" ++ show field)))) (id
-    [1..ctorArity ctor]))++[]))))]++[]))) [])) (id (zip [0..] (dataCtors dat)))
-    )++[(Match WildP (NormalB (AppE (VarE (mkName "fail")) (LitE (StringL
-    "invalid binary data found")))) [])]++[])))])) [(ValD (VarP (mkName
-    "useTag")) (NormalB (applyWith (VarE (mkName ">")) [(AppE (VarE (mkName
-    "length")) (ListE ((map (\(ctorInd,ctor) -> ((flip RecConE []) (mkName (""
-    ++ ctorName ctor)))) (id (zip [0..] (dataCtors dat))))++[]))),(LitE (
-    IntegerL 1))])) [])])])]]
+    ) (VarE (mkName "bh"))) (AppE (VarE (mkName "return")) (LitE (IntegerL 0)))
+    )),(NoBindS (CaseE (VarE (mkName "h")) ((map (\(ctorInd,ctor) -> (Match (
+    LitP (IntegerL ctorInd)) (NormalB (DoE ((map (\field -> (BindS (VarP (
+    mkName ("x" ++ show field))) (AppE (VarE (mkName "get")) (VarE (mkName "bh"
+    ))))) (id [1..ctorArity ctor]))++[(NoBindS (AppE (VarE (mkName "return")) (
+    applyWith (ConE (mkName ("" ++ ctorName ctor))) ((map (\field -> (VarE (
+    mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++[]))))]++[]))) [])
+    ) (id (zip [0..] (dataCtors dat))))++[(Match WildP (NormalB (AppE (VarE (
+    mkName "fail")) (LitE (StringL "invalid binary data found")))) [])]++[])))]
+    )) [(ValD (VarP (mkName "useTag")) (NormalB (applyWith (VarE (mkName ">"))
+    [(AppE (VarE (mkName "length")) (ListE ((map (\(ctorInd,ctor) -> ((flip
+    RecConE []) (mkName ("" ++ ctorName ctor)))) (id (zip [0..] (dataCtors dat)
+    )))++[]))),(LitE (IntegerL 1))])) [])])])]]
