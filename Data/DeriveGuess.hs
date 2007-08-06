@@ -50,11 +50,16 @@ widthify xs = g 80 (f xs)
 -- uniquifiers and changing applications and tuplings into a standard
 -- form.
 unQ :: [Dec] -> [Dec]
-unQ x = everywhere (mkT g) $ everywhere (mkT f) $ map normData x
+unQ x = everywhere (mkT g) $ everywhere fAny $ map normData x
     where
+        fAny :: (Typeable a, Data a) => a -> a
+        fAny = mkT fE `extT` fP
+        fE (VarE x) = VarE (f x); fE x = x
+        fP (VarP x) = VarP (f x); fP x = x
+
         -- | Remove_0 evil_1 ghc_2 name_3 uniquifiers_4
         f :: Name -> Name
-        f name = if match s then mkName $ dropUnder s else name
+        f name = if not ("_" `isSuffixOf` s) && match s then mkName $ dropUnder s else name
             where
                 s = show name
                 match = isPrefixOf "_" . dropWhile isDigit . reverse
