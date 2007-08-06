@@ -26,6 +26,7 @@ Exposed-Modules:
     Data.Derive.Arbitrary2
     Data.Derive.Binary
     Data.Derive.BinaryDefer
+    Data.Derive.BinaryOld
     Data.Derive.Bounded
     Data.Derive.Data
     Data.Derive.Enum
