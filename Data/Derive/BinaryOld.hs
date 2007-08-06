@@ -63,15 +63,15 @@ makeBinaryOld :: Derivation
 makeBinaryOld = derivation binaryOld' "BinaryOld"
 binaryOld' dat = [InstanceD (concat ([(map (\tdat -> (AppT (ConT (mkName
     "Binary")) tdat)) (dataVars dat))])) (head [(AppT (ConT (mkName "Binary"))
-    (lK (dataName dat) (dataVars dat)))])[(FunD (mkName "put") [(Clause [(VarP
+    (lK (dataName dat) (dataVars dat)))])[(FunD (mkName "put_") [(Clause [(VarP
     (mkName "bh")),(VarP (mkName "x"))] (NormalB (CaseE (VarE (mkName "x")) ((
     map (\(ctorInd,ctor) -> (Match (ConP (mkName ("" ++ ctorName ctor)) ((map (
     \field -> (VarP (mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++[
     ])) (NormalB (DoE ([(NoBindS (CondE (VarE (mkName "useTag")) (applyWith (
     VarE (mkName "putByte")) [(VarE (mkName "bh")),(LitE (IntegerL ctorInd))])
     (AppE (VarE (mkName "return")) (TupE []))))]++(map (\field -> (NoBindS (
-    applyWith (VarE (mkName "put")) [(VarE (mkName "bh")),(VarE (mkName ("x" ++
-    show field)))]))) (id [1..ctorArity ctor]))++[]))) [])) (id (zip [0..] (
+    applyWith (VarE (mkName "put_")) [(VarE (mkName "bh")),(VarE (mkName ("x"
+    ++ show field)))]))) (id [1..ctorArity ctor]))++[]))) [])) (id (zip [0..] (
     dataCtors dat))))++[]))) [(ValD (VarP (mkName "useTag")) (NormalB (
     applyWith (VarE (mkName ">")) [(AppE (VarE (mkName "length")) (ListE ((map
     (\(ctorInd,ctor) -> ((flip RecConE []) (mkName ("" ++ ctorName ctor)))) (id
