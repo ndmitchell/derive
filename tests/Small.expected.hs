@@ -1,4 +1,4 @@
-module SmallInstancess where
+module SmallInstances where
 import Small
 import Data.Generics
 import Data.Monoid
