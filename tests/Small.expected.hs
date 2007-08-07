@@ -216,7 +216,7 @@ instance (Data t1, Typeable t1) => Data (Id t1)
     where gfoldl k r (Id x1) = k (r Id) x1
 
 instance Functor Id
-    where fmap fun (Id a) = Id (fun a)
+    where fmap f (Id a1) = Id (f a1)
 
 instance Monoid t1 => Monoid (Id t1)
     where mempty = Id mempty
@@ -265,7 +265,7 @@ instance (Data t1, Typeable t1) => Data (Id2 t1)
     where gfoldl k r (Id2 x1) = k (r Id2) x1
 
 instance Functor Id2
-    where fmap fun (Id2 a) = Id2 (fun a)
+    where fmap f (Id2 a1) = Id2 (f a1)
 
 instance Monoid t1 => Monoid (Id2 t1)
     where mempty = Id2 mempty
