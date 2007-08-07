@@ -1,6 +1,6 @@
 DERIVE=derive
 
-all: warn small big
+all: warn small quickcheck
 
 warn:
 	@echo make sure you have installed the derive you wish to test!
@@ -11,5 +11,7 @@ small:
 	diff -u Small.expected.hs Small.out.hs
 	ghc --make -c Small.out.hs
 
-big:
-	true
+quickcheck:
+	$(DERIVE) -mQuickCheckInstances -iQuickCheck -iTest.QuickCheck \
+	        -o QuickCheck.out.hs QuickCheck.hs
+	diff -u QuickCheck.expected.hs QuickCheck.out.hs
