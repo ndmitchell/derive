@@ -31,14 +31,14 @@ This paper describes a solution: given a single example of the generic function 
 
 \section{Introduction}
 
-Haskell \cite{haskell} is a modern functional programming language. In Haskell a generic function can be defined using a type class \cite{wadler:type_classes} (the |class| keyword), and implementations can be provided for specific types (the |instance| keyword). Generic equality is defined by the |Eq| class:
+Haskell \cite{haskell} is a modern functional programming language. In Haskell a generic function can be defined using a type class \cite{wadler:type_classes} (using the |class| keyword), and implementations can be provided for specific types (using the |instance| keyword). Generic equality is defined by the |Eq| class:
 
 \begin{code}
 class Eq alpha where
     (==) :: alpha -> alpha -> Bool
 \end{code}
 
-The |Eq| class has a member |(==)|. All types which provide an |Eq| instance have the |(==)| operator available. We can define a Haskell data type, along with an instance for |Eq|, as follows:
+The |Eq| class has a member |(==)|. All types that provide an |Eq| instance have the |(==)| operator available. We can define a Haskell data type, along with an instance for |Eq|, as follows:
 
 \begin{code}
 data WritingImplement  =  Pencil       -- a pencil
@@ -50,9 +50,9 @@ instance Eq WritingImplement where
     _              == _              = False
 \end{code}
 
-The data type we introduce is |WritingImplement|. A value of this type is either the constructor |Pencil|, or the constructor |Pen| with a colour field. We can define an |Eq| instance as above. The first line says that any two |Pencil| values are equal. The second line says that for two |Pen| values to be equal, their fields must be equal. The final line says that any remaining pairs of values are not equal. Any instance of |Eq| follows naturally from the data structure: for two values to be equal they must have the same constructor, and the their fields must be equal.
+The data type we introduce is |WritingImplement|. A |WritingImplement| is either a pencil, or a pen with a colour. |Pencil| and |Pen| are referred to as data constructors. The first line of the |Eq| instance says that any two |Pencil| values are equal. The second line says that for two |Pen| values to be equal, their colour fields must be equal. The final line says that any remaining pairs of values are not equal. Any instance of |Eq| follows naturally from the data structure: for two values to be equal they must have the same constructor, and the their fields must be equal.
 
-Writing an |Eq| instance for one data type is not an undue burden. However, as the complexity and number of data types increases, so does the effort required. The solution is to express the relationship between a data type and its instance once, which we call an \textit{instance generator}. In standard tools such as DrIFT \cite{drift}, the author of an instance generator must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is a complex process.
+Writing an |Eq| instance for one data type is simple. However, as the complexity and number of data types increases, so does the effort required. The standard solution is to express the \textit{relationship} between any data type and the instance that corresponds to it, which we call an \textit{instance generator}. In standard tools such as DrIFT \cite{drift}, the author of an instance generator must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is not as straightforward as one might hope.
 
 \begin{figure}[tbp]
 \begin{code}
@@ -65,7 +65,7 @@ data DataName  =  CtorZero
 \label{fig:dataname}
 \end{figure}
 
-Using the techniques described in this paper, instance generators can be automatically inferred from a single example instance. To define \textit{all} |Eq| instances, an example must be given on the provided |DataName| type (see Figure \ref{fig:dataname}):
+Using the techniques described in this paper, instance generators can often be automatically inferred from a single example instance. To define \textit{all} |Eq| instances, an example must be given on the provided |DataName| type (see Figure \ref{fig:dataname}):
 
 \begin{code}
 instance Eq DataName where
@@ -76,7 +76,7 @@ instance Eq DataName where
     _                     == _                     = False
 \end{code}
 
-This paper contributes a practical method for inferring a relationship between two pieces of program code, without resorting to search. In particular, the notion that the relationship is \textit{parameterised} is central.
+This paper contributes a practical method for inferring a relationship between two pieces of program code, without resorting to unguided search.
 
 \subsection{Roadmap}
 
@@ -113,7 +113,10 @@ We have integrated automatic derivation of an instance generator, following the 
 \section{The Method}
 \label{sec:automatic_instances}
 
-The central idea of automatic inference of instance generators is that an instance generator is merely a function from data types to code fragments. By applying a specific data type to the function, the appropriate code will be generated. In order to infer generation functions in a practical way, it is necessary infer a function on each fragment of code separately, then combine them.
+The central idea of automatic inference of instance generators is that an instance generator is merely a function from data types to code fragments. By applying the instance generator function to a specific data type, the appropriate code will be generated. In order to infer generation functions in a practical way, it is useful to first infer a generating function on expressions 
+
+
+In order to infer generation functions in a practical way, it is necessary infer a function on each fragment of code separately, then combine them.
 
 \subsection{Parameter types}
 
