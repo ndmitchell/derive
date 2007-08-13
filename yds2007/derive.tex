@@ -113,21 +113,18 @@ We have integrated automatic derivation of an instance generator, following the 
 \section{The Method}
 \label{sec:automatic_instances}
 
-The central idea of automatic inference of instance generators is that an instance generator is merely a function from data types to code fragments. By applying the instance generator function to a specific data type, the appropriate code will be generated. In order to infer generation functions in a practical way, it is useful to first infer a generating function on expressions 
+The central idea of automatic inference of instance generators is that an instance generator is a function from a data type |_D|, to a piece of code |_C|, namely |gen :: _D -> _C|. By applying |gen| to a specific data type, the appropriate code will be generated.
 
+\subsection{Data Type Fragments}
 
-In order to infer generation functions in a practical way, it is necessary infer a function on each fragment of code separately, then combine them.
-
-\subsection{Parameter types}
-
-The instance generator is parameterised by a data type. Smaller fragments of the code may be parameterised by constructors, numbers, or have no parameter. We outline the types of parameter, along with examples of the fragments which are assigned that parameter.
+Rather than infer the entire |gen| function in one step, we instead infer many functions from |_D| to each element of |_C|'s abstract syntax tree, then combine them to form |gen|. Each smaller function may depend only on some fragment of the data type -- for example one particular line may depend on one particular data constructor, rather than the entire data type. A fragment of a data type may be one of the following:
 
 \begin{description}
-\item[A constant:] A fragment of the implementation can be a constant, meaning that in all cases it will generate the same value. In the original example things such as |True|, |instance|, |(==)|, |(&&)| etc. are constant. Anything which does not have an alternative parameterisable function is assumed to be constant.
+\item[A constant:] A node of the abstract syntax tree can be a constant, meaning that in all cases it will generate the same value. In the original example things such as |True|, |(==)|, |(&&)| etc. are constant. Anything which does not have an alternative generation function is assumed to be constant.
 
-\item[A number:] The fragment |x1| is parameterised by the number |1|, with the hypothesis that the result is simply the number. We use the notation |1 ->> x <|| i ||> | to denote the function, where |i| is the parameterised number, and |1| is the parameter. Any detected number is either a parameterised value, or a constant.
+\item[A number:] The code |x1| is parameterised by the number |1|, with the hypothesis that the result is simply the number. We use the notation |1 ->> x <|| i ||> | to denote the function, where |i| is the parameterised number, and |1| is the parameter. Any detected number is either a parameterised value, or a constant.
 
-\item[A constructor:] The fragment |CtorTwo| is parameterised by the constructor |CtorTwo|, being the name of the constructor. We use the notation |CtorTwo ->> <|| ctorname ||> | to denote this function.
+\item[A constructor:] The code |CtorTwo| is parameterised by the constructor |CtorTwo|, being the name of the constructor. We use the notation |CtorTwo ->> <|| ctorname ||> | to denote this function.
 
 \item[A data type:] In the first example the whole code is parameterised by the data type. One particular place parameterised directly on the data type is |Eq DataName|, which becomes |DataName ->> Eq <|| dataname ||>|. If the name of the data type changes (to say |WritingImplement|), then the function would generate |Eq WritingImplement|.
 \end{description}
@@ -135,7 +132,7 @@ The instance generator is parameterised by a data type. Smaller fragments of the
 \subsection{The Map Pattern}
 \label{sec:induction}
 
-The examples shown previously map values to constant-sized code fragments. But consider the pattern |CtorTwo x1 x2|, we require |n| variables, where |n| is the arity of the constructor. To solve this problem, we can construct a generalised map from a list of fragments. This construction requires two conditions: (1) any item has a function which is is correct on all fragments; (2) their parameter values are sequential.
+The examples shown previously map values to fixed-sized portions of the abstract syntax tree. But consider the pattern |CtorTwo x1 x2|, we require |n| variables, where |n| is the arity of the constructor. To solve this problem, we can construct a generalised map from a list of fragments. This construction requires two conditions: (1) any item has a function which is correct on all fragments; (2) their parameter values are sequential -- either consecutive integers or constructors in their definition order.
 
 \begin{code}
 [1 ->> x <| i |>, 2 ->> x <| i |>]
@@ -202,7 +199,7 @@ After all this work, the resultant function for the |Eq| example is:
 instance Eq \? <| dataname |> where
     <| MAP ctors (
         (<| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) ) ==
-        (<| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) ) =
+        (<| ctorname |> \? <| MAP [1..ctorarity] (y <| i |> ) ) =
         <| FOLDR (&&) True \? <| MAP [1..ctorarity] (x <| i |> == y <| i |>) |> |>
     ) |>
     _ == _ = False
@@ -311,7 +308,7 @@ Having defined a mechanism for inductive instances, it is useful to determine wh
 
 \item[Typebased definitions:] The |Monoid| class requires items of the same type to be processed using |mappend|, but items of a different type use |mempty|. Automatic derivation has no notion of type-specific behaviour.
 
-\item [Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour.
+\item [Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |DataName|, record definitions could be derived, but this change would increase the complexity of all other example instances.
 
 \end{description}
 
@@ -367,7 +364,7 @@ Computers are ideally suited for applying repetitive patterns, but specifying th
 
 \paragraph{Acknowledgements}
 
-Thanks to Matt Naylor for helpful suggestions on the presentation of this work. Thanks to Stefan O'Rear for work on the Derive tool.
+Thanks to Matt Naylor and Chris Smith for helpful suggestions on the presentation of this work. Thanks to Stefan O'Rear for work on the Derive tool.
 
 \bibliographystyle{plain}
 \bibliography{derive}
