@@ -56,10 +56,10 @@ Writing an |Eq| instance for one data type is simple. However, as the complexity
 
 \begin{figure}[tbp]
 \begin{code}
-data DataName  =  CtorZero
-               |  CtorOne    Any
-               |  CtorTwo    Any  Any
-               |  CtorThree  Any  Any
+data DataName  =  First
+               |  Second  Any
+               |  Third   Any  Any
+               |  Fourth  Any  Any
 \end{code}
 \caption{The |DataName| data type.}
 \label{fig:dataname}
@@ -69,10 +69,10 @@ Using the techniques described in this paper, instance generators can often be a
 
 \begin{code}
 instance Eq DataName where
-    (CtorZero          )  == (CtorZero          )  = True
-    (CtorOne    x1     )  == (CtorOne    y1     )  = x1 == y1 && True
-    (CtorTwo    x1 x2  )  == (CtorTwo    y1 y2  )  = x1 == y1 && x2 == y2 && True
-    (CtorThree  x1 x2  )  == (CtorThree  y1 y2  )  = x1 == y1 && x2 == y2 && True
+    (First          )  == (First          )  = True
+    (Second  x1     )  == (Second  y1     )  = x1 == y1 && True
+    (Third   x1 x2  )  == (Third   y1 y2  )  = x1 == y1 && x2 == y2 && True
+    (Fourth  x1 x2  )  == (Fourth  y1 y2  )  = x1 == y1 && x2 == y2 && True
     _                     == _                     = False
 \end{code}
 
@@ -124,7 +124,7 @@ Rather than infer the entire |gen| function in one step, we instead infer many f
 
 \item[A number:] The code |x1| is parameterised by the number |1|, with the hypothesis that the result is simply the number. We use the notation |1 ->> x <|| i ||> | to denote the function, where |i| is the parameterised number, and |1| is the parameter. Any detected number is either a parameterised value, or a constant.
 
-\item[A constructor:] The code |CtorTwo| is parameterised by the constructor |CtorTwo|, being the name of the constructor. We use the notation |CtorTwo ->> <|| ctorname ||> | to denote this function.
+\item[A constructor:] The code |Third| is parameterised by the constructor |Third|, being the name of the constructor. We use the notation |Third ->> <|| ctorname ||> | to denote this function.
 
 \item[A data type:] In the first example the whole code is parameterised by the data type. One particular place parameterised directly on the data type is |Eq DataName|, which becomes |DataName ->> Eq <|| dataname ||>|. If the name of the data type changes (to say |WritingImplement|), then the function would generate |Eq WritingImplement|.
 \end{description}
@@ -132,7 +132,7 @@ Rather than infer the entire |gen| function in one step, we instead infer many f
 \subsection{The Map Pattern}
 \label{sec:induction}
 
-The examples shown previously map values to fixed-sized portions of the abstract syntax tree. But consider the pattern |CtorTwo x1 x2|, we require |n| variables, where |n| is the arity of the constructor. To solve this problem, we can construct a generalised map from a list of fragments. This construction requires two conditions: (1) any item has a function which is correct on all fragments; (2) their parameter values are sequential -- either consecutive integers or constructors in their definition order.
+The examples shown previously map values to fixed-sized portions of the abstract syntax tree. But consider the pattern |Third x1 x2|, we require |n| variables, where |n| is the arity of the constructor. To solve this problem, we can construct a generalised map from a list of fragments. This construction requires two conditions: (1) any item has a function which is correct on all fragments; (2) their parameter values are sequential -- either consecutive integers or constructors in their definition order.
 
 \begin{code}
 [1 ->> x <| i |>, 2 ->> x <| i |>]
@@ -164,9 +164,9 @@ The |MAP| pattern provides the key power to generalising an example from one spe
 One common pattern in programming is the \textit{fold} \cite{hutton:fold}. Consider the |Eq| example from before. If we move to using prefix notation for |(&&)| and explicit bracketing we obtain:
 
 \begin{code}
-(CtorTwo x1 x2) == (CtorTwo y1 y2) = (&&) (x1 == y1) ((&&) (x2 == y2) True)
+(Third x1 x2) == (Third y1 y2) = (&&) (x1 == y1) ((&&) (x2 == y2) True)
  -- or, expressed as a fold
-(CtorTwo x1 x2) == (CtorTwo y1 y2) = foldr (&&) True [x1 == y1, x2 == y2]
+(Third x1 x2) == (Third y1 y2) = foldr (&&) True [x1 == y1, x2 == y2]
 \end{code}
 
 This structure is not a list, and would not be found as a |MAP|. However, we can convert this function to a fold, recovering the list structure. A fold takes a list, and replaces each cons in the list by a function (i.e. |(&&)|) and the nil by a value (i.e. |True|). By automatically converting the code to use fold, a |MAP| is recovered. Using a |FOLDR| rule, the result is:
@@ -183,13 +183,13 @@ The |FOLDR| rule is simply a |foldr| function, but applied at generation time. T
 Initially functions may be parameterised by the whole data type, constructors and numbers. The |MAP| rule converts functions parameterised on constructors to the whole data type, but leaves numbers parameterised by numbers. There is a final rule which is used to eliminate numbers, namely promotion into another parameter type. The idea is that a number is replaced with a constructor with a relationship to that number, taking the example of |x1 x2| from earlier, we can write any of:
 
 \begin{code}
-2          ->> <| MAP [1..i          ] (x <| i |> ) |>
-CtorTwo    ->> <| MAP [1..ctorarity  ] (x <| i |> ) |>
-CtorTwo    ->> <| MAP [1..ctorindex  ] (x <| i |> ) |>
-CtorThree  ->> <| MAP [1..ctorarity  ] (x <| i |> ) |>
+2       ->> <| MAP [1..i          ] (x <| i |> ) |>
+Third   ->> <| MAP [1..ctorarity  ] (x <| i |> ) |>
+Third   ->> <| MAP [1..ctorindex  ] (x <| i |> ) |>
+Fourth  ->> <| MAP [1..ctorarity  ] (x <| i |> ) |>
 \end{code}
 
-Instead of parameterising by a number, we can parameterise by |CtorTwo|, and use its arity. The number 2 can be constructed in many ways: it is both the arity, and zero-based index of |CtorTwo|, and also the arity of |CtorThree|.
+Instead of parameterising by a number, we can parameterise by |Third|, and use its arity. The number 2 can be constructed in many ways: it is both the arity, and zero-based index of |Third|, and also the arity of |Fourth|.
 
 \subsection{The Result}
 
@@ -325,10 +325,10 @@ The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and
 
 \begin{code}
 instance (Data alpha, Typeable alpha) => Data (DataName alpha) where
-    gfoldl k r (CtorZero          ) = r CtorZero
-    gfoldl k r (CtorOne    x1     ) = r CtorOne    `k` x1
-    gfoldl k r (CtorTwo    x1 x2  ) = r CtorTwo    `k` x1 `k` x2
-    gfoldl k r (CtorThree  x1 x2  ) = r CtorThree  `k` x1 `k` x2
+    gfoldl k r (First          ) = r First
+    gfoldl k r (Second  x1     ) = r Second  `k` x1
+    gfoldl k r (Third   x1 x2  ) = r Third   `k` x1 `k` x2
+    gfoldl k r (Fourth  x1 x2  ) = r Fourth  `k` x1 `k` x2
 \end{code}
 
 \subsection{The Serial class}
@@ -337,7 +337,7 @@ The |Serial| class is used by SmallCheck \cite{smallcheck} to automatically perf
 
 \begin{code}
 instance Serial alpha => Serial (DataName alpha) where
-    series = cons0 CtorZero \/ cons1 CtorOne  \/ cons2 CtorTwo  \/ cons2 CtorThree
+    series = cons0 First \/ cons1 Second \/ cons2 Third \/ cons2 Fourth
 \end{code}
 
 \section{Related Work}
