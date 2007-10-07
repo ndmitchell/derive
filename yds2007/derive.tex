@@ -38,7 +38,7 @@ class Eq alpha where
     (==) :: alpha -> alpha -> Bool
 \end{code}
 
-The |Eq| class has a memberan operator, |(==)|. All types that are instances of the class |Eq| have the |(==)| operator available. We can define a Haskell data type, along with an instance for |Eq|, as follows:
+The |Eq| class has an operator, |(==)|. All types that are instances of the class |Eq| have the |(==)| operator available. We can define a Haskell data type, along with an instance for |Eq|, as follows:
 
 \begin{code}
 data WritingImplement  =  Pencil       -- a pencil
@@ -73,16 +73,16 @@ instance Eq DataName where
     (Second  x1     )  == (Second  y1     )  = x1 == y1 && True
     (Third   x1 x2  )  == (Third   y1 y2  )  = x1 == y1 && x2 == y2 && True
     (Fourth  x1 x2  )  == (Fourth  y1 y2  )  = x1 == y1 && x2 == y2 && True
-    _                     == _                     = False
+    _                  == _                  = False
 \end{code}
 
-The reason for the |&& True| expressions is explained in \S\ref{sec:fold}.
+The |DataName| instance follows the same pattern as for |WritingImplement|, but with the addition of |&& True|, whose purpose is explained in \S\ref{sec:fold}.
 
-This paper contributes a practical method for inferring a relationship between a value and a piece of program code, without resorting to unguided search.
+This paper contributes a method for inferring a relationship between a value and a piece of program code, without resorting to unguided search. In our experience, over 60\% of Haskell class instances can be determined using this technique.
 
 \subsection{Roadmap}
 
-This paper first describes how to derive instance generators automatically in \S\ref{sec:automatic_instances}. \S\ref{sec:automatic_failure} discusses which generic functions are applicable for this scheme, and \S\ref{sec:automatic_success} gives more complex examples. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
+This paper first describes how to derive instance generators automatically in \S\ref{sec:automatic_instances}. \S\ref{sec:automatic_failure} discusses which generic functions are applicable for this scheme, and \S\ref{sec:automatic_success} gives a more complex example. \S\ref{sec:related} presents related work, before \S\ref{sec:conclusion} concludes.
 
 
 \begin{comment}
@@ -122,40 +122,40 @@ The central idea of automatic inference of instance generators is that an instan
 Rather than infer the entire |gen| function in one step, we instead infer many functions from |_D| to each element of |_C|'s abstract syntax tree, then combine them to form |gen|. Each smaller function may depend only on some fragment of the data type -- for example one particular line may depend on one particular data constructor, rather than the entire data type. A fragment of a data type may be one of the following:
 
 \begin{description}
-\item[A constant:] A node of the abstract syntax tree can be a constant, meaning that in all cases it will generate the same value. In the original example things such as |True|, |(==)|, |(&&)| etc. are constant. Anything which does not have an alternative generation function is assumed to be constant.
+\item[A constant:] A node of the abstract syntax tree can be a constant, meaning that in all cases it will generate the same value. In the |Eq| example things such as |True|, |(==)|, |(&&)| etc. are constant. Anything which does not have an alternative generation function is assumed to be constant.
 
-\item[A number:] The code |x1| is parameterised by the number |1|. We use the notation |1 ->> x <|| i ||> | to denote the function, where |i| is the parameterised number, and |1| is the parameter. Any detected number is either a parameterised value, or a constant.
+\item[A number:] The code |x1| is parameterised by the number |1|. We use the notation |1 ->> x <|| # ||> | to denote the function, where |#| is the parameterised number, and |1| is the parameter. Any detected number is either a parameterised value, or a constant.
 
 \item[A constructor:] The code |Third| is parameterised by the constructor |Third|, being the name of the constructor. We use the notation |Third ->> <|| ctorname ||> | to denote this function.
 
-\item[A data type:] In the first example the whole code is parameterised by the data type. One particular place parameterised directly on the data type is |Eq DataName|, which becomes |DataName ->> Eq \? <|| dataname ||>|. If the name of the data type changes (to say |WritingImplement|), then the function would generate |Eq WritingImplement|.
+\item[A data type:] In the first example the whole code is parameterised by the data type. One particular place parameterised directly on the data type is |Eq DataName|, which becomes |DataName ->> Eq \? <|| dataname ||>|. If the name of the data type changes to |WritingImplement|, then the function generates |Eq WritingImplement| instead.
 \end{description}
 
 \subsection{The Map Pattern}
 \label{sec:induction}
 
-The examples shown previously map data type fragments to fixed-sized portions of the abstract syntax tree. But consider the pattern |Third x1 x2|, we require |n| variables, where |n| is the arity of the constructor. To solve this problem, we can construct a generalised map from a list of functions. This construction requires two conditions: (1) one item has a function which generates all abstract syntax nodes in the list; (2) their parameter values are sequential -- either consecutive integers or constructors in their definition order.
+The examples shown previously map data type fragments to fixed-sized portions of the abstract syntax tree. But consider the pattern |(Third x1 x2)|, we require |n| variables, where |n| is the arity of the constructor. To solve this problem, we can construct a generalised map from a list of generation functions. This construction requires two conditions: (1) one item of the list has a function which generates all abstract syntax trees in the list; (2) their parameter values are sequential -- either consecutive integers or constructors in their definition order.
 
 \begin{code}
-[1 ->> x <| i |>, 2 ->> x <| i |>]
+[1 ->> x <| # |>, 2 ->> x <| # |>]
 \end{code}
 
-Picking either function, when applying it to the other parameter, we obtain the correct value. The parameters are clearly sequential. We can rewrite this list using a |MAP| as:
+Take the above list of functions. Picking either function, when applying it to the other parameter, we obtain the correct value. The parameters are clearly sequential. We can rewrite this list using a |MAP| as:
 
 \begin{code}
-2 ->> <| MAP [1..i] (x <| i |> ) |>
+2 ->> <| MAP [1..#] (x <| # |> ) |>
 \end{code}
 
-|MAP| takes two arguments, a range of items to use as the parameter, and an expression. Within the second argument, |i| is bound to each number in the range, one after another. The function is now parameterised by the highest number in the sequence. We can also have a |MAP| which operates over constructors, in which case the resultant |MAP| is parameterised by the entire data type.
+|MAP| takes two arguments, a range of items to use as the parameter, and an expression. Within the second argument, |#| is bound to each number in the range in turn. The resultant function is parameterised by the highest number in the sequence. We can also have a |MAP| which operates over constructors, in which case the resultant |MAP| is parameterised by the entire data type.
 
-To give two examples of sequences which \textit{cannot} be generalised to a |MAP|:
+The following two examples \textit{cannot} be generalised to a |MAP|:
 
 \begin{code}
-[1 ->> x <| i |>, 3 ->> x <| i |>]
-[1 ->> x <| i |>, 2 ->> y <| i |>]
+[1 ->> x <| # |>, 3 ->> x <| # |>]
+[1 ->> x <| # |>, 2 ->> y <| # |>]
 \end{code}
 
-In the first the parameters are not sequential. In the second, neither function applies to both fragments.
+In the first, the parameters are not sequential. In the second, neither function produces the correct result on both items.
 
 The |MAP| pattern provides the key power to generalising an example from one specific data type, to any data type. In order to increase the chance of finding a suitable generalisation, we allow each node in the abstract syntax tree to be represented by a list of possible parameterised functions \cite{wadler:list_successes}.
 
@@ -171,36 +171,41 @@ One common pattern in programming is the \textit{fold} \cite{hutton:fold}. Consi
 (Third x1 x2) == (Third y1 y2) = foldr (&&) True [x1 == y1, x2 == y2]
 \end{code}
 
-The original structure is not a list, and would not be found as a |MAP|. However, we can convert this function to a fold, recovering the list structure. A fold takes a list, and replaces each cons in the list by a function (i.e. |(&&)|) and the nil by a value (i.e. |True|). By automatically converting the code to use fold, a |MAP| is recovered. Using a |FOLDR| rule (fold associating to the right), the result on the right hand side is:
+The original structure is not a list, and would not be found as a |MAP|. However, we can convert this function to a fold, recovering a list structure. A fold takes a list, and replaces each cons by a function (i.e. |(&&)|) and the nil by a value (i.e. |True|). By automatically converting the code to use fold, a |MAP| is recovered. Using a |FOLDR| rule (fold associating to the right), the result of the right hand side is:
 
 \begin{code}
-2 ->> <| FOLDR (&&) True \? <| MAP [1..i] (x <| i |> == y <| i |>) |> |>
+2 ->> <| FOLDR (&&) True \? <| MAP [1..#] (x <| # |> == y <| # |>) |> |>
 \end{code}
 
-The |FOLDR| rule is simply a |foldr| function, but applied at generation time. The fold encoding explains the redundant |&& True| at the end -- in order for the base case (|True|) to share the same fold definition as above, we require a redundant conjunct. In the code generated for instances |&& True| is removed, using algebraic simplification.
+The |FOLDR| rule is a |foldr| function, but applied at generation time. The fold encoding explains the redundant |&& True| at the end of each line in the |Eq| example. In order for the base case (|True|) to share the same fold definition as above, we require a redundant conjunct. In the code generated for instances |&& True| is removed, using algebraic simplification.
 
 
 \subsection{Eliminating Number Parameters}
 
-Initially functions may be parameterised by the whole data type, constructors and numbers. The |MAP| rule converts functions parameterised on constructors to the whole data type, but leaves numbers parameterised by numbers. There is a final rule which is used to eliminate numbers, namely promotion into another parameter type. The idea is that a number is replaced with a constructor with a relationship to that number, taking the example of |x1 x2| from earlier, we can write any of:
+Initially functions may be parameterised by the whole data type, constructors or numbers. The |MAP| rule converts a list of functions parameterised by constructors to a function parameterised by the whole data type, but leaves numbers parameterised by numbers. A number parameter is replaced by a constructor with a relationship to that number. Taking the example of |x1 x2| from earlier, we can write any of:
 
 \begin{code}
-2       ->> <| MAP [1..i          ] (x <| i |> ) |>
-Third   ->> <| MAP [1..ctorarity  ] (x <| i |> ) |>
-Third   ->> <| MAP [1..ctorindex  ] (x <| i |> ) |>
-Fourth  ->> <| MAP [1..ctorarity  ] (x <| i |> ) |>
+2       ->> <| MAP [1 .. #          ] (x <| # |> ) |>
+Third   ->> <| MAP [1 .. ctorarity  ] (x <| # |> ) |>
+Third   ->> <| MAP [1 .. ctorindex  ] (x <| # |> ) |>
+Fourth  ->> <| MAP [1 .. ctorarity  ] (x <| # |> ) |>
 \end{code}
 
-Instead of parameterising by a number, we can parameterise by |Third|, and use its arity. The number 2 can be constructed in many ways: it is both the arity, and zero-based index of |Third|, and also the arity of |Fourth|.
+Instead of parameterising by the number 2, we can parameterise by a constructor. The number 2 can be obtained in three ways: it is both the arity, and zero-based index of |Third|, and also the arity of |Fourth|.
 
-\subsection{Combining Generation Patterns}
+\subsection{Combining Generation Functions}
 
-The generation patterns listed match certain fragments of code in an instance definition. For all fragments which do not match any given instance 
+The calculation of generation functions proceeds in a bottom-up manner. Once all the children of a node in the abstract syntax tree have generation functions, they are combined to form a generation function for the whole node. A set of child generation functions can only be combined if all the non-constant functions share the same parameter. For example:
 
+\begin{code}
+(Third ->> <| ctorname |>) (Third ->> <| MAP [1..ctorarity] (x <| i |> ) |>)
+-- becomes
+Third ->> <| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) |>
+\end{code}
 
 \subsection{The Result}
 
-After all this work, the resultant function for the |Eq| example is:
+After applying the rules, the resultant function for the |Eq| example is:
 
 \begin{code}
 instance Eq \? <| dataname |> where
@@ -212,13 +217,13 @@ instance Eq \? <| dataname |> where
     _ == _ = False
 \end{code}
 
-Applying this function to |WritingImplement| will give us the instance we manually specified. Writing this function directly would pose a number of difficulties:
+Applying this function to |WritingImplement| will produce the instance we originally specified. Writing the generation function directly poses a number of difficulties:
 
 \begin{enumerate}
-\item There is no language in which to write such a function. A library could be written facilitating this (and indeed, this has been done \cite{drift}), but it is merely an encoding of this form.
-\item Details such as the associativity of |(&&)| can be omitted from an example, but are required when expressing a |FOLDR|.
-\item There is no guarantee that this generator produces type-safe instances.
-\item The generated code would have to be tested, probably on several data types, to check it has the required behaviour.
+\item There is no available language in which to write a generator. The DrIFT preprocessor \cite{drift} allows a generator to be specified, but requires the author to learn many new library functions.
+\item Details such as the associativity of |(&&)| can be omitted from an example, but are required when expressing a |FOLDR| directly.
+\item Manually written generators may not produce type-safe instances.
+\item The results of a manual generator require testing against examples.
 \item The complexity, compared to a single example, is much higher.
 \end{enumerate}
 
@@ -307,24 +312,22 @@ The fold encoding explains the redundant |&& True| at the end -- in order for th
 \section{Limitations of Automatic Derivation}
 \label{sec:automatic_failure}
 
-Having defined a mechanism for inductive instances, it is useful to determine which instances can be automatically derived, and which must be written manually. The Derive tool \cite{derive} is a program for automatically generating instances for user defined data types. Of the 24 instances supported by the Derive tool, 15 are expressed by example, and 9 require hand-coding. There are several reasons for the automatic method to be inappropriate:
+The instance generation scheme given is not complete -- there exist instances whose generator cannot be determined. The Derive tool \cite{derive} is a program for generating instances for user defined data types. Of the 24 instances supported by the Derive tool, 15 are expressed by example, and 9 require manually written instance generators. There are several reasons some instances cannot be determined:
 
 \begin{description}
 
-\item[Non-inductive definitions:] For example, the |Binary| class serialises a value to disk. For each value a tag is written to indicate the constructor. If a data type only has one constructor the tag is omitted. These instances are not inductive -- the change from one constructor to two does not follow the same pattern.
+\item[Non-inductive definitions:] For example, the |Binary| class serialises a value to disk. For each value, a tag is written to indicate the constructor. If a data type has only one constructor, the tag is omitted. These instances are not inductive -- the single constructor does not follow the same pattern.
 
 \item[Type-based definitions:] For example, the |Monoid| class requires items of the same type to be processed using |mappend|, but items of a different type use |mempty|. Automatic derivation has no notion of type-specific behaviour.
 
-\item [Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |DataName|, record definitions could be derived, but this change would increase the complexity of all other example instances.
+\item [Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |DataName|, record definitions could be determined, but this change would increase the complexity of all other example instances.
 
 \end{description}
-
-Even with these restrictions, the majority of classes can be expressed in a manner which allows the automatic derivation to succeed.
 
 \section{Successes of Generation}
 \label{sec:automatic_success}
 
-In this section we present one instance, from a pre-existing library, which is derived by example. The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over each value, and the application of an argument to join the fields.
+Many instances generators can be expressed by example -- including some from the standard Haskell libraries (|Enum|, |Ord|, |Bounded|) and publicly distributed libraries (|Serial|, |Arbitrary|). The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over each value, and the application of an argument to join the fields. An example instance can be given as:
 
 \begin{code}
 instance Data DataName where
@@ -334,20 +337,19 @@ instance Data DataName where
     gfoldl k r (Fourth  x1 x2  ) = r Fourth  `k` x1 `k` x2
 \end{code}
 
-The generated code is:
+\noindent The generator function inferred is:
 
 \begin{code}
 instance Data \? <| dataname |> where
     <| MAP ctors (
         gfoldl k r
-            (<| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) |> ) =
+            (<| ctorname |> \? <| MAP [1..ctorarity] (x <| # |> ) |> ) =
             <| FOLDR k (r \? <| ctorname |>)
-                <| MAP [1..ctorarity] (x <| i |> ) |>
+                <| MAP [1 .. #] (x <| # |> ) |>
             |>
     ) |>
 \end{code}
 
-Many other instances can be derived by example, including some from the Haskell standard libraries (|Enum|, |Ord|, |Bounded|) and various testing libraries (|Serial|, |Arbitrary|).
 
 \begin{comment}
 
@@ -365,24 +367,28 @@ instance Serial alpha => Serial (DataName alpha) where
 \section{Related Work}
 \label{sec:related}
 
+
+
+
 The purpose of this work is to find a pattern, and generalise the pattern to other situations. Genetic algorithms \cite{genetic_algorithms} are often used to automatically find a pattern in a data set. Genetic algorithms work by evolving a hypothesis (a gene sequence) and testing on a sample problem. They are well suited to search problems where the utility function is continuous -- close hypothesises have similar fitness. The main difference from this paper is that the hypothesis is random, whereas ours is strongly directed by the shape of the example.
 
 The area of optical character recognition \cite{ocr} has some similar characteristics -- a page is analysed to look for common patterns (pictures or text passages), which can be analysed further. This is related to the process of detecting fold (\S\ref{sec:fold}), where a repeating pattern is detected. The difference is that character recognition works on image data, which does not have the same precision as program code.
 
-The closest work we are aware of is that in the theorem proving community. Induction is a very common tactic for writing proofs, and well supported. Using a system such as HOL Light \cite{hol_light} it is possible to instruct the prover to try the induction tactic. Typically the induction proof must be supplied initially, and is then checked for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful.
+The closest work we are aware of is that of the theorem proving community. Induction is a very common tactic for writing proofs, and well supported. Using a system such as HOL Light \cite{hol_light} it is possible to instruct the prover to try the induction tactic. Typically the induction proof must be supplied initially, and is then checked for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful.
 
-The concepts in this paper are applicable outside the domain of instances in Haskell. Any programming language operation that exhibits some degree of uniformity could be automated. To take one example: the object-orientated community have embraced design patterns \cite{design_patterns}, which involve many common recurring patterns.
+The concepts in this paper are applicable outside the domain of instances in Haskell. Any programming language operation that exhibits some degree of uniformity could be automated. To give one example: the object-orientated community have embraced design patterns \cite{design_patterns}, which involve many common recurring patterns.
 
-\section{Conclusion and Future Work}
+\section{Conclusions and Future Work}
 \label{sec:conclusion}
 
-We have presented a mechanism for automatically deriving instances for Haskell programs. Using our scheme, even a novice programmer is able to define many classes, simply by supplying examples. To define a class does not require learning a new library, increasing the user base.
+We have presented a mechanism for automatically deriving instance generators for Haskell type classes. Our technique has been implemented in the Derive tool \cite{derive}, where 60\% of instance generators are specified with a single example. The ease of creating new instances has enabled several users to contribute instance generators to the Derive tool, widening the base of contributors significantly. We see several lines of future work:
 
-Now that the computer is able to infer the rules required for constructing a type, this information could be put to other uses. If the Derive API changed, the new instances would be regenerated with no effort. Using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of separate preprocessors.
+\begin{itemize}
+\item Using automatic instance generation allows the underlying tool to change the API for specifying instances, without requiring human intervention to modify the generators -- they can simply be regenerated. This freedom allows instances to be expressed in new ways. Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor.
+\item The provided data type (Figure \ref{fig:dataname}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names \ref{sec:automatic_failure}. An alternative approach would be to introduce new data types with features sepcifically targeted for certain types of definition. These extensions will invevitably bring about additional complication, so the additional instances will have to be weighed carefully.
+\end{itemize}
 
-It may be possible by modifying the example data type (Figure \ref{fig:dataname}) to allow additional instances to be inferred. While we suspect that instances depending on record names can be inferred, we have yet to determine how to do so without complicating the data type for all instances.
-
-Computers are ideally suited for applying repetitive patterns, but specifying those patterns can be tiresome. We hope that this work goes some way towards alleviating the specification burden. The Derive tool has been released, and makes extensive use of automatic instance derivation. By lowering the barrier to defining instance generators, we have already benefited from several external contributions of new generic functions.
+Computers are ideally suited to applying repetitive patterns, but specifying these patterns can be complex and error prone. By specifying the result, instead of the pattern, a user can focus on what they want, rather than the mechanism by which this is realised.
 
 \paragraph{Acknowledgements}
 
