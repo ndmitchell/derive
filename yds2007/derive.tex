@@ -128,7 +128,7 @@ Rather than infer the entire |gen| function in one step, we instead infer many f
 
 \item[A constructor:] The code |Third| is parameterised by the constructor |Third|, being the name of the constructor. We use the notation |Third ->> <|| ctorname ||> | to denote this function.
 
-\item[A data type:] In the first example the whole code is parameterised by the data type. One particular place parameterised directly on the data type is |Eq DataName|, which becomes |DataName ->> Eq \? <|| dataname ||>|. If the name of the data type changes to |WritingImplement|, then the function generates |Eq WritingImplement| instead.
+\item[A data type:] In the first example the whole code is parameterised by the data type. One particular place parameterised directly on the data type is |Eq DataName|, which becomes |DataName ->> Eq \? <|| dataname ||>|. If the name of the data type changes to |WritingImplement|, then the function will generate |Eq WritingImplement| instead.
 \end{description}
 
 \subsection{The Map Pattern}
@@ -198,9 +198,9 @@ Instead of parameterising by the number 2, we can parameterise by a constructor.
 The calculation of generation functions proceeds in a bottom-up manner. Once all the children of a node in the abstract syntax tree have generation functions, they are combined to form a generation function for the whole node. A set of child generation functions can only be combined if all the non-constant functions share the same parameter. For example:
 
 \begin{code}
-(Third ->> <| ctorname |>) (Third ->> <| MAP [1..ctorarity] (x <| i |> ) |>)
+(Third ->> <| ctorname |>) (Third ->> <| MAP [1..ctorarity] (x <| # |> ) |>)
 -- becomes
-Third ->> <| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) |>
+Third ->> <| ctorname |> \? <| MAP [1..ctorarity] (x <| # |> ) |>
 \end{code}
 
 \subsection{The Result}
@@ -210,9 +210,9 @@ After applying the rules, the resultant function for the |Eq| example is:
 \begin{code}
 instance Eq \? <| dataname |> where
     <| MAP ctors (
-        (<| ctorname |> \? <| MAP [1..ctorarity] (x <| i |> ) ) ==
-        (<| ctorname |> \? <| MAP [1..ctorarity] (y <| i |> ) ) =
-        <| FOLDR (&&) True \? <| MAP [1..ctorarity] (x <| i |> == y <| i |>) |> |>
+        (<| ctorname |> \? <| MAP [1..ctorarity] (x <| # |> ) ) ==
+        (<| ctorname |> \? <| MAP [1..ctorarity] (y <| # |> ) ) =
+        <| FOLDR (&&) True \? <| MAP [1..ctorarity] (x <| # |> == y <| # |>) |> |>
     ) |>
     _ == _ = False
 \end{code}
@@ -312,7 +312,7 @@ The fold encoding explains the redundant |&& True| at the end -- in order for th
 \section{Limitations of Automatic Derivation}
 \label{sec:automatic_failure}
 
-The instance generation scheme given is not complete -- there exist instances whose generator cannot be determined. The Derive tool \cite{derive} is a program for generating instances for user defined data types. Of the 24 instances supported by the Derive tool, 15 are expressed by example, and 9 require manually written instance generators. There are several reasons some instances cannot be determined:
+The instance generation scheme given is not complete -- there exist instances whose generator cannot be determined. The Derive tool \cite{derive} is a program for generating instances for user defined data types. Of the 24 instances supported by the Derive tool, 15 are expressed by example, while 9 require manually written instance generators. There are several reasons some instances cannot be determined:
 
 \begin{description}
 
@@ -324,10 +324,10 @@ The instance generation scheme given is not complete -- there exist instances wh
 
 \end{description}
 
-\section{Successes of Generation}
+\section{Generation of Standard Classes}
 \label{sec:automatic_success}
 
-Many instances generators can be expressed by example -- including some from the standard Haskell libraries (|Enum|, |Ord|, |Bounded|) and publicly distributed libraries (|Serial|, |Arbitrary|). The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over each value, and the application of an argument to join the fields. An example instance can be given as:
+Many instance generators can be expressed by example -- including some from the standard Haskell libraries (|Enum|, |Ord|, |Bounded|) and publicly distributed libraries (|Serial|, |Arbitrary|). The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over each value, and the application of an argument to join the fields. An example instance can be given as:
 
 \begin{code}
 instance Data DataName where
@@ -337,7 +337,7 @@ instance Data DataName where
     gfoldl k r (Fourth  x1 x2  ) = r Fourth  `k` x1 `k` x2
 \end{code}
 
-\noindent The generator function inferred is:
+\noindent The generator function is inferred as:
 
 \begin{code}
 instance Data \? <| dataname |> where
@@ -345,7 +345,7 @@ instance Data \? <| dataname |> where
         gfoldl k r
             (<| ctorname |> \? <| MAP [1..ctorarity] (x <| # |> ) |> ) =
             <| FOLDR k (r \? <| ctorname |>)
-                <| MAP [1 .. #] (x <| # |> ) |>
+                <| MAP [1 .. ctorarity] (x <| # |> ) |>
             |>
     ) |>
 \end{code}
@@ -355,7 +355,7 @@ instance Data \? <| dataname |> where
 
 \subsection{The Serial class}
 
-The |Serial| class is used by SmallCheck \cite{smallcheck} to automatically perform enumerative testing. The definition relies on the arities of each constructor, and does not induct over the the components of a constructor.
+The |Serial| class is used by SmallCheck \cite{smallcheck} to automatically perform enumerative testing. The definition relies on the arities of each constructor, and does not induct over the components of a constructor.
 
 \begin{code}
 instance Serial alpha => Serial (DataName alpha) where
@@ -367,28 +367,25 @@ instance Serial alpha => Serial (DataName alpha) where
 \section{Related Work}
 \label{sec:related}
 
+The purpose of this work is to find a pattern, and generalise that pattern to other situations. Genetic algorithms \cite{genetic_algorithms} are often used to automatically find a pattern in a data set. Genetic algorithms work by evolving a hypothesis (a gene sequence) and testing on a sample problem. They are well suited to search problems where the utility function is continuous -- close hypotheses have similar fitness. The main difference from this paper is that the hypothesis is random, whereas ours is strongly directed by the shape of the example.
 
+The area of optical character recognition \cite{ocr} has some similar characteristics -- a page is analysed to look for common patterns (pictures or text passages), which can be processed further. This is related to the process of using the fold pattern (\S\ref{sec:fold}), where a repeating pattern is detected. The difference is that character recognition works on image data, which does not have the same precision as program code.
 
+The closest work we are aware of is that of the theorem proving community. Induction is a very common tactic for writing proofs, and well supported in systems such as HOL Light \cite{hol_light}. Typically the user must suggest the use of induction, which the system checks for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful.
 
-The purpose of this work is to find a pattern, and generalise the pattern to other situations. Genetic algorithms \cite{genetic_algorithms} are often used to automatically find a pattern in a data set. Genetic algorithms work by evolving a hypothesis (a gene sequence) and testing on a sample problem. They are well suited to search problems where the utility function is continuous -- close hypothesises have similar fitness. The main difference from this paper is that the hypothesis is random, whereas ours is strongly directed by the shape of the example.
-
-The area of optical character recognition \cite{ocr} has some similar characteristics -- a page is analysed to look for common patterns (pictures or text passages), which can be analysed further. This is related to the process of detecting fold (\S\ref{sec:fold}), where a repeating pattern is detected. The difference is that character recognition works on image data, which does not have the same precision as program code.
-
-The closest work we are aware of is that of the theorem proving community. Induction is a very common tactic for writing proofs, and well supported. Using a system such as HOL Light \cite{hol_light} it is possible to instruct the prover to try the induction tactic. Typically the induction proof must be supplied initially, and is then checked for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful.
-
-The concepts in this paper are applicable outside the domain of instances in Haskell. Any programming language operation that exhibits some degree of uniformity could be automated. To give one example: the object-orientated community have embraced design patterns \cite{design_patterns}, which involve many common recurring patterns.
+The concepts in this paper are applicable outside the domain of instances in Haskell. Any programming language operation that exhibits some degree of uniformity could be automated. To give one example: the object-orientated community have embraced design patterns \cite{design_patterns}, which involve many recurring patterns.
 
 \section{Conclusions and Future Work}
 \label{sec:conclusion}
 
-We have presented a mechanism for automatically deriving instance generators for Haskell type classes. Our technique has been implemented in the Derive tool \cite{derive}, where 60\% of instance generators are specified with a single example. The ease of creating new instances has enabled several users to contribute instance generators to the Derive tool, widening the base of contributors significantly. We see several lines of future work:
+We have presented a mechanism for automatically deriving instance generators for Haskell type classes. Our technique has been implemented in the Derive tool \cite{derive}, where 60\% of instance generators are specified by example. The ease of creating new instances has enabled several users to contribute instance generators to the Derive tool. We see several lines of future work:
 
 \begin{itemize}
 \item Using automatic instance generation allows the underlying tool to change the API for specifying instances, without requiring human intervention to modify the generators -- they can simply be regenerated. This freedom allows instances to be expressed in new ways. Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor.
-\item The provided data type (Figure \ref{fig:dataname}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names \ref{sec:automatic_failure}. An alternative approach would be to introduce new data types with features sepcifically targeted for certain types of definition. These extensions will invevitably bring about additional complication, so the additional instances will have to be weighed carefully.
+\item The provided data type (Figure \ref{fig:dataname}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names (see \S\ref{sec:automatic_failure}). An alternative approach would be to introduce new data types with features specifically targeted for certain types of definition. Care would have to be taken to ensure that these extensions do not substantially increase the complexity of writing examples.
 \end{itemize}
 
-Computers are ideally suited to applying repetitive patterns, but specifying these patterns can be complex and error prone. By specifying the result, instead of the pattern, a user can focus on what they want, rather than the mechanism by which this is realised.
+Computers are ideally suited to applying repetitive patterns, but specifying these patterns can be complex and error prone. By specifying the result, instead of the pattern, a user can focus on what they want, rather than the mechanism by which this is realized.
 
 \paragraph{Acknowledgements}
 
