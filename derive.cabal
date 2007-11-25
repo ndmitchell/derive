@@ -26,12 +26,10 @@ Library
     Build-Depends: template-haskell, filepath, mtl
     if flag(small_base)
         Build-Depends: base >= 3, containers, pretty, packedstring, random, process, directory
-    else
-        Build-Depends: base < 3
-    if impl(ghc >= 6.7)
         CPP-Options: "-DNO_SYB"
     else
-        Exposed-Modules: Language.Haskell.TH.SYB      
+        Build-Depends: base < 3
+        Exposed-Modules: Language.Haskell.TH.SYB
 
     Exposed-Modules:
         Data.DeriveGuess
