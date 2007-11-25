@@ -1,3 +1,4 @@
+Cabal-Version:  >= 1.2
 Name:           derive
 Version:        0.1
 Copyright:      2006-7, Neil Mitchell
@@ -7,67 +8,71 @@ License:        BSD3
 License-File:   LICENSE
 Author:         Neil Mitchell & Stefan O'Rear
 Synopsis:       A program and library to derive instances for data types
+Category:       Development
 Description:
     Data.Derive is a library and a tool for deriving instances for Haskell programs.
     It is designed to work with custom derivations, SYB and Template Haskell mechanisms.
     The tool requires GHC, but the generated code is portable to all compilers.
     We see this tool as a competitor to DrIFT.
-Category:       Development
-cabal-Version:  >= 1.2
+
 Extra-Source-Files:
-  derive.htm
+    derive.htm
+
 Flag small_base
-  Description: Choose the new smaller, split-up base package.
+    Description: Choose the new smaller, split-up base package.
+
 Library
-  Build-Depends:  template-haskell, filepath, mtl
-  if flag(small_base)
-      Build-Depends: base >= 3, containers, pretty, packedstring, random, process, directory
-  else
-      Build-Depends: base < 3
-  if impl(ghc >= 6.7)
-    CPP-Options: "-DNO_SYB"
-  else
-    Exposed-Modules: Language.Haskell.TH.SYB      
-  Extensions:     CPP
-  Exposed-Modules:
-      Data.DeriveGuess
-      Data.DeriveTH
-      Data.DeriveTraversal
-      Data.Derive.All
-      Data.Derive.Arbitrary
-      Data.Derive.Arbitrary2
-      Data.Derive.Binary
-      Data.Derive.BinaryDefer
-      Data.Derive.BinaryOld
-      Data.Derive.Bounded
-      Data.Derive.Data
-      Data.Derive.Enum
-      Data.Derive.EnumCyclic
-      Data.Derive.Eq
-      Data.Derive.From
-      Data.Derive.Foldable
-      Data.Derive.Functor
-      Data.Derive.Has
-      Data.Derive.Is
-      Data.Derive.LazySet
-      Data.Derive.Monoid
-      Data.Derive.NFData
-      Data.Derive.Ord
-      Data.Derive.PlateDirect
-      Data.Derive.PlateTypeable
-      Data.Derive.Read
-      Data.Derive.Ref
-      Data.Derive.Serial
-      Data.Derive.Set
-      Data.Derive.Show
-      Data.Derive.Traversable
-      Data.Derive.TTypeable
-      Data.Derive.Typeable
-      Data.Derive.Uniplate
-      Language.Haskell.TH.All
-      Language.Haskell.TH.Data
-      Language.Haskell.TH.FixedPpr
-      Language.Haskell.TH.Helper
-      Language.Haskell.TH.Peephole
+    Extensions: CPP
+    Build-Depends: template-haskell, filepath, mtl
+    if flag(small_base)
+        Build-Depends: base >= 3, containers, pretty, packedstring, random, process, directory
+    else
+        Build-Depends: base < 3
+    if impl(ghc >= 6.7)
+        CPP-Options: "-DNO_SYB"
+    else
+        Exposed-Modules: Language.Haskell.TH.SYB      
+
+    Exposed-Modules:
+        Data.DeriveGuess
+        Data.DeriveTH
+        Data.DeriveTraversal
+        Data.Derive.All
+        Data.Derive.Arbitrary
+        Data.Derive.Arbitrary2
+        Data.Derive.Binary
+        Data.Derive.BinaryDefer
+        Data.Derive.BinaryOld
+        Data.Derive.Bounded
+        Data.Derive.Data
+        Data.Derive.Enum
+        Data.Derive.EnumCyclic
+        Data.Derive.Eq
+        Data.Derive.From
+        Data.Derive.Foldable
+        Data.Derive.Functor
+        Data.Derive.Has
+        Data.Derive.Is
+        Data.Derive.LazySet
+        Data.Derive.Monoid
+        Data.Derive.NFData
+        Data.Derive.Ord
+        Data.Derive.PlateDirect
+        Data.Derive.PlateTypeable
+        Data.Derive.Read
+        Data.Derive.Ref
+        Data.Derive.Serial
+        Data.Derive.Set
+        Data.Derive.Show
+        Data.Derive.Traversable
+        Data.Derive.TTypeable
+        Data.Derive.Typeable
+        Data.Derive.Uniplate
+        Language.Haskell.TH.All
+        Language.Haskell.TH.Data
+        Language.Haskell.TH.FixedPpr
+        Language.Haskell.TH.Helper
+        Language.Haskell.TH.Peephole
+
 Executable derive
-  Main-Is:        Derive.hs
+    Main-Is: Derive.hs
