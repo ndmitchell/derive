@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-missing-methods -fno-warn-deprecations #-}
+{-# OPTIONS_GHC -cpp -fno-warn-missing-methods -fno-warn-deprecations #-}
 
 module Language.Haskell.TH.SYB where
 
@@ -6,9 +6,8 @@ import Data.Generics hiding (Fixity)
 import Language.Haskell.TH.Syntax
 import Data.PackedString
 
-
+#ifndef NO_SYB    
 instance Data PackedString where gfoldl k z x = z x
-
 
 
 typename_Name = mkTyCon "Name"
@@ -364,5 +363,4 @@ instance Data Type
           gfoldl k z (ArrowT) = z ArrowT
           gfoldl k z (ListT) = z ListT
           gfoldl k z (AppT x1 x2) = k (k (z AppT) x1) x2
-
-
+#endif
