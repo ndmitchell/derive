@@ -1,12 +1,11 @@
-{-# OPTIONS -cpp #-}
+{-# OPTIONS_GHC -w #-}
+
 module Language.Haskell.TH.All (
     module Language.Haskell.TH.All,
     module Language.Haskell.TH.Syntax, module Language.Haskell.TH.Peephole,
     module Language.Haskell.TH.Helper, module Language.Haskell.TH.FixedPpr,
     module Language.Haskell.TH.Data, 
-#ifndef NO_SYB    
     module Language.Haskell.TH.SYB
-#endif
     ) where
 
 import Language.Haskell.TH.Syntax

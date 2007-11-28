@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -cpp -fno-warn-missing-methods -fno-warn-deprecations #-}
+{-# OPTIONS_GHC -cpp -fno-warn-missing-methods -fno-warn-deprecations -fno-warn-unused-imports #-}
 
 module Language.Haskell.TH.SYB where
 

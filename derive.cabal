@@ -29,7 +29,6 @@ Library
         CPP-Options: "-DNO_SYB"
     else
         Build-Depends: base < 3
-        Exposed-Modules: Language.Haskell.TH.SYB
 
     Exposed-Modules:
         Data.DeriveGuess
@@ -71,6 +70,7 @@ Library
         Language.Haskell.TH.FixedPpr
         Language.Haskell.TH.Helper
         Language.Haskell.TH.Peephole
+        Language.Haskell.TH.SYB
 
 Executable derive
     Main-Is: Derive.hs
