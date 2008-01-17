@@ -1,4 +1,3 @@
-
 module Main(main) where
 
 import System.Console.GetOpt
@@ -60,12 +59,12 @@ options =
  , Option "i"  ["import"]  (OptArg (Import . fromMaybe "") "MODULE") "add an import statement"
  , Option "m"  ["module"]  (ReqArg Module "MODULE") "add a module MODULE where statement"
  , Option "a"  ["append"]  (NoArg Append)           "append the result to the file"
- , Option "d"  ["derive"]  (ReqArg split "DERIVES") "things to derive for all types"
+ , Option "d"  ["derive"]  (ReqArg splt "DERIVES") "things to derive for all types"
  , Option "k"  ["keep"]    (NoArg KeepTemp)         "keep temporary file"
  , Option "n"  ["no-opts"] (NoArg NoOpts)           "ignore the file options"
  ]
  where
-    split = Derive . words . map (\x -> if x == ',' then ' ' else x)
+    splt = Derive . words . map (\x -> if x == ',' then ' ' else x)
 
 
 getOpts :: IO ([Flag], [String])
@@ -81,12 +80,12 @@ getOpts = do
         useage = usageInfo "Usage: derive [OPTION...] files..." options
         exitSuccess = exitWith ExitSuccess
 
-
+main :: IO ()
 main = do
     (flags,files) <- getOpts
-    files <- mapM pickFile files
-    mapM_ (mainFile flags) (catMaybes files)
-    when (any isNothing files) exitFailure
+    fles <- mapM pickFile files
+    mapM_ (mainFile flags) (catMaybes fles)
+    when (any isNothing fles) exitFailure
 
 
 pickFile :: FilePath -> IO (Maybe FilePath)
@@ -97,7 +96,7 @@ pickFile orig = f [orig, orig <.> "hs", orig <.> "lhs"]
             b <- doesFileExist x
             if b then return $ Just x else f xs
 
-
+appendMsg :: String
 appendMsg = "--------------------------------------------------------\n" ++
             "-- DERIVES GENERATED CODE\n" ++
             "-- DO NOT MODIFY BELOW THIS LINE\n" ++
@@ -110,28 +109,26 @@ appendMsg = "--------------------------------------------------------\n" ++
 dropAppend :: String -> (String,Bool)
 dropAppend xs = f 0 xs
     where
-        f i xs | appendMsg `isPrefixOf` xs =
+        f i ys | appendMsg `isPrefixOf` ys =
                 if hashString rest == chk
                 then f i []
-                else (xs ++ "\n\n\n\n", True)
-            where (chk, rest) = span isDigit $ drop (length appendMsg) xs
+                else (ys ++ "\n\n\n\n", True)
+            where (chk, rest) = span isDigit $ drop (length appendMsg) ys
 
         f i [] = (replicate (4 - i) '\n', False)
-        f i ('\n':xs) = add '\n' (f (i+1) xs)
-        f i (x:xs) = add x (f 0 xs)
+        f i ('\n':ys) = add '\n' (f (i+1) ys)
+        f _ (y:ys) = add y (f 0 ys)
 
         add c ~(cs,b) = (c:cs,b)
 
 
-
+mainFile :: [Flag] -> FilePath -> IO ()
 mainFile flags file = do
     (fileflags,pragmas,modname,datas,reqs) <- parseFile flags file
-    let tmpfile = "Temp.hs"
-    
-        devs = ["'\\n': $( _derive_string_instance make" ++ cls ++ " ''" ++ ctor ++ " )"
+    let devs = ["'\\n': $( _derive_string_instance make" ++ cls ++ " ''" ++ ctor ++ " )"
                | (ctor,cls) <- reqs]
 
-        hscode x = "{-# OPTIONS_GHC -fth -fglasgow-exts -w #-}\n" ++
+    let hscode x = "{-# OPTIONS_GHC -fth -fglasgow-exts -w #-}\n" ++
                    unlines pragmas ++
                    "module " ++ modname ++ " where\n" ++
                    "import Data.DeriveTH\n" ++
@@ -143,38 +140,38 @@ mainFile flags file = do
     -- note: Wrong on Hugs on Windows
     tmpdir <- getTemporaryDirectory
     b <- doesDirectoryExist tmpdir
-    tmpdir <- return $ if b && KeepTemp `notElem` flags then tmpdir else ""
-    
-    (hsfile, hshndl) <- openTempFileLocal tmpdir "Temp.hs"
-    (txfile, txhndl) <- openTempFileLocal tmpdir "Temp.txt"
+    tmpdr <- return $ if b && KeepTemp `notElem` flags then tmpdir else ""
+
+    (hsfile, hshndl) <- openTempFileLocal tmpdr "Temp.hs"
+    (txfile, txhndl) <- openTempFileLocal tmpdr "Temp.txt"
     hClose txhndl
-    
+
     hPutStr hshndl $ hscode txfile
     hClose hshndl
-    
+
     system $ "ghc -e " ++ modname ++ ".main " ++ hsfile
 
-    txhndl <- openFile txfile ReadMode
-    res <- hGetContents txhndl
+    txhandl <- openFile txfile ReadMode
+    res <- hGetContents txhandl
     length res `seq` return ()
-    hClose txhndl
-    
+    hClose txhandl
+
     when (KeepTemp `notElem` flags) $ do
         removeFile hsfile
         removeFile txfile
 
-    flags <- return $ fileflags ++ flags
-    if Append `elem` flags then do
+    flgs <- return $ fileflags ++ flags
+    if Append `elem` flgs then do
         src <- readFile file
-        let (src2,b) = dropAppend src
-        when b $ putStrLn "Warning, Checksum does not match, please edit the file manually"
+        let (src2,c) = dropAppend src
+        when c $ putStrLn "Warning, Checksum does not match, please edit the file manually"
         writeFile file $ src2 ++ (if null res then "" else appendMsg ++ hashString res ++ "\n" ++ res)
      else do
-        let modline = concat $ take 1 ["module " ++ x ++ " where\n" | Module x <- flags]
-            impline = unlines ["import " ++ if null i then modname else i | Import i <- flags]
+        let modline = concat $ take 1 ["module " ++ x ++ " where\n" | Module x <- flgs]
+            impline = unlines ["import " ++ if null i then modname else i | Import i <- flgs]
             answer = modline ++ impline ++ res
-        
-        case [x | Output x <- flags] of
+
+        case [x | Output x <- flgs] of
              [] -> putStr answer
              (x:_) -> writeFile x answer
 
@@ -190,13 +187,13 @@ mainFile flags file = do
 parseFile :: [Flag] -> FilePath -> IO ([Flag], [String], String, String, [(String,String)])
 parseFile flags file = do
         src <- liftM lines $ readFile file
-        options <- if NoOpts `elem` flags then return [] else parseOptions src
+        optns <- if NoOpts `elem` flags then return [] else parseOptions src
         pragmas <- return $ parsePragmas src
         modname <- parseModname src
-        let deriv = concat [x | Derive x <- flags ++ options]
+        let deriv = concat [x | Derive x <- flags ++ optns]
         (decl,req) <- return $ unzip $ concatMap (checkData deriv) $ joinLines $
                                map dropComments $ filter (not . isBlank) src
-        return (options, pragmas, modname, unlines decl, concat req)
+        return (optns, pragmas, modname, unlines decl, concat req)
     where
         parsePragmas (x:xs)
             | "{-#" `isPrefixOf` x2 && "#-}" `isSuffixOf` x2 = x2 : parsePragmas xs
@@ -211,21 +208,21 @@ parseFile flags file = do
                     return $ a ++ b
             | "{-# OPTIONS" `isPrefixOf` x = parseOptions xs
         parseOptions _ = return []
-        
+
         readOptions x = case getOpt Permute options (words x) of
                             (a,_,ns) -> mapM_ putStr ns >> return a
 
 
-        parseModname (x:xs) | "module " `isPrefixOf` x = return $ takeWhile f $ dropWhile isSpace $ drop 6 x
-            where f x = not (isSpace x) && x `notElem` "("
-        parseModname (x:xs) = parseModname xs
+        parseModname (x:_) | "module " `isPrefixOf` x = return $ takeWhile f $ dropWhile isSpace $ drop 6 x
+            where f y = not (isSpace y) && y `notElem` "("
+        parseModname (_:ys) = parseModname ys
         parseModname [] = putStrLn "Error, module name not detected" >> return "Main"
 
 
         isBlank x = null x2 || "--" `isPrefixOf` x2
             where x2 = dropWhile isSpace x
-            
-        dropComments ('-':'-':xs) = []
+
+        dropComments ('-':'-':_) = []
         dropComments (x:xs) = x : dropComments xs
         dropComments [] = []
 
@@ -233,7 +230,7 @@ parseFile flags file = do
             where col1 = null . takeWhile isSpace
         joinLines (x:xs) = x : joinLines xs
         joinLines [] = []
-        
+
         checkData extra x
                 | keyword `elem` ["data","newtype"] = [(x, map ((,) name) req)]
                 | keyword `elem` ["type","import"] = [(x,[])]
@@ -249,10 +246,10 @@ parseFile flags file = do
         parseDeriving :: String -> [String]
         parseDeriving x = words $ f False x
             where
-                f b ('{':'-':'!':xs) = ' ' : f True  xs
-                f b ('!':'-':'}':xs) = ' ' : f False xs
-                f b (x:xs) = [if x == ',' then ' ' else x | b] ++ f b xs
-                f b [] = []
+                f _ ('{':'-':'!':xs) = ' ' : f True  xs
+                f _ ('!':'-':'}':xs) = ' ' : f False xs
+                f b (y:ys) = [if y == ',' then ' ' else y | b] ++ f b ys
+                f _ [] = []
 
 
         -- if there is a =>, its just after that
