@@ -25,7 +25,7 @@ traverseTraversal = defaultTraversalType
         { traversalName  = "traverse"
         , traversalId    = l0 "pure"
         , traversalPlus  = fail "variable used in multiple positions in a data type"
-        , traverseTuple  = \args -> liftAN (VarE $ tupleDataName $ length args) args
+        , traverseTuple  = \args -> liftAN (ConE $ tupleDataName $ length args) args
         , traverseCtor   = \ctor -> liftAN (l0 ctor)
         , traverseFunc   = \pat rhs -> sclause [vr "f", pat] rhs
         }
