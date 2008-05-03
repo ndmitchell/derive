@@ -17,6 +17,7 @@ import Data.List
 import Control.Monad (liftM)
 
 import Language.Haskell.TH.All
+import Language.Haskell.TH.ExpandSynonym
 
 
 -- | Derive an instance of some class. @derive@ only derives instances
@@ -37,7 +38,7 @@ _derive_string_instance (Derivation f s) nm =
 -- | Extract a 'DataDef' value from a type using the TH 'reify'
 -- framework.
 deriveOne :: Name -> Q DataDef
-deriveOne x = liftM extract (reify x)
+deriveOne x = extract =<< reify x
 
-extract (TyConI decl) = normData decl
+extract (TyConI decl) = liftM normData (expandData decl)
 extract _ = error $ "Data.Derive.TH.deriveInternal: not a type!"
