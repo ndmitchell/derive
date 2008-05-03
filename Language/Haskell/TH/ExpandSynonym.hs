@@ -23,7 +23,7 @@ expandType' :: Type -> [Type] -> Q Type
 expandType'   (AppT t arg) args   = expandType' t (arg:args)
 expandType' t@(ConT name)  args   = do result <- expandSyn name args
                                        case result of
-                                          Just (t',args') -> expandType' t' args'
+                                          Just (t',args') -> everywhereM (mkM expandType) $ foldl AppT t' args'
                                           _               -> return $ foldl AppT t args
 expandType' t              args   = return $ foldl AppT t args
 
