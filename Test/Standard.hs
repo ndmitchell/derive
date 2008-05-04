@@ -27,21 +27,3 @@ instance Bounded (a -> b)
 instance Read (a -> b)
 
 instance Bounded a => Bounded [a]
-
-{-
-makeArbitrary :: Language.Haskell.TH.All.Derivation
-makeBinary :: Language.Haskell.TH.All.Derivation
-makeBinaryDefer :: Language.Haskell.TH.All.Derivation
-makeBinaryOld :: Language.Haskell.TH.All.Derivation
-makeEnumCyclic :: Language.Haskell.TH.All.Derivation
-makeFoldable :: Language.Haskell.TH.All.Derivation
-makeNFData :: Language.Haskell.TH.All.Derivation
-makePlateDirect :: Language.Haskell.TH.All.Derivation
-makePlateTypeable :: Language.Haskell.TH.All.Derivation
-makeRef :: Language.Haskell.TH.All.Derivation
-makeLazySet
-makeSerial :: Language.Haskell.TH.All.Derivation
-makeTTypeable :: Language.Haskell.TH.All.Derivation
-makeTraversable :: Language.Haskell.TH.All.Derivation
-makeUniplate :: Language.Haskell.TH.All.Derivation
--}
