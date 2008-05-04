@@ -4,7 +4,7 @@ module Language.Haskell.TH.All (
     module Language.Haskell.TH.All,
     module Language.Haskell.TH.Syntax, module Language.Haskell.TH.Peephole,
     module Language.Haskell.TH.Helper, module Language.Haskell.TH.FixedPpr,
-    module Language.Haskell.TH.Data, 
+    module Language.Haskell.TH.Data,   module Language.Haskell.TH.ExpandSynonym,
     module Language.Haskell.TH.SYB
     ) where
 
@@ -12,6 +12,7 @@ import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Peephole
 import Language.Haskell.TH.Helper
 import Language.Haskell.TH.FixedPpr
+import Language.Haskell.TH.ExpandSynonym
 import Language.Haskell.TH.Data
 import Language.Haskell.TH.SYB
 

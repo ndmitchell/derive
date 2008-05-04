@@ -19,7 +19,6 @@ import Control.Monad (liftM)
 
 import Data.Derive.All
 import Language.Haskell.TH.All
-import Language.Haskell.TH.ExpandSynonym
 
 
 -- | Derive an instance of some class. @derive@ only derives instances
