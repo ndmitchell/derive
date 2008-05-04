@@ -35,7 +35,7 @@ functorTraversal = defaultTraversalType
 functorForArrowType :: Exp -> Exp -> Exp
 functorForArrowType a b
   | isId a && isId b  =  id'
-  | isId a            =  InfixE Nothing  (l0 ".") (Just b)
-  | isId b            =  InfixE (Just a) (l0 ".") Nothing
-  | otherwise         =  LamE [l0 "arg"] $ a .: l0 "arg" .: b
+  | isId a            =  InfixE (Just b) (l0 ".") Nothing
+  | isId b            =  InfixE Nothing  (l0 ".") (Just a)
+  | otherwise         =  LamE [l0 "arg"] $ b .: l0 "arg" .: a
  where isId = (id'==)
