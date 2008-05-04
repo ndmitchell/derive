@@ -14,6 +14,7 @@
 -- <http://www.mail-archive.com/haskell-prime@haskell.org/msg02116.html>.
 module Data.DeriveTraversal(
         TraveralType(..), defaultTraversalType,
+        traversalDerivation1,
         traversalInstance, traversalInstance1,
         deriveTraversal
     ) where
@@ -78,6 +79,12 @@ type WithInstances a = Writer (S.Set RequiredInstance) a
 
 ---------------------------------------------------------------------------------
 -- Deriving traversals
+
+
+-- | Derivation for a Traversable like class with just 1 method
+traversalDerivation1 :: TraveralType -> String -> Derivation
+traversalDerivation1 tt nm = derivation (traversalInstance1 tt nm) (className (traversalArg tt))
+    where className n = nm ++ (if n > 1 then show n else "")
 
 
 -- | Instance for a Traversable like class with just 1 method

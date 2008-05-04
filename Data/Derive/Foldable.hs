@@ -10,16 +10,17 @@
 
 -- NOTE: Cannot be guessed as it relies on type information
 
-module Data.Derive.Foldable(makeFoldable) where
+module Data.Derive.Foldable(makeFoldable, makeFoldableN) where
 
 import Language.Haskell.TH.All
 import Data.DeriveTraversal
 
 
 makeFoldable :: Derivation
-makeFoldable = derivation derive "Foldable"
+makeFoldable = makeFoldableN 1
 
-derive dat = traversalInstance1 foldrTraversal "Foldable" dat
+makeFoldableN :: Int -> Derivation
+makeFoldableN n = traversalDerivation1 foldrTraversal{traversalArg = n} "Foldable"
 
 foldrTraversal = defaultTraversalType
         { traversalName   = "foldr"

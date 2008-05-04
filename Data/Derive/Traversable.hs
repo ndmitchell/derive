@@ -10,16 +10,17 @@
 
 -- NOTE: Cannot be guessed as it relies on type information
 
-module Data.Derive.Traversable(makeTraversable) where
+module Data.Derive.Traversable(makeTraversable, makeTraversableN) where
 
 import Language.Haskell.TH.All
 import Data.DeriveTraversal
 
 
 makeTraversable :: Derivation
-makeTraversable = derivation derive "Traversable"
+makeTraversable = makeTraversableN 1
 
-derive dat = traversalInstance1 traverseTraversal "Traversable" dat
+makeTraversableN :: Int -> Derivation
+makeTraversableN n = traversalDerivation1 traverseTraversal{traversalArg = n} "Traversable"
 
 traverseTraversal = defaultTraversalType
         { traversalName  = "traverse"

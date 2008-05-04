@@ -22,9 +22,7 @@ makeFunctor :: Derivation
 makeFunctor = makeFunctorN 1
 
 makeFunctorN :: Int -> Derivation
-makeFunctorN n = derivation (derive n) ("Functor" ++ (if n > 1 then show n else ""))
-
-derive n dat = traversalInstance1 functorTraversal{traversalArg = n} "Functor" dat
+makeFunctorN n = traversalDerivation1 functorTraversal{traversalArg = n} "Functor"
 
 functorTraversal = defaultTraversalType
         { traversalName   = "fmap"
