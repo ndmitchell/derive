@@ -26,9 +26,9 @@ Library
     Build-Depends: template-haskell, filepath, mtl
     if flag(small_base)
         Build-Depends: base >= 3, containers, pretty, packedstring, random, process, directory
-        CPP-Options: "-DNO_SYB"
     else
         Build-Depends: base < 3
+        CPP-Options: "-DTH_SYB"
 
     Exposed-Modules:
         Data.DeriveGuess

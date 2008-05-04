@@ -6,7 +6,7 @@ import Data.Generics hiding (Fixity)
 import Language.Haskell.TH.Syntax
 import Data.PackedString
 
-#ifndef NO_SYB    
+#ifdef TH_SYB
 instance Data PackedString where gfoldl k z x = z x
 
 
