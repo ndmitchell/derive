@@ -9,6 +9,7 @@ module Data.DeriveTH
        (derive,
         -- * Convienience re-exports
         Derivation, -- abstract!
+        module Data.Derive.All,
         -- * Internal
         _derive_string_instance
        ) where
@@ -16,6 +17,7 @@ module Data.DeriveTH
 import Data.List
 import Control.Monad (liftM)
 
+import Data.Derive.All
 import Language.Haskell.TH.All
 import Language.Haskell.TH.ExpandSynonym
 
