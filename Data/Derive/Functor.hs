@@ -12,16 +12,19 @@
 
 -- | Derives 'Functor', as discussed on the Haskell-prime mailing list:
 -- <http://www.mail-archive.com/haskell-prime@haskell.org/msg02116.html>.
-module Data.Derive.Functor(makeFunctor) where
+module Data.Derive.Functor(makeFunctor,makeFunctorN) where
 
 import Language.Haskell.TH.All
 import Data.DeriveTraversal
 
 
 makeFunctor :: Derivation
-makeFunctor = derivation derive "Functor"
+makeFunctor = makeFunctorN 1
 
-derive dat = traversalInstance1 functorTraversal "Functor" dat
+makeFunctorN :: Int -> Derivation
+makeFunctorN n = derivation (derive n) ("Functor" ++ (if n > 1 then show n else ""))
+
+derive n dat = traversalInstance1 functorTraversal{traversalArg = n} "Functor" dat
 
 functorTraversal = defaultTraversalType
         { traversalName   = "fmap"
