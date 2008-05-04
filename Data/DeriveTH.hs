@@ -3,7 +3,7 @@
 -- threading issues such that all one needs to do is:
 --
 -- @
---   data Foo = Foo ; $( derive 'Data.Derive.StdDerivations.eq' ''Foo )
+--   data Foo = Foo ; $( derive makeEq ''Foo )
 -- @
 module Data.DeriveTH
        (derive,
