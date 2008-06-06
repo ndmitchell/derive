@@ -124,6 +124,7 @@ dropAppend xs = f 0 xs
 
 mainFile :: [Flag] -> FilePath -> IO ()
 mainFile flags file = do
+    file <- canonicalizePath file
     (fileflags,pragmas,modname,datas,reqs) <- parseFile flags file
     let devs = ["'\\n': $( _derive_string_instance make" ++ cls ++ " ''" ++ ctor ++ " )"
                | (ctor,cls) <- reqs]
@@ -149,7 +150,10 @@ mainFile flags file = do
     hPutStr hshndl $ hscode txfile
     hClose hshndl
 
-    code <- system $ "ghc -e " ++ modname ++ ".main " ++ hsfile
+    let incdir = dropTrailingPathSeparator $ joinPath $ reverse $
+                 drop (1 + length (filter (== '.') modname)) $ reverse $ splitPath file
+        cmd = "ghc -i.;\"" ++ incdir ++ "\" -e " ++ modname ++ ".main " ++ hsfile
+    code <- system cmd
     when (code /= ExitSuccess) $ do
         putStrLn "Failed to generate the code"
         exitWith code
