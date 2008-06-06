@@ -110,7 +110,7 @@ dropAppend :: String -> (String,Bool)
 dropAppend xs = f 0 xs
     where
         f i ys | appendMsg `isPrefixOf` ys =
-                if hashString rest == chk
+                if hashString (filter (/= '\r') rest) == chk
                 then f i []
                 else (ys ++ "\n\n\n\n", True)
             where (chk, rest) = span isDigit $ drop (length appendMsg) ys
@@ -122,6 +122,8 @@ dropAppend xs = f 0 xs
         add c ~(cs,b) = (c:cs,b)
 
 
+-- note: need to be careful that on Windows we don't convert \n files into
+--       \r\n files
 mainFile :: [Flag] -> FilePath -> IO ()
 mainFile flags file = do
     file <- canonicalizePath file
@@ -158,17 +160,19 @@ mainFile flags file = do
         putStrLn "Failed to generate the code"
         exitWith code
 
-    res <- readFile' txFile
+    res <- readFile' txfile
     when (KeepTemp `notElem` flags) $ do
         removeFile hsfile
         removeFile txfile
 
     flgs <- return $ fileflags ++ flags
     if Append `elem` flgs then do
-        src <- readFile file
+        src <- readFileBinary file
         let (src2,c) = dropAppend src
+            ans = (if '\r' `elem` src then windowsNewLine else id)
+                  (src2 ++ if null res then "" else appendMsg ++ hashString res ++ "\n" ++ res)
         when c $ putStrLn "Warning, Checksum does not match, please edit the file manually"
-        writeFile file $ src2 ++ (if null res then "" else appendMsg ++ hashString res ++ "\n" ++ res)
+        writeFileBinary file ans
      else do
         let modline = concat $ take 1 ["module " ++ x ++ " where\n" | Module x <- flgs]
             impline = unlines ["import " ++ if null i then modname else i | Import i <- flgs]
@@ -290,3 +294,24 @@ readFile' file = do
     length res `seq` return ()
     hClose h
     return res
+
+
+readFileBinary :: FilePath -> IO String
+readFileBinary file = do
+    h <- openBinaryFile file ReadMode
+    hGetContents h
+
+
+writeFileBinary :: FilePath -> String -> IO ()
+writeFileBinary file s = do
+    h <- openBinaryFile file WriteMode
+    hPutStr h s
+    hClose h
+
+
+windowsNewLine :: String -> String
+windowsNewLine ('\r':'\n':xs) = '\r':'\n': windowsNewLine xs
+windowsNewLine ('\n':xs) = '\r':'\n': windowsNewLine xs
+windowsNewLine (x:xs) = x : windowsNewLine xs
+windowsNewLine [] = []
+
