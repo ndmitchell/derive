@@ -149,7 +149,10 @@ mainFile flags file = do
     hPutStr hshndl $ hscode txfile
     hClose hshndl
 
-    system $ "ghc -e " ++ modname ++ ".main " ++ hsfile
+    code <- system $ "ghc -e " ++ modname ++ ".main " ++ hsfile
+    when (code /= ExitSuccess) $ do
+        putStrLn "Failed to generate the code"
+        exitWith code
 
     txhandl <- openFile txfile ReadMode
     res <- hGetContents txhandl
