@@ -158,11 +158,7 @@ mainFile flags file = do
         putStrLn "Failed to generate the code"
         exitWith code
 
-    txhandl <- openFile txfile ReadMode
-    res <- hGetContents txhandl
-    length res `seq` return ()
-    hClose txhandl
-
+    res <- readFile' txFile
     when (KeepTemp `notElem` flags) $ do
         removeFile hsfile
         removeFile txfile
@@ -285,3 +281,12 @@ openTempFileLocal dir template = do
     if b then openTempFileLocal dir template else do
         h <- openFile s ReadWriteMode
         return (s, h)
+
+
+readFile' :: FilePath -> IO String
+readFile' file = do
+    h <- openFile file ReadMode
+    res <- hGetContents h
+    length res `seq` return ()
+    hClose h
+    return res
