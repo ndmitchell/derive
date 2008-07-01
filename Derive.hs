@@ -154,7 +154,7 @@ mainFile flags file = do
 
     let incdir = dropTrailingPathSeparator $ joinPath $ reverse $
                  drop (1 + length (filter (== '.') modname)) $ reverse $ splitPath file
-        cmd = "ghc -i.;\"" ++ incdir ++ "\" -e " ++ modname ++ ".main " ++ hsfile
+        cmd = "ghc -i. -i\"" ++ incdir ++ "\" -e " ++ modname ++ ".main " ++ hsfile
     code <- system cmd
     when (code /= ExitSuccess) $ do
         putStrLn "Failed to generate the code"
