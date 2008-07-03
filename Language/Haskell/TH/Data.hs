@@ -18,9 +18,12 @@ type CtorDef = Con
 
 
 dataName :: DataDef -> String
-dataName (DataD    _ name _ _ _) = show name
-dataName (NewtypeD _ name _ _ _) = show name
+dataName (DataD    _ name _ _ _) = show (unqualifiedName name)
+dataName (NewtypeD _ name _ _ _) = show (unqualifiedName name)
 
+qualifiedDataName :: DataDef -> Name
+qualifiedDataName (DataD    _ name _ _ _) = name
+qualifiedDataName (NewtypeD _ name _ _ _) = name
 
 dataArity :: DataDef -> Int
 dataArity (DataD    _ _ xs _ _) = length xs
@@ -33,10 +36,16 @@ dataCtors (NewtypeD _ _ _ x  _) = [x]
 
 
 ctorName :: CtorDef -> String
-ctorName (NormalC name _ ) = show name
-ctorName (RecC name _    ) = show name
-ctorName (InfixC _ name _) = show name
+ctorName (NormalC name _ ) = show (unqualifiedName name)
+ctorName (RecC name _    ) = show (unqualifiedName name)
+ctorName (InfixC _ name _) = show (unqualifiedName name)
 ctorName (ForallC _ _ c  ) = ctorName c
+
+qualifiedCtorName :: CtorDef -> Name
+qualifiedCtorName (NormalC name _ ) = name
+qualifiedCtorName (RecC name _    ) = name
+qualifiedCtorName (InfixC _ name _) = name
+qualifiedCtorName (ForallC _ _ c  ) = qualifiedCtorName c
 
 
 ctorArity :: CtorDef -> Int
@@ -58,7 +67,7 @@ ctorTypes = map snd . ctorStrictTypes
 
 
 ctorFields :: CtorDef -> [String]
-ctorFields (RecC name xs) = [show a | (a,b,c) <- xs]
+ctorFields (RecC name varStrictType) = [show (unqualifiedName name) | (name,strict,typ) <- varStrictType]
 ctorFields _ = []
 
 
@@ -72,15 +81,14 @@ dropModule xs = case reverse xs of
 
 
 normData :: DataDef -> DataDef
-normData = everywhere (mkT normType) . everywhere (mkT normName)
+normData = everywhere (mkT normType)
     where
-        normName :: Name -> Name
-        normName = mkName . dropModule . show
-
         normType :: Type -> Type
         normType (ConT x) | show x == "[]" = ListT
         normType x = x
 
+unqualifiedName :: Name -> Name
+unqualifiedName = mkName . dropModule . show
 
 
 -- convert AppT chains back to a proper list
