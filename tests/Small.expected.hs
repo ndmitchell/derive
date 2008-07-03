@@ -45,7 +45,7 @@ instance Show t1 => Show (Expr t1)
                            x2) = showParen (p > 10) (showString "EAp" . (showChar ' ' . (showsPrec 11 x1 . (showChar ' ' . showsPrec 11 x2))))
           showsPrec p (EVar x1) = showParen (p > 10) (showString "EVar" . (showChar ' ' . showsPrec 11 x1))
 
-typename_Expr = mkTyCon "Expr"
+typename_Expr = mkTyCon "Small.Expr"
 instance Typeable1 Expr
     where typeOf1 _ = mkTyConApp typename_Expr []
 instance Typeable a => Typeable (Expr a)
@@ -55,6 +55,18 @@ instance (Data t1, Typeable t1) => Data (Expr t1)
     where gfoldl k r (ELambda x1 x2) = k (k (r ELambda) x1) x2
           gfoldl k r (EAp x1 x2) = k (k (r EAp) x1) x2
           gfoldl k r (EVar x1) = k (r EVar) x1
+          gunfold k z c = case constrIndex c of
+                              1 -> k (k (z ELambda))
+                              2 -> k (k (z EAp))
+                              3 -> k (z EVar)
+          toConstr (ctor@(ELambda x1 x2)) = indexConstr (dataTypeOf ctor) 1
+          toConstr (ctor@(EAp x1 x2)) = indexConstr (dataTypeOf ctor) 2
+          toConstr (ctor@(EVar x1)) = indexConstr (dataTypeOf ctor) 3
+          dataTypeOf _ = ty_T
+                         where ty_T = mkDataType "Small.Expr" [con_C1, con_C2, con_C3]
+                               con_C1 = mkConstr ty_T "ELambda" [] Prefix
+                               con_C2 = mkConstr ty_T "EAp" [] Prefix
+                               con_C3 = mkConstr ty_T "EVar" [] Prefix
 
 fromELambda (ELambda x1 x2) = (x1, x2)
 fromEAp (EAp x1 x2) = (x1, x2)
@@ -110,7 +122,7 @@ instance Show Primary
           showsPrec p (Green) = showParen (p > 10) (showString "Green")
           showsPrec p (Blue) = showParen (p > 10) (showString "Blue")
 
-typename_Primary = mkTyCon "Primary"
+typename_Primary = mkTyCon "Small.Primary"
 instance Typeable Primary
     where typeOf _ = mkTyConApp typename_Primary []
 
@@ -118,6 +130,18 @@ instance Data Primary
     where gfoldl k r (Red) = r Red
           gfoldl k r (Green) = r Green
           gfoldl k r (Blue) = r Blue
+          gunfold k z c = case constrIndex c of
+                              1 -> z Red
+                              2 -> z Green
+                              3 -> z Blue
+          toConstr (ctor@(Red)) = indexConstr (dataTypeOf ctor) 1
+          toConstr (ctor@(Green)) = indexConstr (dataTypeOf ctor) 2
+          toConstr (ctor@(Blue)) = indexConstr (dataTypeOf ctor) 3
+          dataTypeOf _ = ty_T
+                         where ty_T = mkDataType "Small.Primary" [con_C1, con_C2, con_C3]
+                               con_C1 = mkConstr ty_T "Red" [] Prefix
+                               con_C2 = mkConstr ty_T "Green" [] Prefix
+                               con_C3 = mkConstr ty_T "Blue" [] Prefix
 
 fromRed (Red) = ()
 fromGreen (Green) = ()
@@ -166,7 +190,7 @@ instance Show t1 => Show (BinTree t1)
                               x2
                               x3) = showParen (p > 10) (showString "Branch" . (showChar ' ' . (showsPrec 11 x1 . (showChar ' ' . (showsPrec 11 x2 . (showChar ' ' . showsPrec 11 x3))))))
 
-typename_BinTree = mkTyCon "BinTree"
+typename_BinTree = mkTyCon "Small.BinTree"
 instance Typeable1 BinTree
     where typeOf1 _ = mkTyConApp typename_BinTree []
 instance Typeable a => Typeable (BinTree a)
@@ -175,6 +199,15 @@ instance Typeable a => Typeable (BinTree a)
 instance (Data t1, Typeable t1) => Data (BinTree t1)
     where gfoldl k r (Leaf) = r Leaf
           gfoldl k r (Branch x1 x2 x3) = k (k (k (r Branch) x1) x2) x3
+          gunfold k z c = case constrIndex c of
+                              1 -> z Leaf
+                              2 -> k (k (k (z Branch)))
+          toConstr (ctor@(Leaf)) = indexConstr (dataTypeOf ctor) 1
+          toConstr (ctor@(Branch x1 x2 x3)) = indexConstr (dataTypeOf ctor) 2
+          dataTypeOf _ = ty_T
+                         where ty_T = mkDataType "Small.BinTree" [con_C1, con_C2]
+                               con_C1 = mkConstr ty_T "Leaf" [] Prefix
+                               con_C2 = mkConstr ty_T "Branch" [] Prefix
 
 fromLeaf (Leaf) = ()
 fromBranch (Branch x1 x2 x3) = (x1, x2, x3)
@@ -206,7 +239,7 @@ instance Read t1 => Read (Id t1)
 instance Show t1 => Show (Id t1)
     where showsPrec p (Id x1) = showParen (p > 10) (showString "Id" . (showChar ' ' . showsPrec 11 x1))
 
-typename_Id = mkTyCon "Id"
+typename_Id = mkTyCon "Small.Id"
 instance Typeable1 Id
     where typeOf1 _ = mkTyConApp typename_Id []
 instance Typeable a => Typeable (Id a)
@@ -214,6 +247,12 @@ instance Typeable a => Typeable (Id a)
 
 instance (Data t1, Typeable t1) => Data (Id t1)
     where gfoldl k r (Id x1) = k (r Id) x1
+          gunfold k z c = case constrIndex c of
+                              1 -> k (z Id)
+          toConstr (ctor@(Id x1)) = indexConstr (dataTypeOf ctor) 1
+          dataTypeOf _ = ty_T
+                         where ty_T = mkDataType "Small.Id" [con_C1]
+                               con_C1 = mkConstr ty_T "Id" [] Prefix
 
 instance Functor Id
     where fmap f (Id a1) = Id (f a1)
@@ -255,7 +294,7 @@ instance Read t1 => Read (Id2 t1)
 instance Show t1 => Show (Id2 t1)
     where showsPrec p (Id2 x1) = showString "Id2 {" . (showChar ' ' . (showString "runId = " . (showsPrec 0 x1 . (showChar ' ' . showChar '}'))))
 
-typename_Id2 = mkTyCon "Id2"
+typename_Id2 = mkTyCon "Small.Id2"
 instance Typeable1 Id2
     where typeOf1 _ = mkTyConApp typename_Id2 []
 instance Typeable a => Typeable (Id2 a)
@@ -263,6 +302,12 @@ instance Typeable a => Typeable (Id2 a)
 
 instance (Data t1, Typeable t1) => Data (Id2 t1)
     where gfoldl k r (Id2 x1) = k (r Id2) x1
+          gunfold k z c = case constrIndex c of
+                              1 -> k (z Id2)
+          toConstr (ctor@(Id2 x1)) = indexConstr (dataTypeOf ctor) 1
+          dataTypeOf _ = ty_T
+                         where ty_T = mkDataType "Small.Id2" [con_C1]
+                               con_C1 = mkConstr ty_T "Id2" ["runId"] Prefix
 
 instance Functor Id2
     where fmap f (Id2 a1) = Id2 (f a1)
