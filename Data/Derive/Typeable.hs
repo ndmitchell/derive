@@ -48,7 +48,7 @@ instance (Typeable a, Typeable b, Typeable c) => Typeable (tycon a b c) where { 
 
 makeTypeable :: Derivation
 makeTypeable = derivation typeable' "Typeable"
-typeable' dat = (funN nam [sclause [] (l1 "mkTyCon" $ lit $ dataName dat)])
+typeable' dat = (funN nam [sclause [] (l1 "mkTyCon" $ lit . show $ qualifiedDataName dat)])
                 : map f [0..dataArity dat]
     where
         nam = [if x == '.' then '_' else x | x <- "typename_" ++ dataName dat]
