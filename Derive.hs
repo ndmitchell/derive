@@ -71,7 +71,7 @@ getOpts :: IO ([Flag], [String])
 getOpts = do
     args <- getArgs
     case getOpt Permute options args of
-        (o,n,[]  ) | Version `elem` o -> putStrLn "Derive 0.1, (C) Neil Mitchell & Stefan O'Rear 2006-2007" >> exitSuccess
+        (o,n,[]  ) | Version `elem` o -> putStrLn "Derive 0.1, (C) Neil Mitchell & Stefan O'Rear 2006-2008" >> exitSuccess
                    | Help `elem` o    -> putStr useage >> exitSuccess
                    | null n           -> putStr ("no files specified\n" ++ useage) >> exitSuccess
                    | otherwise        -> return (o, n)
