@@ -8,7 +8,7 @@ import System.Exit
 import Control.Monad
 
 
-main = defaultMainWithHooks defaultUserHooks{runTests=test}
+main = defaultMainWithHooks simpleUserHooks{runTests=test}
 
 
 test :: CabalBreaksTheAPI_Grr grr => Args -> Bool -> PackageDescription -> LocalBuildInfo -> IO grr
