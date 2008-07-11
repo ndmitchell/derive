@@ -36,6 +36,8 @@ CONSOLE OPTIONS:
 
 -import, should an import statement be added
 
+-import-derivation, additional modules providing derivations
+
 -module name, should a module statement be added, and if so with what name
 
 -append, append the code to the current file (overrides all other flags)
@@ -46,7 +48,7 @@ And a list of files to execute upon
 
 
 
-data Flag = Version | Help | Output String | Import String | Module String
+data Flag = Version | Help | Output String | Import String | Module String | ImportDeriv String
           | Append | Derive [String] | KeepTemp | NoOpts
             deriving (Eq, Show)
 
@@ -57,6 +59,7 @@ options =
  , Option "h?" ["help"]    (NoArg Help)             "show help message"
  , Option "o"  ["output"]  (ReqArg Output "FILE")   "output FILE"
  , Option "i"  ["import"]  (OptArg (Import . fromMaybe "") "MODULE") "add an import statement"
+ , Option "I"  ["import-derivation"]  (ReqArg ImportDeriv "MODULE") "import additional derivations"
  , Option "m"  ["module"]  (ReqArg Module "MODULE") "add a module MODULE where statement"
  , Option "a"  ["append"]  (NoArg Append)           "append the result to the file"
  , Option "d"  ["derive"]  (ReqArg splt "DERIVES") "things to derive for all types"
@@ -136,6 +139,7 @@ mainFile flags file = do
                    "module " ++ modname ++ " where\n" ++
                    "import Data.DeriveTH\n" ++
                    "import Data.Derive.All\n" ++
+                   concat [ "import " ++ derivMod ++ "\n" | ImportDeriv derivMod <- flags ] ++
                    datas ++ "\n" ++
                    "main = Prelude.writeFile " ++ show x ++ " $\n" ++
                    "    Prelude.unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
