@@ -78,7 +78,7 @@ getOpts = do
                    | Help `elem` o    -> putStr useage >> exitSuccess
                    | null n           -> putStr ("no files specified\n" ++ useage) >> exitSuccess
                    | otherwise        -> return (o, n)
-        (_,_,errs) -> putStr (concat errs ++ useage) >> exitFailure
+        (_,_,errs) -> hPutStr stderr (concat errs ++ useage) >> exitFailure
     where
         useage = usageInfo "Usage: derive [OPTION...] files..." options
         exitSuccess = exitWith ExitSuccess
@@ -94,7 +94,7 @@ main = do
 pickFile :: FilePath -> IO (Maybe FilePath)
 pickFile orig = f [orig, orig <.> "hs", orig <.> "lhs"]
     where
-        f [] = putStrLn ("Error, file not found: " ++ orig) >> return Nothing
+        f [] = hPutStrLn stderr ("Error, file not found: " ++ orig) >> return Nothing
         f (x:xs) = do
             b <- doesFileExist x
             if b then return $ Just x else f xs
