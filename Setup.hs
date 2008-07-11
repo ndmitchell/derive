@@ -23,7 +23,7 @@ test args bool pd lbi = do
                   "-o Small.out.hs Small.hs"
 
     b <- doesFileExist "Small.out.hs"
-    if b then system "diff -u Small.expected.hs Small.out.hs" >> return ()
+    if b then system "diff -u -b Small.expected.hs Small.out.hs" >> return ()
          else putStrLn "Error: Failed to generate the output file"
     
     -- currently we turn off warnings when compiling
