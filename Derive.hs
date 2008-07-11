@@ -48,7 +48,7 @@ And a list of files to execute upon
 
 
 
-data Flag = Version | Help | Output String | Import String | Module String | ImportDeriv String
+data Flag = Version | Help | Output String | Import String | Module String | Use String
           | Append | Derive [String] | KeepTemp | NoOpts
             deriving (Eq, Show)
 
@@ -59,7 +59,7 @@ options =
  , Option "h?" ["help"]    (NoArg Help)             "show help message"
  , Option "o"  ["output"]  (ReqArg Output "FILE")   "output FILE"
  , Option "i"  ["import"]  (OptArg (Import . fromMaybe "") "MODULE") "add an import statement"
- , Option "I"  ["import-derivation"]  (ReqArg ImportDeriv "MODULE") "import additional derivations"
+ , Option "u"  ["use"]  (ReqArg Use "MODULE") "use additional derivations"
  , Option "m"  ["module"]  (ReqArg Module "MODULE") "add a module MODULE where statement"
  , Option "a"  ["append"]  (NoArg Append)           "append the result to the file"
  , Option "d"  ["derive"]  (ReqArg splt "DERIVES") "things to derive for all types"
@@ -139,7 +139,7 @@ mainFile flags file = do
                    "module " ++ modname ++ " where\n" ++
                    "import Data.DeriveTH\n" ++
                    "import Data.Derive.All\n" ++
-                   concat [ "import " ++ derivMod ++ "\n" | ImportDeriv derivMod <- flags ] ++
+                   concat [ "import " ++ x ++ "\n" | Use x <- flags ] ++
                    datas ++ "\n" ++
                    "main = Prelude.writeFile " ++ show x ++ " $\n" ++
                    "    Prelude.unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
