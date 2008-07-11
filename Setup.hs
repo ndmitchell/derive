@@ -19,7 +19,7 @@ test args bool pd lbi = do
     
     b <- doesFileExist "Small.out.hs"
     when b $ removeFile "Small.out.hs"
-    i <- system $ "derive -mSmallInstancess -iSmall -iData.Generics -iData.Monoid " ++
+    i <- system $ "derive -mSmallInstances -iSmall -iData.Generics -iData.Monoid " ++
                   "-o Small.out.hs Small.hs"
 
     b <- doesFileExist "Small.out.hs"
