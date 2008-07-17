@@ -3,6 +3,8 @@
 -- | Derive 'Eq', as specified in the Haskell 98 Language Report.
 module Data.Derive.Eq(makeEq) where
 
+import Control.Monad(guard)
+
 import Language.Haskell.TH.All
 
 
@@ -25,16 +27,17 @@ example = (,) "Eq" [d|
 
 makeEq :: Derivation
 makeEq = derivation eq' "Eq"
-eq' dat = [instance_context ["Eq"] "Eq" dat [FunD (mkName "==") ((map (\(ctorInd
+eq' dat = [instance_context ["Eq"] "Eq" dat [FunD (mkName "==") ((map (\(_
     ,ctor) -> (Clause [(ConP (mkName (ctorName ctor)) ((map (\field -> (VarP (
     mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++[])),(ConP (mkName
     (ctorName ctor)) ((map (\field -> (VarP (mkName ("y" ++ show field)))) (id
     [1..ctorArity ctor]))++[]))] (NormalB (foldl1With (VarE (mkName "&&")) ((
     map (\field -> (AppE (AppE (VarE (mkName "==")) (VarE (mkName ("x" ++ show
     field)))) (VarE (mkName ("y" ++ show field))))) (id [1..ctorArity ctor]))++
-    [(ConE (mkName "True"))]++[]))) [])) (id (zip [0..] (dataCtors dat))))++[(
-    Clause [WildP,WildP] (NormalB (ConE (mkName "False"))) [])]++[])]]
-
+    [(ConE (mkName "True"))]++[]))) [])) (id (zip [0..] (dataCtors dat))))++
+    (guard (length (dataCtors dat) > 1) >> [(
+    Clause [WildP,WildP] (NormalB (ConE (mkName "False"))) [])]
+    )++[])]]
 
 {-
 -- HAND WRITTEN VERSION
