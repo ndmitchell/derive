@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+
+
 {-
     This module is not written/maintained by the usual Data.Derive author.
 
@@ -12,6 +15,8 @@
 
 module Data.Derive.Foldable(makeFoldable, makeFoldableN) where
 
+import qualified Data.Foldable ( foldr )
+
 import Language.Haskell.TH.All
 import Data.DeriveTraversal
 
@@ -23,7 +28,7 @@ makeFoldableN :: Int -> Derivation
 makeFoldableN n = traversalDerivation1 foldrTraversal{traversalArg = n} "Foldable"
 
 foldrTraversal = defaultTraversalType
-        { traversalName   = "foldr"
+        { traversalName   = 'Data.Foldable.foldr
         , traversalFunc   = \n a -> l1 "flip" (l1 n a)
         , traversalPlus   = fail "variable used in multiple positions in a data type"
         , traversalId     = l1 "flip" (l0 "const")
