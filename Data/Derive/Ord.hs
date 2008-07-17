@@ -3,6 +3,7 @@
 -- | Derive 'Ord', as specified in the Haskell 98 Language Report.
 module Data.Derive.Ord(makeOrd) where
 
+import Control.Monad(guard)
 import Language.Haskell.TH.All
 
 #ifdef GUESS
@@ -20,7 +21,7 @@ example = (,) "Ord" [d|
                 check (CtorOne x1) (CtorOne y1) = compare (tup1 x1) (tup1 y1)
                 check (CtorTwo x1 x2) (CtorTwo y1 y2) = compare (x1,x2) (y1,y2)
                 check (CtorTwo' x1 x2) (CtorTwo' y1 y2) = compare (x1,x2) (y1,y2)
-                check a b = compare (tag a) (tag b)
+                check x y = compare (tag x) (tag y)
                 
                 tag (CtorZero{}) = 0
                 tag (CtorOne{}) = 1
@@ -34,21 +35,27 @@ example = (,) "Ord" [d|
 makeOrd :: Derivation
 makeOrd = derivation ord' "Ord"
 ord' dat = [instance_context ["Ord"] "Ord" dat [FunD (mkName "compare") [(Clause
-    [(VarP (mkName "a")),(VarP (mkName "b"))] (NormalB (applyWith (VarE (mkName
-    "check")) [(VarE (mkName "a")),(VarE (mkName "b"))])) [FunD (mkName "check"
-    ) ((map (\(ctorInd,ctor) -> (Clause [(ConP (mkName (ctorName ctor)) ((map (
-    \field -> (VarP (mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++[
-    ])),(ConP (mkName (ctorName ctor)) ((map (\field -> (VarP (mkName ("y" ++
+    [(VarP (lName "a")),(VarP (lName "b"))] (NormalB (applyWith (VarE (lName
+    "check")) [(VarE (lName "a")),(VarE (lName "b"))])) (FunD (lName "check"
+    ) ((map (\ (_,ctor) -> (Clause [(ConP (mkName (ctorName ctor)) ((map (
+    \field -> (VarP (lName ("x" ++ show field)))) (id [1..ctorArity ctor]))++[
+    ])),(ConP (mkName (ctorName ctor)) ((map (\field -> (VarP (lName ("y" ++
     show field)))) (id [1..ctorArity ctor]))++[]))] (NormalB (applyWith (VarE (
-    mkName "compare")) [(TupE ((map (\field -> (VarE (mkName ("x" ++ show field
-    )))) (id [1..ctorArity ctor]))++[])),(TupE ((map (\field -> (VarE (mkName (
+    mkName "compare")) [(TupE ((map (\field -> (VarE (lName ("x" ++ show field
+    )))) (id [1..ctorArity ctor]))++[])),(TupE ((map (\field -> (VarE (lName (
     "y" ++ show field)))) (id [1..ctorArity ctor]))++[]))])) [])) (id (zip [0..
-    ] (dataCtors dat))))++[(Clause [(VarP (mkName "a")),(VarP (mkName "b"))] (
-    NormalB (applyWith (VarE (mkName "compare")) [(AppE (VarE (mkName "tag")) (
-    VarE (mkName "a"))),(AppE (VarE (mkName "tag")) (VarE (mkName "b")))])) [])
-    ]++[]),FunD (mkName "tag") ((map (\(ctorInd,ctor) -> (Clause [((flip RecP [
+    ] (dataCtors dat))))
+    ++ emptyIfOneCtor
+    [(Clause [(VarP (lName "x")),(VarP (lName "y"))] (
+    NormalB (applyWith (VarE (mkName "compare")) [(AppE (VarE (lName "tag")) (
+    VarE (lName "x"))),(AppE (VarE (lName "tag")) (VarE (lName "y")))])) [])
+    ])
+    : emptyIfOneCtor
+    [FunD (lName "tag") ((map (\ (ctorInd,ctor) -> (Clause [((flip RecP [
     ]) (mkName (ctorName ctor)))] (NormalB (LitE (IntegerL ctorInd))) [])) (id
-    (zip [0..] (dataCtors dat))))++[])])]]]
+    (zip [0..] (dataCtors dat)))))] ))]]]
+  where lName = mkName . (++ "_Data_Derive_Ord__")
+        emptyIfOneCtor = (guard (length (dataCtors dat) > 1) >>)
 
 {-
 -- HAND WRITTEN VERSION
