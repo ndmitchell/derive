@@ -27,7 +27,7 @@ makeFunctorN n = traversalDerivation1 functorTraversal{traversalArg = n} "Functo
 functorTraversal = defaultTraversalType
         { traversalName   = "fmap"
         , traverseArrow   = functorForArrowType
-        , traverseFunc    = \pat rhs -> sclause [vr "f", pat] rhs
+        , traverseFunc    = \pat rhs -> sclause [vr "_f", pat] rhs
         }
 
 functorForArrowType :: Exp -> Exp -> Exp

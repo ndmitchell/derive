@@ -29,5 +29,5 @@ foldrTraversal = defaultTraversalType
         , traversalId     = l1 "flip" (l0 "const")
         , traverseTuple   =         foldr (.:) id'
         , traverseCtor    = const $ foldr (.:) id'
-        , traverseFunc    = \pat rhs -> sclause [vr "f", vr "b", pat] (AppE rhs (vr "b"))
+        , traverseFunc    = \pat rhs -> sclause [vr "_f", vr "b", pat] (AppE rhs (vr "b"))
         }
