@@ -1,3 +1,6 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+
+
 -- | These small short-named functions are intended to make the
 --   construction of abstranct syntax trees less tedious.
 module Language.Haskell.TH.Helper where
@@ -79,6 +82,11 @@ funN nam claus = FunD (mkName nam) claus
 
 -- * Pattern vs Value abstraction
 
+class Eq nm => NameLike nm where
+  toName :: nm -> Name
+instance NameLike Name   where toName = id
+instance NameLike String where toName = mkName
+
 -- | The class used to overload lifting operations.  To reduce code
 -- duplication, we overload the wrapped constructors (and everything
 -- else, but that's irrelevant) to work in patterns, expressions, and
@@ -86,9 +94,9 @@ funN nam claus = FunD (mkName nam) claus
 class Valcon a where
       -- | Build an application node, with a name for a head and a
       -- provided list of arguments.
-      lK :: String -> [a] -> a
+      lK :: NameLike nm => nm -> [a] -> a
       -- | Reference a named variable.
-      vr :: String -> a
+      vr :: NameLike nm => nm -> a
       -- | Lift a TH 'Lit'
       raw_lit :: Lit -> a
       -- | Tupling
@@ -96,25 +104,28 @@ class Valcon a where
       -- | Listing
       lst :: [a] -> a
 instance Valcon Exp where
-      lK "[]" [] = ConE (mkName "[]")
-      lK "[]" xs = lst xs
-      lK nm@(x:_) args | isUpper x || x == ':' = foldl AppE (ConE (mkName nm)) args
-      lK nm@(x:_) [a,b] | isOper x = InfixE (Just a) (VarE (mkName nm)) (Just b)
+      lK nm ys = let name = toName nm in case (nameBase name, ys) of
+        ("[]", []) -> ConE name
+        ("[]", xs) -> lst xs
+        ((x:_), args)  | isUpper x || x == ':' -> foldl AppE (ConE name) args
+        ((x:_), [a,b]) | isOper x -> InfixE (Just a) (VarE name) (Just b)
          where isOper x = not (isAlpha x || x == '_')
-      lK nm       args = foldl AppE (VarE (mkName nm)) args
-      vr = VarE . mkName
+        (nm,     args) -> foldl AppE (VarE name) args
+
+      vr = VarE . toName
       raw_lit = LitE
       tup = TupE
       lst = ListE
 instance Valcon Pat where
-      lK = ConP . mkName
-      vr = VarP . mkName
+      lK = ConP . toName
+      vr = VarP . toName
       raw_lit = LitP
       tup = TupP
       lst = ListP
 instance Valcon Type where
-      lK nm = foldl AppT (if nm == "[]" then ListT else ConT (mkName nm))
-      vr = VarT . mkName
+      lK nm = foldl AppT (if bNm == "[]" then ListT else ConT (mkName bNm))
+        where bNm = nameBase (toName nm)
+      vr = VarT . toName
       raw_lit = error "raw_lit @ Type"
       tup l = foldl AppT (TupleT (length l)) l
       lst = error "lst @ Type"
@@ -170,9 +181,9 @@ ctc = l0 . ctorName
 
 -- * Lift a constructor over a fixed number of arguments.
 
-l0 :: Valcon a => String -> a
-l1 :: Valcon a => String -> a -> a
-l2 :: Valcon a => String -> a -> a -> a
+l0 :: (NameLike nm, Valcon a) => nm -> a
+l1 :: (NameLike nm, Valcon a) => nm -> a -> a
+l2 :: (NameLike nm, Valcon a) => nm -> a -> a -> a
 l0 s     = lK s []
 l1 s a   = lK s [a]
 l2 s a b = lK s [a,b]

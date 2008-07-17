@@ -20,6 +20,7 @@ module Data.DeriveTraversal(
     ) where
 
 import Language.Haskell.TH.All
+import Language.Haskell.TH.Helper ( toName )
 import Data.List
 import qualified Data.Set as S
 import Control.Monad.Writer
@@ -39,13 +40,13 @@ instance Monoid w => Applicative (Writer w) where
 type Trav = Exp
 
 -- | What kind of traversal are we deriving?
-data TraveralType = TraveralType
+data TraveralType nm = TraveralType
         { traversalArg    :: Int                     -- ^ On what position are we traversing?
         , traversalCo     :: Bool                    -- ^ covariant?
-        , traversalName   :: String                  -- ^ name of the traversal function
+        , traversalName   :: nm                      -- ^ name of the traversal function
         , traversalId     :: Trav                    -- ^ Identity traversal
         , traversalDirect :: Trav                    -- ^ Traversal of 'a'
-        , traversalFunc   :: String -> Trav -> Trav  -- ^ Apply the sub-traversal function
+        , traversalFunc   :: Name -> Trav -> Trav    -- ^ Apply the sub-traversal function
         , traversalPlus   :: Trav -> Trav -> Trav    -- ^ Apply two non-identity traversals in sequence
         , traverseArrow   :: Trav -> Trav -> Trav    -- ^ Traverse a function type
         , traverseTuple   :: [Exp] -> Exp            -- ^ Construct a tuple from applied traversals
@@ -82,17 +83,18 @@ type WithInstances a = Writer (S.Set RequiredInstance) a
 
 
 -- | Derivation for a Traversable like class with just 1 method
-traversalDerivation1 :: TraveralType -> String -> Derivation
+traversalDerivation1 :: NameLike nm => TraveralType nm -> String -> Derivation
 traversalDerivation1 tt nm = derivation (traversalInstance1 tt nm) (className (traversalArg tt))
     where className n = nm ++ (if n > 1 then show n else "")
 
 
 -- | Instance for a Traversable like class with just 1 method
-traversalInstance1 :: TraveralType -> String -> DataDef -> [Dec]
+traversalInstance1 :: NameLike nm => TraveralType nm -> String -> DataDef -> [Dec]
 traversalInstance1 tt nm dat = traversalInstance tt nm dat [deriveTraversal tt dat]
 
 -- | Instance for a Traversable like class
-traversalInstance :: TraveralType -> String -> DataDef -> [WithInstances Dec] -> [Dec]
+traversalInstance :: NameLike nm
+                  => TraveralType nm -> String -> DataDef -> [WithInstances Dec] -> [Dec]
 traversalInstance tt nameBase dat bodyM
  | dataArity dat == 0 = []
  | otherwise          = [InstanceD ctx head body]
@@ -108,16 +110,17 @@ traversalInstance tt nameBase dat bodyM
 
 
 -- | Derive a 'traverse' like function
-deriveTraversal :: TraveralType -> DataDef -> WithInstances Dec
+deriveTraversal :: NameLike nm => TraveralType nm -> DataDef -> WithInstances Dec
 deriveTraversal tt dat  =  fun
     where
-        fun  = funN (traversalNameN tt (traversalArg tt)) <$> body
+        fun  = funN (nameBase $ toName $ traversalNameN tt (traversalArg tt)) <$> body
         args = argPositions dat
         body = mapM (deriveTraversalCtor tt args) (dataCtors dat)
 
 
 -- | Derive a clause of a 'traverse' like function for a constructor
-deriveTraversalCtor :: TraveralType -> ArgPositions -> CtorDef -> WithInstances Clause
+deriveTraversalCtor :: NameLike nm
+                    => TraveralType nm -> ArgPositions -> CtorDef -> WithInstances Clause
 deriveTraversalCtor tt ap ctor = do
         tTypes <- mapM (deriveTraversalType tt ap) (ctorTypes ctor)
         return $ traverseFunc tt (ctp ctor 'a')
@@ -125,7 +128,8 @@ deriveTraversalCtor tt ap ctor = do
 
 
 -- | Derive a traversal for a type
-deriveTraversalType :: TraveralType -> ArgPositions -> Type -> WithInstances Trav
+deriveTraversalType :: NameLike nm
+                    => TraveralType nm -> ArgPositions -> Type -> WithInstances Trav
 deriveTraversalType tt ap (ForallT _ _ _)  = fail "forall not supported in traversal deriving"
 deriveTraversalType tt ap (AppT (AppT ArrowT a) b)
                                            = traverseArrow tt <$> deriveTraversalType tt{traversalCo = not $ traversalCo tt} ap a
@@ -140,7 +144,8 @@ deriveTraversalType tt ap (VarT n) -- a
 
 
 -- | Find all arguments to a type application, then derive a traversal
-deriveTraversalApp :: TraveralType -> ArgPositions -> Type -> [Type] -> WithInstances Trav
+deriveTraversalApp :: NameLike nm
+  => TraveralType nm -> ArgPositions -> Type -> [Type] -> WithInstances Trav
 deriveTraversalApp tt ap (AppT a b) args = deriveTraversalApp tt ap a (b : args)
 deriveTraversalApp tt ap tycon args
   | isTupleT tycon = do -- (a,b,c)
@@ -174,12 +179,13 @@ deriveTraversalApp tt ap tycon args
 
 
 -- | Lift a traversal to the argument of a type constructor
-traverseArg :: TraveralType -> Int -> Trav -> Trav
+traverseArg :: NameLike nm => TraveralType nm -> Int -> Trav -> Trav
 traverseArg tt n e   =  traversalFunc tt (traversalNameN tt n) e
 
-traversalNameN :: TraveralType -> Int -> String
-traversalNameN tt n  =  traversalName tt ++ (if n > 1 then show n else "")
-
+traversalNameN :: NameLike nm => TraveralType nm -> Int -> Name
+traversalNameN tt n | n <= 1    = nm
+                    | otherwise = mkName (nameBase nm ++ (if n > 1 then show n else ""))
+  where nm = toName (traversalName tt)
 
 -- | Information on argument positions
 type ArgPositions = Name -> Int

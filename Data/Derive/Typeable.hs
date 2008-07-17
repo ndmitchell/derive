@@ -59,5 +59,5 @@ typeable' dat = (funN nam [sclause [] (l1 "mkTyCon" $ lit . show $ qualifiedData
             where
                 def = if n == 0 then l2 "mkTyConApp" (l0 nam) (lst [])
                                 else l0 ("typeOf" ++ sn ++ "Default")
-                vars = take n $ map (vr . return) ['a'..]
+                vars = take n $ map (vr . (:"")) ['a'..]
                 sn = let i = dataArity dat - n in if i == 0 then "" else show i
