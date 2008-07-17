@@ -6,7 +6,7 @@
 --   data Foo = Foo ; $( derive makeEq ''Foo )
 -- @
 module Data.DeriveTH
-       (derive,
+       (derive, deriveFromDec,
         -- * Convienience re-exports
         Derivation, -- abstract!
         module Data.Derive.All,
@@ -26,6 +26,11 @@ import Language.Haskell.TH.All
 derive :: Derivation -> Name -> Q [Dec]
 derive (Derivation f _) nm = f =<< deriveOne nm
 
+-- | Derive an instance of some class. @deriveFromDec@ only derives instances
+-- for the type of the argument.
+deriveFromDec :: Derivation -> Dec -> Q [Dec]
+deriveFromDec (Derivation f _) dec = f =<< fromTyConDecl dec
+
 -- | Derive for a type and print the code to standard output.  This is
 -- a internal hook for the use of the Derive executable.
 _derive_string_instance :: Derivation -> Name -> Q Exp
@@ -41,5 +46,7 @@ _derive_string_instance (Derivation f s) nm =
 deriveOne :: Name -> Q DataDef
 deriveOne x = extract =<< reify x
 
-extract (TyConI decl) = liftM normData (expandData decl)
+fromTyConDecl = liftM normData . expandData
+
+extract (TyConI decl) = fromTyConDecl decl
 extract _ = error $ "Data.Derive.TH.deriveInternal: not a type!"
