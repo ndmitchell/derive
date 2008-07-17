@@ -14,10 +14,11 @@ makeShow = derivation show' "Show"
 
 show' dat = [instance_default "Show" dat [funN "showsPrec" body]]
     where
-        body = [ sclause [vr "p", ctp ctr 'x'] (showit ctr) | ctr <- dataCtors dat ]
+        body = [ sclause [vr vname, ctp ctr 'x'] rhs
+               | ctr <- dataCtors dat, let (vname, rhs) = showit ctr ]
 
-showit ctr = case ctorFields ctr of [] -> norm
-                                    fl -> flds fl
+showit ctr = case ctorFields ctr of [] -> ("p", norm)
+                                    fl -> ("_", flds fl)
     where
         norm = l2 "showParen" (vr "p" >: lit (10::Integer))
                ((.::) (intersperse (scl ' ')
