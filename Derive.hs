@@ -137,8 +137,8 @@ mainFile flags file = do
                    "import Data.DeriveTH\n" ++
                    "import Data.Derive.All\n" ++
                    datas ++ "\n" ++
-                   "main = writeFile " ++ show x ++ " $\n" ++
-                   "    unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
+                   "main = Prelude.writeFile " ++ show x ++ " $\n" ++
+                   "    Prelude.unlines [" ++ concat (intersperse ", " devs) ++ "]\n"
 
     -- note: Wrong on Hugs on Windows
     tmpdir <- getTemporaryDirectory
