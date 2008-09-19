@@ -3,6 +3,7 @@
 module Data.Derive.All (module D) where
 
 import Data.Derive.Arbitrary        as D
+import Data.Derive.Arbitrary2       as D
 import Data.Derive.Binary           as D
 import Data.Derive.BinaryDefer      as D
 import Data.Derive.BinaryOld        as D

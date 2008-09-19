@@ -1,12 +1,12 @@
 {-# OPTIONS_GHC -fth -fno-warn-missing-methods -cpp #-}
 
--- | Derivation for 'Test.QuickCheck.Arbitrary'.
+-- | Derivation for 'Test.QuickCheck.Arbitrary' (version 2 of quickcheck.)
 --
 -- * The resulting instances of @arbitrary@ generate each constructor
 -- of the data type with equal probability.
 --
 -- * No form of size control is used.
-module Data.Derive.Arbitrary2(makeArbitrary) where
+module Data.Derive.Arbitrary2(makeArbitrary2) where
 
 import Language.Haskell.TH.All
 
@@ -16,7 +16,7 @@ import Language.Haskell.TH.All
 import Test.QuickCheck
 import Data.DeriveGuess
 
-example = (,) "Arbitrary" [d|
+example = (,) "Arbitrary2" [d|
 
     instance Arbitrary a => Arbitrary (DataName a) where
         arbitrary = do
@@ -35,8 +35,8 @@ example = (,) "Arbitrary" [d|
 
 #endif
 
-makeArbitrary :: Derivation
-makeArbitrary = derivation arbitrary' "Arbitrary"
+makeArbitrary2 :: Derivation
+makeArbitrary2 = derivation arbitrary' "Arbitrary2"
 arbitrary' dat = [InstanceD (concat ([(map (\tdat -> (AppT (ConT (mkName 
     "Arbitrary")) tdat)) (dataVars dat))])) (head [(AppT (ConT (mkName 
     "Arbitrary")) (lK (dataName dat) (dataVars dat)))])[(ValD (VarP (mkName 
