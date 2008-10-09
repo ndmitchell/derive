@@ -2,6 +2,7 @@ Cabal-Version:  >= 1.2
 Build-Type:     Custom
 Name:           derive
 Version:        0.1.2
+build-type:     Simple
 Copyright:      2006-7, Neil Mitchell
 Maintainer:     ndmitchell@gmail.com
 Homepage:       http://www-users.cs.york.ac.uk/~ndm/derive/
