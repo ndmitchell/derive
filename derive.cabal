@@ -25,8 +25,8 @@ Flag small_base
 Library
     Extensions: CPP
     Build-Depends: template-haskell, filepath, mtl
-    if impl(ghc >= 6.9)
-        build-depends: syb
+    if impl(ghc >= 6.10)
+        build-depends: base == 4.*, syb
     if flag(small_base)
         Build-Depends: base >= 3, containers, pretty, packedstring, random, process, directory
     else
