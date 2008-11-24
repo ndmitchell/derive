@@ -69,6 +69,7 @@ Library
         Data.Derive.TTypeable
         Data.Derive.Typeable
         Data.Derive.Uniplate
+        Data.Derive.Update
         Language.Haskell.TH.All
         Language.Haskell.TH.Data
         Language.Haskell.TH.ExpandSynonym

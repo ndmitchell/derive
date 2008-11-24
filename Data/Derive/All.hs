@@ -32,3 +32,4 @@ import Data.Derive.Traversable      as D
 import Data.Derive.TTypeable        as D
 import Data.Derive.Typeable         as D
 import Data.Derive.Uniplate         as D
+import Data.Derive.Update           as D
