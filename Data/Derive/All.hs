@@ -12,6 +12,7 @@ import Data.Derive.Data             as D
 import Data.Derive.Enum             as D
 import Data.Derive.EnumCyclic       as D
 import Data.Derive.Eq               as D
+import Data.Derive.Fold             as D
 import Data.Derive.Foldable         as D
 import Data.Derive.From             as D
 import Data.Derive.Functor          as D
