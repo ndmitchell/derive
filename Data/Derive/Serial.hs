@@ -4,7 +4,7 @@
 -- the guidelines in the SmallCheck README
 -- <http://www.cs.york.ac.uk/fp/darcs/smallcheck/README>, we implement
 -- both @series@ and @coseries@.  The generated instances use the
--- SmallCheck instance combinators in the proscribed way.
+-- SmallCheck instance combinators in the prescribed way.
 
 module Data.Derive.Serial(makeSerial) where
 
