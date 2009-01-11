@@ -50,6 +50,7 @@ Library
         Data.Derive.EnumCyclic
         Data.Derive.Eq
         Data.Derive.From
+        Data.Derive.Fold
         Data.Derive.Foldable
         Data.Derive.Functor
         Data.Derive.Has
