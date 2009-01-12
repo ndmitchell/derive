@@ -1,3 +1,5 @@
+-- Contributed by Tim Newsham <newsham -AT- lava -DOT- net>
+
 -- | A pseudo derivation.  Derive a (non-recursive) fold function for 
 -- the type which takes one function per alternative constructor.  Each
 -- function takes the same arguments as the constructor and returns
