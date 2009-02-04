@@ -4,6 +4,7 @@
 module Data.Derive.Update(makeUpdate) where
 
 import Language.Haskell.TH.All
+import Control.Monad (liftM2)
 import Data.Char
 import Data.List
 {-
@@ -27,13 +28,22 @@ makeUpdate = derivation update' "Update"
 update' dat = concatMap f fields
     where
         ctors = dataCtors dat -- constructors of the data type
-        fields = nub $ concatMap ctorFields ctors -- get all of the fields of every data type
-        
-        f field = [ funN (field ++ "_u") $
-                     [sclause [vr "f",vr "r"] 
-                                  $ RecUpdE (vr "r") [( mkName field
-                                                      , AppE (vr "f") $ AppE (vr field) (vr "r"))]]
-                  , funN (field ++ "_s") $
-                       [sclause [vr "v"] $ AppE (VarE (mkName $ field++"_u")) 
-                                                (AppE (vr "const") $ vr "v")]
-                  ]
+
+        -- get all of the fields of every data constructor
+        fields = nub $ concatMap (liftM2 zip ctorFields ctorTypes) ctors
+
+        tyargs = ex_args dat
+        rty = lK (dataName dat) (map VarT tyargs)
+        funT a b = AppT (AppT ArrowT a) b
+
+        f (fname, fty) =
+            [ sigN (fname ++ "_u") $ ForallT tyargs [] (funT (funT fty fty) (funT rty rty))
+            , funN (fname ++ "_u") $
+               [sclause [vr "f",vr "r"]
+                            $ RecUpdE (vr "r") [( mkName fname
+                                                , AppE (vr "f") $ AppE (vr fname) (vr "r"))]]
+            , sigN (fname ++ "_s") $ ForallT tyargs [] (funT fty (funT rty rty))
+            , funN (fname ++ "_s") $
+                 [sclause [vr "v"] $ AppE (VarE (mkName $ fname++"_u"))
+                                          (AppE (vr "const") $ vr "v")]
+            ]
