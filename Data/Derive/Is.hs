@@ -28,7 +28,10 @@ example = (,) "Is" [d|
 makeIs :: Derivation
 makeIs = derivation is' "Is"
 is' dat = ((concatMap (\(ctorInd,ctor) -> [SigD (mkName ("is" ++ ctorName ctor))
-                                                (lK (dataName dat) (dataVars dat))
+                                                (ForallT (ex_args dat) []
+                                                         (AppT (AppT ArrowT
+                                                                    (lK (dataName dat) (map VarT $ ex_args dat)))
+                                                               (l0 "Bool")))
                                           ,FunD (mkName ("is" ++ ctorName ctor))
                                                 [( Clause [((flip RecP []) (mkName ("" ++ ctorName ctor)))]
                                                           (NormalB (ConE (mkName "True"))) [])
