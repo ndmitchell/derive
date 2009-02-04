@@ -76,6 +76,10 @@ generic_instance cls dat ctxTypes defs = [InstanceD ctx hed defs]
         hed = l1 cls (lK (dataName dat) vrs)
         ctx = map (l1 cls) ctxTypes
 
+-- | Build a type signature declaration with a string name
+sigN :: String -> Type -> Dec
+sigN nam ty = SigD (mkName nam) ty
+
 -- | Build a fundecl with a string name
 funN :: String -> [Clause] -> Dec
 funN nam claus = FunD (mkName nam) claus

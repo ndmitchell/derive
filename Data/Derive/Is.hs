@@ -9,6 +9,7 @@ module Data.Derive.Is(makeIs) where
 import Language.Haskell.TH.All
 
 
+-- don't use this until Guess supports type signatures!
 #ifdef GUESS
 
 import Data.DeriveGuess
@@ -26,7 +27,12 @@ example = (,) "Is" [d|
 
 makeIs :: Derivation
 makeIs = derivation is' "Is"
-is' dat = ((map (\(ctorInd,ctor) -> (FunD (mkName ("is" ++ ctorName ctor)) [(
-    Clause [((flip RecP []) (mkName ("" ++ ctorName ctor)))] (NormalB (ConE (
-    mkName "True"))) []),(Clause [WildP] (NormalB (ConE (mkName "False"))) [])]
-    )) (id (zip [0..] (dataCtors dat))))++[])
+is' dat = ((concatMap (\(ctorInd,ctor) -> [SigD (mkName ("is" ++ ctorName ctor))
+                                                (lK (dataName dat) (dataVars dat))
+                                          ,FunD (mkName ("is" ++ ctorName ctor))
+                                                [( Clause [((flip RecP []) (mkName ("" ++ ctorName ctor)))]
+                                                          (NormalB (ConE (mkName "True"))) [])
+                                                ,( Clause [WildP]
+                                                          (NormalB (ConE (mkName "False"))) [])]
+                                          ])
+                      (id (zip [0..] (dataCtors dat))))++[])
