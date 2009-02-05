@@ -18,8 +18,8 @@ type CtorDef = Con
 
 
 dataName :: DataDef -> String
-dataName (DataD    _ name _ _ _) = show (unqualifiedName name)
-dataName (NewtypeD _ name _ _ _) = show (unqualifiedName name)
+dataName (DataD    _ name _ _ _) = unqualifiedName name
+dataName (NewtypeD _ name _ _ _) = unqualifiedName name
 
 qualifiedDataName :: DataDef -> Name
 qualifiedDataName (DataD    _ name _ _ _) = name
@@ -87,8 +87,8 @@ normData = everywhere (mkT normType)
         normType (ConT x) | show x == "[]" = ListT
         normType x = x
 
-unqualifiedName :: Name -> Name
-unqualifiedName = mkName . dropModule . show
+unqualifiedName :: Name -> String
+unqualifiedName = dropModule . show
 
 
 -- convert AppT chains back to a proper list
