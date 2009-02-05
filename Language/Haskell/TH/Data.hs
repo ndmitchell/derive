@@ -39,9 +39,9 @@ dataCtors (NewtypeD _ _ _ x  _) = [x]
 
 
 ctorName :: CtorDef -> String
-ctorName (NormalC name _ ) = show (unqualifiedName name)
-ctorName (RecC name _    ) = show (unqualifiedName name)
-ctorName (InfixC _ name _) = show (unqualifiedName name)
+ctorName (NormalC name _ ) = unqualifiedName name
+ctorName (RecC name _    ) = unqualifiedName name
+ctorName (InfixC _ name _) = unqualifiedName name
 ctorName (ForallC _ _ c  ) = ctorName c
 
 qualifiedCtorName :: CtorDef -> Name
@@ -70,7 +70,7 @@ ctorTypes = map snd . ctorStrictTypes
 
 
 ctorFields :: CtorDef -> [String]
-ctorFields (RecC name varStrictType) = [show (unqualifiedName name) | (name,strict,typ) <- varStrictType]
+ctorFields (RecC name varStrictType) = [unqualifiedName name | (name,strict,typ) <- varStrictType]
 ctorFields _ = []
 
 
