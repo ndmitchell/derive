@@ -39,4 +39,4 @@ is' dat = ((concatMap (\(ctorInd,ctor) -> [SigD (mkName ("is" ++ ctorName ctor))
                                                           (NormalB (ConE (mkName "False"))) [])]
                                           ])
                       (id (zip [0..] (dataCtors dat))))++[])
-    where args = map mkName $ dataArgs dat
+    where args = dataArgs dat

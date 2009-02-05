@@ -29,9 +29,9 @@ dataArity :: DataDef -> Int
 dataArity (DataD    _ _ xs _ _) = length xs
 dataArity (NewtypeD _ _ xs _ _) = length xs
 
-dataArgs :: DataDef -> [String]
-dataArgs (DataD _cx name args cons _derv) = map unqualifiedName args
-dataArgs (NewtypeD cx name args con derv) = map unqualifiedName args
+dataArgs :: DataDef -> [Name]
+dataArgs (DataD _cx name args cons _derv) = args
+dataArgs (NewtypeD cx name args con derv) = args
 
 dataCtors :: DataDef -> [CtorDef]
 dataCtors (DataD    _ _ _ xs _) = xs
@@ -82,6 +82,11 @@ dropModule xs = case reverse xs of
                     ('.':xs) -> takeWhile (== '.') xs
                     xs -> reverse $ takeWhile (/= '.') xs
 
+-- i_123432 -> i
+dropNumber :: String -> String
+dropNumber xs = if all isDigit a then reverse (tail b) else xs
+    where (a,b) = break (== '_') $ reverse xs
+
 
 normData :: DataDef -> DataDef
 normData = everywhere (mkT normType)
@@ -112,13 +117,3 @@ isTupleT (ConT x) = head sx == '(' && last sx == ')' &&
                     all (== ',') (take (length sx - 2) (tail sx))
     where sx = show x
 isTupleT _ = False
-
-
-
-
--- * Depreciated, old type stuff
-
-
-ex_args :: DataDef -> [Name]
-ex_args (DataD _cx name args cons _derv) = args
-ex_args (NewtypeD cx name args con derv) = args

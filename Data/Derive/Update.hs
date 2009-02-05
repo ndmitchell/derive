@@ -32,7 +32,7 @@ update' dat = concatMap f fields
         -- get all of the fields of every data constructor
         fields = nub $ concatMap (liftM2 zip ctorFields ctorTypes) ctors
 
-        tyargs = map mkName $ dataArgs dat
+        tyargs = dataArgs dat
         rty = lK (dataName dat) (map VarT tyargs)
         funT a b = AppT (AppT ArrowT a) b
 

@@ -197,4 +197,4 @@ argPositions :: DataDef -> Name -> Int
 argPositions dat = \nm -> case elemIndex nm args of
     Nothing -> error "impossible: tyvar not in scope"
     Just k  -> length args - k
- where args = ex_args dat
+ where args = dataArgs dat
