@@ -17,14 +17,14 @@ import Prelude hiding (foldr)
 
 $( derivess [makeOrd, makeShow, makeEq, makeBounded, makeEnum, makeRead
             ,makeData, makeTypeable
-            ,makeIs, makeHas, makeSet, makeFrom
+            ,makeIs, makeHas, makeSet, makeFrom, makeUpdate
             ,makeMonoid
-            ,makeFunctor
+            -- ,makeFunctor
             ] )
 
 
-$( derivesNot makeFoldable    [''State] )
-$( derivesNot makeTraversable [''State] )
+-- $( derivesNot makeFoldable    [''State] )
+-- $( derivesNot makeTraversable [''State] )
 
 -- to prevent errors about missing instances:
 instance Eq (a -> b)
