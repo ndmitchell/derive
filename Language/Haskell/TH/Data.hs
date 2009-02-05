@@ -29,6 +29,9 @@ dataArity :: DataDef -> Int
 dataArity (DataD    _ _ xs _ _) = length xs
 dataArity (NewtypeD _ _ xs _ _) = length xs
 
+dataArgs :: DataDef -> [String]
+dataArgs (DataD _cx name args cons _derv) = map unqualifiedName args
+dataArgs (NewtypeD cx name args con derv) = map unqualifiedName args
 
 dataCtors :: DataDef -> [CtorDef]
 dataCtors (DataD    _ _ _ xs _) = xs
