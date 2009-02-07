@@ -12,4 +12,5 @@ $( derive makeUpdate ''Computer )
 $( derive makeUpdate ''PolyRecord )
 $( derive makeIs ''Computer )
 $( derive makeIs ''PolyRecord )
-
+$( derives makeFrom )
+$( derive makeFrom ''PolyRecord )
