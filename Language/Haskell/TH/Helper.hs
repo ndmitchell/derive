@@ -131,7 +131,12 @@ instance Valcon Type where
         where bNm = nameBase (toName nm)
       vr = VarT . toName
       raw_lit = error "raw_lit @ Type"
-      tup l = foldl AppT (TupleT (length l)) l
+
+      -- XXX work around bug in GHC < 6.10
+      -- (see http://hackage.haskell.org/trac/ghc/ticket/2358 for details)
+      tup [t] = t
+      tup ts  = foldl AppT (TupleT (length ts)) ts
+
       lst = error "lst @ Type"
 
 -- | Build an application node without a given head
