@@ -31,9 +31,9 @@ makeFrom :: Derivation
 makeFrom = derivation from' "From"
 from' dat = ((concatMap (\(ctorInd,ctor) ->
                          [SigD (mkName ("from" ++ ctorName ctor))
-                               (ForallT (ex_args dat) []
+                               (ForallT (dataArgs dat) []
                                         (AppT (AppT ArrowT
-                                                    (lK (dataName dat) (map VarT $ ex_args dat)))
+                                                    (lK (dataName dat) (map VarT $ dataArgs dat)))
                                               (tup (ctorTypes ctor))))
                          ,FunD (mkName ("from" ++ ctorName ctor))
                                [(Clause [(ConP (mkName ("" ++ ctorName ctor))
