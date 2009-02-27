@@ -24,16 +24,16 @@ example = (,) "Serial" [d|
                  cons2 CtorTwo  \/
                  cons2 CtorTwo'
 
-        coseries d = [ \t -> case t of
-                                CtorZero -> t0
-                                CtorOne x1 -> t1 x1
-                                CtorTwo x1 x2 -> t2 x1 x2
-                                CtorTwo' x1 x2 -> t3 x1 x2
-                     | t0 <- alts0 d
-                     , t1 <- alts1 d
-                     , t2 <- alts2 d
-                     , t3 <- alts2 d
-                     ]
+        coseries rs d = [ \t -> case t of
+                                  CtorZero -> t0
+                                  CtorOne x1 -> t1 x1
+                                  CtorTwo x1 x2 -> t2 x1 x2
+                                  CtorTwo' x1 x2 -> t3 x1 x2
+                       | t0 <- alts0 rs d
+                       , t1 <- alts1 rs d
+                       , t2 <- alts2 rs d
+                       , t3 <- alts2 rs d
+                       ]
 
     |]
 
@@ -45,9 +45,9 @@ serial' dat = [instance_context ["Serial"] "Serial" dat [ValD (VarP (mkName
     "series")) (NormalB (foldl1With (VarE (mkName "\\/")) ((map (\(ctorInd,ctor
     ) -> (AppE (VarE (mkName ("cons" ++ show (ctorArity ctor)))) (ConE (mkName
     (ctorName ctor))))) (id (zip [0..] (dataCtors dat))))++[]))) [],FunD (
-    mkName "coseries") [(Clause [(VarP (mkName "d"))] (NormalB (CompE ((map (\(
-    ctorInd,ctor) -> (BindS (VarP (mkName ("t" ++ show ctorInd))) (AppE (VarE (
-    mkName ("alts" ++ show (ctorArity ctor)))) (VarE (mkName "d"))))) (id (zip
+    mkName "coseries") [(Clause [(VarP (mkName "rs")),(VarP (mkName "d"))] (NormalB (CompE ((map (\(
+    ctorInd,ctor) -> (BindS (VarP (mkName ("t" ++ show ctorInd))) (AppE (AppE (VarE (
+    mkName ("alts" ++ show (ctorArity ctor)))) (VarE (mkName "rs"))) (VarE (mkName "d"))))) (id (zip
     [0..] (dataCtors dat))))++[(NoBindS (LamE [(VarP (mkName "t"))] (CaseE (
     VarE (mkName "t")) ((map (\(ctorInd,ctor) -> (Match (ConP (mkName (ctorName
     ctor)) ((map (\field -> (VarP (mkName ("x" ++ show field)))) (id [1..
