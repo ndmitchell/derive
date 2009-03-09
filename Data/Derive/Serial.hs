@@ -13,7 +13,7 @@ import Language.Haskell.TH.All
 
 #ifdef GUESS
 
-import SmallCheck
+import Test.SmallCheck
 import Data.DeriveGuess
 
 example = (,) "Serial" [d|
@@ -25,15 +25,15 @@ example = (,) "Serial" [d|
                  cons2 CtorTwo'
 
         coseries rs d = [ \t -> case t of
-                                  CtorZero -> t0
-                                  CtorOne x1 -> t1 x1
-                                  CtorTwo x1 x2 -> t2 x1 x2
-                                  CtorTwo' x1 x2 -> t3 x1 x2
-                       | t0 <- alts0 rs d
-                       , t1 <- alts1 rs d
-                       , t2 <- alts2 rs d
-                       , t3 <- alts2 rs d
-                       ]
+                                    CtorZero -> t0
+                                    CtorOne x1 -> t1 x1
+                                    CtorTwo x1 x2 -> t2 x1 x2
+                                    CtorTwo' x1 x2 -> t3 x1 x2
+                        | t0 <- alts0 rs d
+                        , t1 <- alts1 rs d
+                        , t2 <- alts2 rs d
+                        , t3 <- alts2 rs d
+                        ]
 
     |]
 
