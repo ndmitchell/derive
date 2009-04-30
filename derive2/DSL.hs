@@ -4,13 +4,17 @@ module DSL where
 import HSE
 
 data DSL = App String [DSL]
+         | List [DSL]
+         | Append DSL DSL
+         | String String
+         | ShowInt DSL
+         
          | MapField DSL
          | MapCtor DSL
          | CtorName
+         | FieldInd
          
          | Instance [String] String DSL{-[InstDecl]-}
-         | List [DSL]
-         | Append DSL DSL
            deriving Show
 
 singleton x = List [x]
@@ -33,7 +37,7 @@ dslEq :: DSL
 dslEq = singleton $ Instance ["Eq"] "Eq" $ singleton $ _1 "InsDecl" $ _1 "FunBind" $ match `Append` dull
     where
         match = MapCtor $ _5 "Match" (u $ Symbol "==") (List [vars "x",vars "y"]) (u (Nothing :: Maybe Type)) (u $ UnGuardedRhs $ Con $ UnQual $ Ident "False") (u $ BDecls [])
-        vars x = _2 "PApp" (_1 "UnQual" $ _1 "Ident" CtorName) nil
+        vars x = _2 "PApp" (_1 "UnQual" $ _1 "Ident" CtorName) (MapField (_1 "PVar" $ _1 "Ident" $ Append (String x) (ShowInt FieldInd)))
         
         dull = u [Match sl (Symbol "==") [PWildCard,PWildCard] Nothing (UnGuardedRhs $ Con $ UnQual $ Ident "False") (BDecls [])]
 

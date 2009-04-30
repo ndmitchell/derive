@@ -1,7 +1,7 @@
 
 module HSE(module HSE, module Language.Haskell.Exts) where
 
-import Language.Haskell.Exts hiding (List, App)
+import Language.Haskell.Exts hiding (List, App, String)
 import qualified Language.Haskell.Exts
 import Data.Data
 import Data.Maybe
@@ -40,6 +40,11 @@ dataCtors (DataDecl _ _ _ _ _ x _) = x
 
 ctorName :: Ctr -> String
 ctorName (QualConDecl _ _ _ (ConDecl x _)) = prettyPrint x
+
+ctorFields :: Ctr -> Int
+ctorFields (QualConDecl _ _ _ (ConDecl _ x)) = length x
+
+
 
 
 data Universe = UString String
