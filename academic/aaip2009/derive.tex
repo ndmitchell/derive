@@ -11,6 +11,7 @@
 
 %include paper.fmt
 
+\newcommand{\derive}{\textsc{Derive}}
 
 \hsdef{\begin{comment}
 f
@@ -39,7 +40,7 @@ f
 \maketitle
 
 \begin{abstract}
-This paper describes how to derive a DSL from one example.
+This paper describes how to infer a function |alpha -> beta|, given a single example pair for a particular element in |alpha|. Throughout we use the concrete example of getting type-class definitions in Haskell, where |alpha| is the set of Haskell data types and |beta| is the set of Haskell abstract syntax trees. We have produced a tool which can infer such instances, and which has seen practical use in the {\derive} tool, providing over 60\% of the type classes.
 \end{abstract}
 
 \category{D.3}{Software}{Programming Languages}
@@ -52,7 +53,141 @@ Haskell, todo
 
 \section{Introduction}
 
-Add an introduction here.
+Haskell \cite{haskell} is a modern functional programming language. In Haskell a generic function can be defined using a type class \cite{wadler:type_classes} (using the |class| keyword), and implementations can be provided for specific types (using the |instance| keyword). Generic equality is defined by the |Eq| class:
+
+\begin{code}
+class Eq alpha where
+    (==) :: alpha -> alpha -> Bool
+\end{code}
+
+The |Eq| class has an operator, |(==)|. All types that are instances of the class |Eq| have the |(==)| operator available. We can define a Haskell data type, along with an instance for |Eq|, as follows:
+
+\begin{code}
+data WritingImplement  =  Pencil       -- a pencil
+                       |  Pen Colour   -- a pen, plus its colour
+
+instance Eq WritingImplement where
+    (Pencil     )  == (Pencil     )  = True
+    (Pen     x  )  == (Pen     y  )  = x == y
+    _              == _              = False
+\end{code}
+
+The data type we introduce is |WritingImplement|. A |WritingImplement| is either a pencil, or a pen with a colour. |Pencil| and |Pen| are referred to as data constructors. The first line of the |Eq| instance says that any two |Pencil| values are equal. The second line says that for two |Pen| values to be equal, their colour fields must be equal. The final line says that any remaining pairs of values are not equal. Any instance of |Eq| follows naturally from the data structure: for two values to be equal they must have the same constructor, and all their fields must be equal.
+
+Writing an |Eq| instance for one data type is simple. However, as the complexity and number of data types increases, so does the effort required. The standard solution is to express the \textit{relationship} between any data type and the instance that corresponds to it, which we call an \textit{instance generator}. In standard tools such as DrIFT \cite{drift}, the author of an instance generator must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is not as straightforward as one might hope.
+
+\begin{figure}
+\begin{code}
+data DataName  =  First
+               |  Second  Any
+               |  Third   Any  Any
+               |  Fourth  Any  Any
+\end{code}
+\caption{The |DataName| data type.}
+\label{fig:dataname}
+\end{figure}
+
+Using the techniques described in this paper, instance generators can often be automatically inferred from a single example instance. To define \textit{all} |Eq| instances, an example must be given on the |DataName| type, provided by a library (see Figure \ref{fig:dataname}):
+
+\begin{code}
+instance Eq DataName where
+    (First          )  == (First          )  = True
+    (Second  x1     )  == (Second  y1     )  = x1 == y1 && True
+    (Third   x1 x2  )  == (Third   y1 y2  )  = x1 == y1 && x2 == y2 && True
+    (Fourth  x1 x2  )  == (Fourth  y1 y2  )  = x1 == y1 && x2 == y2 && True
+    _                  == _                  = False
+\end{code}
+
+The |DataName| instance follows the same pattern as for |WritingImplement|, but with the addition of |&& True|, whose purpose is explained in \S\ref{sec:fold}.
+
+This paper contributes a method for inferring a relationship between a value and a piece of program code, without resorting to unguided search. In our experience, over 60\% of Haskell class instances can be determined using this technique.
+
+\subsection{Road Map}
+
+We first formulate the problem abstractly (simple), then given concrete instantiations of each section.
+
+\section{Derivation from one positive example}
+
+
+\section{A DSL for Instances}
+
+\section{A Universal Data Type}
+
+\section{A search mechanism}
+
+\section{Implementation Details}
+
+SYB stuff goes in here. Haskell-src-exts.
+
+\section{Results}
+
+\subsection{Limitations of Automatic Derivation}
+\label{sec:automatic_failure}
+
+The instance generation scheme given is not complete -- there exist instances whose generator cannot be determined. The Derive tool \cite{derive} is a program for generating instances for user defined data types. Of the 24 instances supported by the Derive tool, 15 are expressed by example, while 9 require manually written instance generators. There are several reasons some instances cannot be determined:
+
+\begin{description}
+
+\item[Non-inductive definitions:] For example, the |Binary| class serialises a value to disk. For each value, a tag is written to indicate the constructor. If a data type has only one constructor, the tag is omitted. These instances are not inductive -- the single constructor does not follow the same pattern.
+
+\item[Type-based definitions:] For example, the |Monoid| class requires items of the same type to be processed using |mappend|, but items of a different type use |mempty|. Automatic derivation has no notion of type-specific behaviour.
+
+\item [Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |DataName|, record definitions could be determined, but this change would increase the complexity of all other example instances.
+
+\end{description}
+
+\subsection{Generation of Standard Classes}
+\label{sec:automatic_success}
+
+Many instance generators can be expressed by example -- including some from the standard Haskell libraries (|Enum|, |Ord|, |Bounded|) and publicly distributed libraries (|Serial|, |Arbitrary|). The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over each value, and the application of an argument to join the fields. An example instance can be given as:
+
+\begin{code}
+instance Data DataName where
+    gfoldl k r (First          ) = r First
+    gfoldl k r (Second  x1     ) = r Second  `k` x1
+    gfoldl k r (Third   x1 x2  ) = r Third   `k` x1 `k` x2
+    gfoldl k r (Fourth  x1 x2  ) = r Fourth  `k` x1 `k` x2
+\end{code}
+
+\noindent The generator function is inferred as:
+
+\begin{code}
+instance Data \? <| dataname |> where
+    <| MAP ctors (
+        gfoldl k r
+            (<| ctorname |> \? <| MAP [1..ctorarity] (x <| # |> ) |> ) =
+            <| FOLDR k (r \? <| ctorname |>)
+                <| MAP [1 .. ctorarity] (x <| # |> ) |>
+            |>
+    ) |>
+\end{code}
+
+\section{Related Work}
+\label{sec:related}
+
+The purpose of this work is to find a pattern, and generalise that pattern to other situations. Genetic algorithms \cite{genetic_algorithms} are often used to automatically find a pattern in a data set. Genetic algorithms work by evolving a hypothesis (a gene sequence) and testing on a sample problem. They are well suited to search problems where the utility function is continuous -- close hypotheses have similar fitness. The main difference from this paper is that the hypothesis is random, whereas ours is strongly directed by the shape of the example.
+
+The area of optical character recognition \cite{ocr} has some similar characteristics -- a page is analysed to look for common patterns (pictures or text passages), which can be processed further. This is related to the process of using the fold pattern (\S\ref{sec:fold}), where a repeating pattern is detected. The difference is that character recognition works on image data, which does not have the same precision as program code.
+
+The closest work we are aware of is that of the theorem proving community. Induction is a very common tactic for writing proofs, and well supported in systems such as HOL Light \cite{hol_light}. Typically the user must suggest the use of induction, which the system checks for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful.
+
+The concepts in this paper are applicable outside the domain of instances in Haskell. Any programming language operation that exhibits some degree of uniformity could be automated. To give one example: the object-orientated community have embraced design patterns \cite{design_patterns}, which involve many recurring patterns.
+
+\section{Conclusions and Future Work}
+\label{sec:conclusion}
+
+We have presented a mechanism for automatically deriving instance generators for Haskell type classes. Our technique has been implemented in the Derive tool \cite{derive}, where 60\% of instance generators are specified by example. The ease of creating new instances has enabled several users to contribute instance generators to the Derive tool. We see several lines of future work:
+
+\begin{itemize}
+\item Using automatic instance generation allows the underlying tool to change the API for specifying instances, without requiring human intervention to modify the generators -- they can simply be regenerated. This freedom allows instances to be expressed in new ways. Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor.
+\item The provided data type (Figure \ref{fig:dataname}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names (see \S\ref{sec:automatic_failure}). An alternative approach would be to introduce new data types with features specifically targeted for certain types of definition. Care would have to be taken to ensure that these extensions do not substantially increase the complexity of writing examples.
+\end{itemize}
+
+Computers are ideally suited to applying repetitive patterns, but specifying these patterns can be complex and error prone. By specifying the result, instead of the pattern, a user can focus on what they want, rather than the mechanism by which this is realized.
+
+
+
+
 
 \balance
 
