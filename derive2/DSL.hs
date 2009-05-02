@@ -28,6 +28,7 @@ nil = List []
 fromUni :: Universe -> DSL
 fromUni (UApp x y) = App x (map fromUni y)
 fromUni (UList x) = List (map fromUni x)
+fromUni (UString x) = String x
 fromUni x = error $ show ("fromUni",x)
 
 
@@ -43,7 +44,8 @@ dslEq = singleton $ Instance ["Eq"] "Eq" $ singleton $ _1 "InsDecl" $ _1 "FunBin
     where
         match = MapCtor $ _5 "Match" (u $ Symbol "==") (List [vars "x",vars "y"]) (u (Nothing :: Maybe Type)) (_1 "UnGuardedRhs" bod) (u $ BDecls [])
         vars x = _2 "PApp" (_1 "UnQual" $ _1 "Ident" CtorName) (MapField (_1 "PVar" $ _1 "Ident" $ Append (String x) (ShowInt FieldInd)))
-        bod = Fold (_3 "InfixApp" Head (u $ QVarOp $ UnQual $ Symbol "&&") Tail) (u $ Con $ UnQual $ Ident "True") $ MapField pair
+        bod = u $ Con $ UnQual $ Ident "TODO"
+            -- Fold (_3 "InfixApp" Head (u $ QVarOp $ UnQual $ Symbol "&&") Tail) (u $ Con $ UnQual $ Ident "True") $ MapField pair
         pair = _3 "InfixApp" (var "x") (u $ QVarOp $ UnQual $ Symbol "==") (var "y")
         var x = _1 "Var" $ _1 "UnQual" $ _1 "Ident" $ Append (String x) (ShowInt FieldInd)
 

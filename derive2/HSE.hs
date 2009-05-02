@@ -22,7 +22,16 @@ dataTypeList = DataDecl sl DataType [] (Ident "List") [Ident "a"] [nil,cons] []
         cons = QualConDecl sl [] [] $ ConDecl (Ident "Cons")
             [UnBangedTy $ TyVar $ Ident "a", UnBangedTy $ TyApp (TyCon $ UnQual $ Ident "List") (TyVar $ Ident "a")]
 
+
+-- data Ctors a = CtorZero | CtorOne a | CtorTwo a a | CtorThree a a
+dataTypeCtors :: Dat
+dataTypeCtors = DataDecl sl DataType [] (Ident "Ctors") [Ident "a"] [f "CtorZero" 0, f "CtorOne" 1, f "CtorTwo" 2, f "CtorThree" 2] []
+    where f s n = QualConDecl sl [] [] $ ConDecl (Ident s) $ replicate n $ UnBangedTy $ TyVar $ Ident "a"
+
+
 ---------------------------------------------------------------------
+
+showRes x = unlines $ map prettyPrint x
 
 type Dat = Decl
 type Ctr = QualConDecl
@@ -58,6 +67,7 @@ data Universe = UString String
 
 toUniverse :: Data a => a -> Universe
 toUniverse x
+    | t == typeOf "" = UString $ coerce x
     | c == "[]" = UList $ fList x
     | t == typeOf sl = UIgnore
     | otherwise = UApp (showConstr $ toConstr x) (filter (/= UIgnore) $ gmapQ toUniverse x)
@@ -68,7 +78,6 @@ toUniverse x
         fList :: Data a => a -> [Universe]
         fList = gmapQl (++) [] $ \x -> if typeOf x == t then fList x else [toUniverse x]
 
--- ahem, should be able to at least use typeable?
 fromUniverse :: Data a => Universe -> a
 fromUniverse (UList xs) = res
     where res = f xs
