@@ -106,20 +106,149 @@ This paper contributes a method for inferring a relationship between a value and
 
 We first formulate the problem abstractly (simple), then given concrete instantiations of each section.
 
-\section{Derivation from one positive example}
+\section{Abstractly}
 
-Given a function |alpha -> beta|. 
+Given an unknown function |alpha -> beta|, and a single example of the result for some given value in |alpha|, can we infer the function? What restrictions need to be imposed to infer the function reliably and quickly?
+
+\begin{code}
+data Input
+data Output
+data DSL
+
+input :: Input -- a canonical input example
+output :: Output -- given input
+
+apply :: Input -> DSL -> Output
+guess :: Output -> [DSL]
+
+-- equivalence of DSL terms
+d_1 ~== d_2 = forall i `elem` Input `o` apply i d_1 == apply i d_2
+
+-- guess is correct
+forall o `elem` guess output `o` apply input o == output
+
+-- predictability
+forall d_1, d_2 `elem` DSL `o` apply input d_1 == apply input d_2 => d_1 ~== d_2
+\end{code}
+
+\subsection{Correctness}
+
+Correctness of guess can be assured with:
+
+\begin{code}
+guess x = [y | y <- guess' x, apply input y == output]
+\end{code}
+
+Now |guess'| can be written without regard to correctness.
+
+\subsection{Predictability}
+
+The predictability lemma requires that if a DSL successfully guesses the input/output pair, it must be equivalent to all other possible DSL. Note that the predictability lemma does not mention |guess|, although it may require a specially chosen |input| value.
+
+By combining the predictability lemma with the correctness lemma, we can guarantee that if |guess| returns any results, any result is equally good to any other. This frees |guess| from any burden. Combined with defining |guess| in terms of |guess'| allows us to write any terminating expression for |guess| and still get correct behavior.
+
+\section{Concretely}
+
+\subsection{Output}
+
+Our output language is the language of Haskell declarations. Because of the tool we're writing, we don't have a choice about the output domain. Internally we use haskell-src-exts, but that has a big tree. To simplify things we use a universal data type, we translate to and from hse \ref{todo}.
+
+\begin{code}
+data Output = OString String
+            | OInt Int
+            | OList [Output]
+            | OApp String [Output]
+\end{code}
+
+\subsection{Input}
+
+We have more freedom over input. We choose which information to present in a data type, for example we can choose to make the derivation depend on the module name, or not. We choose not too, however this does eliminate some derivations \ref{typeable}. In \ref{extensions} we describe how you could beef up the power.
+
+Our |Input| language is that of algebraically constructed Haskell data types:
+
+\begin{code}
+data Input = Input {dataName :: String, dataVars :: Int, dataCtors :: [Ctor]}
+data Ctor = Ctor {ctorName :: String, ctorIndex :: Int, ctorArity :: Int}
+\end{code}
+
+Note the details we choose to represent and the details we abstract away. For example, we allow derivations to depend on the arity or index of a constructor, but not the types of the constructors arguments.
+
+\subsection{DSL}
+
+The DSL we have most freedom over.
+
+\subsubsection{Constants}
+
+One useful thing is to represent is constants, so we can lift the |Output| type in to |DSL|.
+
+\begin{code}
+data DSL = DString String
+         | DInt Int
+         | DList [DSL]
+         | DApp String [DSL]
+\end{code}
+
+\subsubsection{Operations}
+
+\begin{code}
+data DSL = ...
+         | Append DSL DSL
+         | ShowInt DSL
+         | DApp String [DSL]
+\end{code}
+
+These operations are fairly general.
+
+\subsubsection{Constructors}
+
+We also want to talk about constructors:
+
+\begin{code}
+data DSL = ...
+         | CtorIndex
+         | CtorArity
+         | CtorName
+         | MapCtor DSL
+\end{code}
+
+\subsubsection{Fields}
+
+\begin{code}
+data DSL = 
 
 
-\section{A DSL for Instances}
+\subsubsection{Custom items}
 
-\section{A Universal Data Type}
+\begin{code}
+data DSL = ...
+         | Instance 
+\end{code}
 
-\section{A search mechanism}
+
+
+\subsection{Restrictions for predictability}
+
+You can only refer to the arity of something if you also refer to it's constructor name. You can't have a constructor name as a constant. Consider:
+
+\begin{code}
+instance Arities Ctors where
+    arities _ = [0,1,2,2]
+\end{code}
+
+However, it's easy to write:
+
+\begin{code}
+instance Arities Ctors where
+    arities _ = map fst [(0,"CZero"),(1,"COne"),(2,"CTwo"),(2,"CThree")]
+\end{code}
+
+\section{Implementing |guess|}
 
 \section{Implementation Details}
 
 SYB stuff goes in here. Haskell-src-exts.
+
+Post-generation optimisation tweaks. i.e. |a && True => a|. Could perhaps use HLint in a future version.
 
 \section{Results}
 
@@ -164,6 +293,10 @@ instance Data \? <| dataname |> where
     ) |>
 \end{code}
 
+\section{Extensions}
+
+How would we increase it to get more power.
+
 \section{Related Work}
 \label{sec:related}
 
@@ -183,6 +316,7 @@ We have presented a mechanism for automatically deriving instance generators for
 \begin{itemize}
 \item Using automatic instance generation allows the underlying tool to change the API for specifying instances, without requiring human intervention to modify the generators -- they can simply be regenerated. This freedom allows instances to be expressed in new ways. Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor.
 \item The provided data type (Figure \ref{fig:dataname}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names (see \S\ref{sec:automatic_failure}). An alternative approach would be to introduce new data types with features specifically targeted for certain types of definition. Care would have to be taken to ensure that these extensions do not substantially increase the complexity of writing examples.
+\item We could make everything more type safe using GADT's.
 \end{itemize}
 
 Computers are ideally suited to applying repetitive patterns, but specifying these patterns can be complex and error prone. By specifying the result, instead of the pattern, a user can focus on what they want, rather than the mechanism by which this is realized.
