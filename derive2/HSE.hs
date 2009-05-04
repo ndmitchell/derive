@@ -1,7 +1,8 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module HSE(module HSE, module Language.Haskell.Exts) where
 
-import Language.Haskell.Exts hiding (List, App, String)
+import Language.Haskell.Exts hiding (List, App, String, Int)
 import qualified Language.Haskell.Exts
 import Data.Data
 import Data.Maybe
@@ -62,7 +63,7 @@ data Universe = UString String
               | UList [Universe]
               | UMaybe (Maybe Universe)
               | UIgnore
-              deriving (Eq,Show)
+              deriving (Eq,Show,Data,Typeable)
 
 
 toUniverse :: Data a => a -> Universe

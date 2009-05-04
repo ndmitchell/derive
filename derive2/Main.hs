@@ -8,7 +8,7 @@ import Guess
 
 test = do
     let res = apply dataTypeCtors dslEq
-    let dsl = head $ guess res
+    let dsl = guess res
     putStr $ showRes res
     print dsl
     putStr $ showRes $ apply dataTypeList dsl

@@ -1,12 +1,16 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module DSL where
 
 import HSE
+import Data.Data
 
 data DSL = App String [DSL]
          | List [DSL]
          | Append DSL DSL
+         | Reverse DSL
          | String String
+         | Int Int
          | ShowInt DSL
          
          | MapField DSL
@@ -19,7 +23,7 @@ data DSL = App String [DSL]
          | Tail
          
          | Instance [String] String DSL{-[InstDecl]-}
-           deriving Show
+           deriving (Data,Typeable,Show)
 
 singleton x = List [x]
 nil = List []
