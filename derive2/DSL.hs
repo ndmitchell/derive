@@ -5,17 +5,19 @@ module DSL where
 import HSE
 import Data.Data
 
-data DSL = App String [DSL]
-         | List [DSL]
-         | Append DSL DSL
+data DSL = App String DSL{-List-}
+         | Concat DSL
          | Reverse DSL
          | String String
-         | Int Int
          | ShowInt DSL
+         | Int Int
+         | List [DSL]
          
          | MapField DSL
          | MapCtor DSL
          | CtorName
+         | CtorInd
+         | CtorArity
          | FieldInd
          
          | Fold DSL DSL DSL
@@ -25,35 +27,39 @@ data DSL = App String [DSL]
          | Instance [String] String DSL{-[InstDecl]-}
            deriving (Data,Typeable,Show)
 
-singleton x = List [x]
+box x = List [x]
 nil = List []
+append x y = Concat $ List [x,y]
 
 
 fromUni :: Universe -> DSL
-fromUni (UApp x y) = App x (map fromUni y)
+fromUni (UApp x y) = App x (List $ map fromUni y)
 fromUni (UList x) = List (map fromUni x)
 fromUni (UString x) = String x
 fromUni x = error $ show ("fromUni",x)
 
 
-_1 s x1 = App s [x1]
-_2 s x1 x2 = App s [x1,x2]
-_3 s x1 x2 x3 = App s [x1,x2,x3]
-_5 s x1 x2 x3 x4 x5 = App s [x1,x2,x3,x4,x5]
+_1 s x1 = App s $ List [x1]
+_2 s x1 x2 = App s $ List [x1,x2]
+_3 s x1 x2 x3 = App s $ List [x1,x2,x3]
+_5 s x1 x2 x3 x4 x5 = App s $ List [x1,x2,x3,x4,x5]
 
 u x = fromUni $ uni x
 
 dslEq :: DSL
-dslEq = singleton $ Instance ["Eq"] "Eq" $ singleton $ _1 "InsDecl" $ _1 "FunBind" $ match `Append` dull
+dslEq = box $ Instance ["Eq"] "Eq" $ box $ _1 "InsDecl" $ _1 "FunBind" $ match `append` dull
     where
         match = MapCtor $ _5 "Match" (u $ Symbol "==") (List [vars "x",vars "y"]) (u (Nothing :: Maybe Type)) (_1 "UnGuardedRhs" bod) (u $ BDecls [])
-        vars x = _2 "PApp" (_1 "UnQual" $ _1 "Ident" CtorName) (MapField (_1 "PVar" $ _1 "Ident" $ Append (String x) (ShowInt FieldInd)))
+        vars x = _2 "PApp" (_1 "UnQual" $ _1 "Ident" CtorName) (MapField (_1 "PVar" $ _1 "Ident" $ append (String x) (ShowInt FieldInd)))
         bod = u $ Con $ UnQual $ Ident "TODO"
             -- Fold (_3 "InfixApp" Head (u $ QVarOp $ UnQual $ Symbol "&&") Tail) (u $ Con $ UnQual $ Ident "True") $ MapField pair
         pair = _3 "InfixApp" (var "x") (u $ QVarOp $ UnQual $ Symbol "==") (var "y")
-        var x = _1 "Var" $ _1 "UnQual" $ _1 "Ident" $ Append (String x) (ShowInt FieldInd)
+        var x = _1 "Var" $ _1 "UnQual" $ _1 "Ident" $ append (String x) (ShowInt FieldInd)
 
         dull = u [Match sl (Symbol "==") [PWildCard,PWildCard] Nothing (UnGuardedRhs $ Con $ UnQual $ Ident "False") (BDecls [])]
+
+
+
 
 {-
 
