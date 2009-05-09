@@ -31,6 +31,13 @@ dataTypeCtors = DataDecl sl DataType [] (Ident "Ctors") [Ident "a"] [f "CtorZero
 
 
 ---------------------------------------------------------------------
+-- UTILITIES
+
+isUnknownDeclPragma UnknownDeclPragma{} = True
+isUnknownDeclPragma _ = False
+
+
+---------------------------------------------------------------------
 
 showRes x = unlines $ map prettyPrint x
 
@@ -58,7 +65,7 @@ ctorFields (QualConDecl _ _ _ (ConDecl _ x)) = length x
 
 
 data Universe = UString String
-              | UInt Int
+              | UInt Integer
               | UApp String [Universe]
               | UList [Universe]
               | UMaybe (Maybe Universe)
@@ -71,6 +78,7 @@ toUniverse x
     | t == typeOf "" = UString $ coerce x
     | c == "[]" = UList $ fList x
     | t == typeOf sl = UIgnore
+    | t == typeOf (1 :: Integer) = UInt $ coerce x
     | otherwise = UApp (showConstr $ toConstr x) (filter (/= UIgnore) $ gmapQ toUniverse x)
     where
         t = typeOf x
@@ -98,6 +106,8 @@ fromUniverse (UApp str args) = res
                               do x:xs <- get; put xs; return $ fromUniverse x
 
 fromUniverse (UString x) = coerce x
+
+fromUniverse (UInt x) = coerce x
 
 -- fromUniverse (UApp str args) = fromJust $ readConstr dat str
 fromUniverse x = error $ show ("fromUniverse",x)

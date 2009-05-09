@@ -38,17 +38,20 @@ gss (UApp "InstDecl" [UList ctxt,name,typ,bod])
     = [Guess $ Instance ctxt name y | Guess y <- gss bod]
 
 gss (UList xs) = gssList xs
-gss (UApp op xs) = map (lift (App op)) $ gssList xs
-
+gss o@(UApp op xs) = gssFold o ++ map (lift (App op)) (gssList xs)
+    
 gss (UString x) 
     | Just i <- findIndex (==x) ctrNames = [GuessCtr i True CtorName]
-    | otherwise = [Guess $ String x] ++
-        [GuessInt (read [last x]) $ \d -> append (String $ init x) (ShowInt d) | x /= "", isDigit (last x)]
+    | otherwise =
+         [GuessInt (read [last x]) $ \d -> append (String $ init x) (ShowInt d) | x /= "", isDigit (last x)] ++
+         [Guess $ String x]
+
+gss (UInt i) = [GuessInt j id | let j = fromInteger i, fromIntegral j == i] ++
+               [GuessCtr 2 False CtorInd | i == 2] ++
+               [GuessCtr 1 False CtorArity | i == 2] ++
+               [Guess $ Int i]
 
 gss x = error $ show ("fallthrough",x)
-
--- gss x = [Guess $ fromUni x]
-
 
 
 {-
@@ -74,12 +77,31 @@ gssList xs = mapMaybe sames $ map diffs $ sequence $ map gss xs
             where f i x = apply2 dataTypeCtors (Just i) Nothing Nothing x
         
         diffs (GuessInt 1 x1:GuessInt 2 x2:xs)
-            | f 1 x1 == f 1 x2 = GuessCtr 1 False (MapField (x2 FieldInd)) : diffs xs
+            | f 1 x1 == f 1 x2 = GuessCtr 1 False (MapField $ x2 FieldInd) : diffs xs
+            where f i x = apply2 dataTypeCtors Nothing (Just i) Nothing (x FieldInd)
+        
+        diffs (GuessInt 2 x2:GuessInt 1 x1:xs)
+            | f 1 x1 == f 1 x2 = GuessCtr 1 False (Reverse $ MapField $ x2 FieldInd) : diffs xs
             where f i x = apply2 dataTypeCtors Nothing (Just i) Nothing (x FieldInd)
         
         diffs (x:xs) = lift box x : diffs xs
         diffs [] = []
 
+
+gssFold o@(UApp op [x,m,y]) = f True (x : follow True y) ++ f False (y : follow False x)
+    where
+        follow dir (UApp op2 [a,m2,b]) | op == op2 && m == m2 = a2 : follow dir b2
+            where (a2,b2) = if dir then (a,b) else (b,a)
+        follow dir x = [x]
+
+        f dir xs | length xs <= 2 = []
+        f dir xs = map (lift g) $ gss $ UList xs
+            where g = Fold (App op $ List [h,fromUni m,t])
+                  (h,t) = if dir then (Head,Tail) else (Tail,Head)
+
+gssFold _ = []
+    
+    
 
 lift :: (DSL -> DSL) -> Guess -> Guess
 lift f x = toGuess a (f . b)
@@ -97,7 +119,6 @@ toGuess :: GuessState -> (DSL -> DSL) -> Guess
 toGuess Nothing f = Guess (f undefined)
 toGuess (Just (Left i)) f = GuessInt i f
 toGuess (Just (Right (i,b))) f = GuessCtr i b (f undefined)
-
 
 
 -- return the maximum element, if one exists

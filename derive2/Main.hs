@@ -5,12 +5,16 @@ import HSE
 import Apply
 import DSL
 import Guess
+import Data.List
 
 test = do
-    let res = apply dataTypeCtors dslEq
-    let dsl = head $ guess res
-    putStr $ showRes res
-    print dsl
-    putStr $ showRes $ apply dataTypeList dsl
+    ParseOk (Module _ _ _ _ _ _ decls) <- parseFile "Examples.hs"
+    let todo = [(name, takeWhile (not . isUnknownDeclPragma) real) | UnknownDeclPragma _ "DERIVE" name:real <- tails decls]
+    mapM_ (uncurry tester) todo
 
-    
+
+tester :: String -> Res -> IO ()
+tester name res = do
+    putStrLn $ "Testing for " ++ name
+    putStr   $ showRes res
+    putStrLn $ showRes $ apply dataTypeList $ head $ guess res

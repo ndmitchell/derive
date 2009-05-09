@@ -27,20 +27,25 @@ apply2 dat ctr fld lst = f
         f (MapField dsl) = UList [apply2 dat ctr (Just i) lst dsl | i <- [1..ctorFields ctr2]]
 
         f CtorName = UString $ ctorName ctr2
-        f FieldInd = UInt $ fromJust fld
+        f CtorArity = UInt $ fromIntegral $ ctorFields ctr2
+        f CtorInd = UInt $ fromIntegral $ fromJust ctr
+        f FieldInd = UInt $ fromIntegral $ fromJust fld
 
         f Head = fst $ fromJust lst
         f Tail = snd $ fromJust lst
-        f (Fold cons nil xs) = case app2 xs of UList xs -> g xs
+        f (Fold cons xs) = case app2 xs of UList xs -> g xs
             where
-                g [] = app2 nil
+                g [x] = x
                 g (x:xs) = apply2 dat ctr fld (Just (x,g xs)) cons
 
         f (List xs) = UList $ map f xs
+        f (Reverse xs) = case app2 xs of
+            UList xs -> UList $ reverse xs
         f (Concat xs) = case app2 xs of
             UList [] -> UList []
             UList xs -> foldr1 g xs
         f (String x) = UString x
+        f (Int x) = UInt x
         f (ShowInt x) = case app2 x of UInt x -> UString (show x)
         f (App x ys) = case app2 ys of
             UList ys -> UApp x ys

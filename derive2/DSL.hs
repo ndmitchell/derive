@@ -10,7 +10,7 @@ data DSL = App String DSL{-List-}
          | Reverse DSL
          | String String
          | ShowInt DSL
-         | Int Int
+         | Int Integer
          | List [DSL]
          
          | MapField DSL
@@ -20,7 +20,7 @@ data DSL = App String DSL{-List-}
          | CtorArity
          | FieldInd
          
-         | Fold DSL DSL DSL
+         | Fold DSL DSL
          | Head
          | Tail
          
@@ -51,74 +51,8 @@ dslEq = box $ Instance ["Eq"] "Eq" $ box $ _1 "InsDecl" $ _1 "FunBind" $ match `
     where
         match = MapCtor $ _5 "Match" (u $ Symbol "==") (List [vars "x",vars "y"]) (u (Nothing :: Maybe Type)) (_1 "UnGuardedRhs" bod) (u $ BDecls [])
         vars x = _2 "PApp" (_1 "UnQual" $ _1 "Ident" CtorName) (MapField (_1 "PVar" $ _1 "Ident" $ append (String x) (ShowInt FieldInd)))
-        bod = u $ Con $ UnQual $ Ident "TODO"
-            -- Fold (_3 "InfixApp" Head (u $ QVarOp $ UnQual $ Symbol "&&") Tail) (u $ Con $ UnQual $ Ident "True") $ MapField pair
+        bod = Fold (_3 "InfixApp" Head (u $ QVarOp $ UnQual $ Symbol "&&") Tail) $ MapField pair `append` u [Con $ UnQual $ Ident "True"]
         pair = _3 "InfixApp" (var "x") (u $ QVarOp $ UnQual $ Symbol "==") (var "y")
         var x = _1 "Var" $ _1 "UnQual" $ _1 "Ident" $ append (String x) (ShowInt FieldInd)
 
         dull = u [Match sl (Symbol "==") [PWildCard,PWildCard] Nothing (UnGuardedRhs $ Con $ UnQual $ Ident "False") (BDecls [])]
-
-
-
-
-{-
-
-uni fromUni $ uni $ InsDecl $ FunBind [m]
-    where
-        m = Match sl (Symbol "==") [] Nothing (UnGuardedRhs $ Lit $ Int 42) (BDecls [])
--}
-
-
-{-
-type Data = Decl
-type Ctor = QualConDecl
-
-
-dataVars :: Data -> [String]
-dataVars (DataDecl _ _ _ _ x _ _) = map prettyPrint x
-
-dataName :: Data -> String
-dataName (DataDecl _ _ _ x _ _ _) = prettyPrint x
-
-
----------------------------------------------------------------------
--- DSL
-
--- from `elem` Data Ctor i (parameter type)
--- to `elem` HSE (result type)
-data DSL from to where
-    C :: to -> DSL i to
-    Ap :: DSL i (a -> b) -> DSL i a -> DSL i b
-
-    Instance :: [String] -> String -> DSL Data [InstDecl] -> DSL Data Decl
-
-
-
-evalData :: DSL Data a -> Data -> a
-evalData (C a) x = a
-evalData (Ap a b) x = evalData a x $ evalData b x
-
-evalData (Instance ctx hd body) x =
-        InstDecl sl con (UnQual $ Ident hd) [typ] (evalData body x)
-    where
-        con = [ClassA (UnQual $ Ident c) [TyVar $ Ident v] | v <- dataVars x, c <- ctx]
-        typ = foldl TyApp (TyCon $ UnQual $ Ident $ dataName x) [TyVar $ Ident v | v <- dataVars x]
-        
-
-data Sample a = Zero | One a | Two a a | Three a a
-
-
-singleton :: DSL i a -> DSL i [a]
-singleton x = Ap (C (:[])) x
-
-
----------------------------------------------------------------------
--- EXAMPLES
-
-
-eq :: DSL Data [Decl]
-eq = singleton $ Instance ["Eq"] "Eq" (C [])
-
-
-test = putStr $ unlines $ map prettyPrint $ evalData eq list
--}
