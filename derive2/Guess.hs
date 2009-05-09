@@ -42,13 +42,14 @@ gss o@(UApp op xs) = gssFold o ++ map (lift (App op)) (gssList xs)
     
 gss (UString x) 
     | Just i <- findIndex (==x) ctrNames = [GuessCtr i True CtorName]
+    | x == "Ctors" = [Guess DataName]
     | otherwise =
          [GuessInt (read [last x]) $ \d -> append (String $ init x) (ShowInt d) | x /= "", isDigit (last x)] ++
          [Guess $ String x]
 
-gss (UInt i) = [GuessInt j id | let j = fromInteger i, fromIntegral j == i] ++
-               [GuessCtr 2 False CtorInd | i == 2] ++
+gss (UInt i) = [GuessCtr 1 False CtorInd | i == 1] ++
                [GuessCtr 1 False CtorArity | i == 2] ++
+               [GuessInt j id | let j = fromInteger i, fromIntegral j == i] ++
                [Guess $ Int i]
 
 gss x = error $ show ("fallthrough",x)

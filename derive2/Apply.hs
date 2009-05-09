@@ -26,6 +26,7 @@ apply2 dat ctr fld lst = f
         f (MapCtor dsl) = UList [apply2 dat (Just c) Nothing lst dsl | c <- [0 .. length (dataCtors dat) - 1]]
         f (MapField dsl) = UList [apply2 dat ctr (Just i) lst dsl | i <- [1..ctorFields ctr2]]
 
+        f DataName = UString $ dataName dat
         f CtorName = UString $ ctorName ctr2
         f CtorArity = UInt $ fromIntegral $ ctorFields ctr2
         f CtorInd = UInt $ fromIntegral $ fromJust ctr

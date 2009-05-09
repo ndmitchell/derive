@@ -17,3 +17,14 @@ instance Arity (Ctors a) where
     arity CtorOne{} = 2
     arity CtorTwo{} = 1
 
+{-# DERIVE Enum #-}
+
+instance Enum (Ctors a) where
+    toEnum 0 = CtorZero{}
+    toEnum 1 = CtorOne {}
+    toEnum 2 = CtorTwo {}
+    toEnum n = error $ "toEnum " ++ show n ++ ", not defined for " ++ "Ctors"
+
+    fromEnum (CtorZero{}) = 0
+    fromEnum (CtorOne {}) = 1
+    fromEnum (CtorTwo {}) = 2

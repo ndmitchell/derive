@@ -15,6 +15,7 @@ data DSL = App String DSL{-List-}
          
          | MapField DSL
          | MapCtor DSL
+         | DataName
          | CtorName
          | CtorInd
          | CtorArity
