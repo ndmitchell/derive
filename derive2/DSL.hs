@@ -26,6 +26,7 @@ data DSL = App String DSL{-List-}
          | Tail
          
          | Instance [String] String DSL{-[InstDecl]-}
+         | Application DSL{-List-}
            deriving (Data,Typeable,Show)
 
 box x = List [x]

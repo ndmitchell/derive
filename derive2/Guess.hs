@@ -38,7 +38,7 @@ gss (UApp "InstDecl" [UList ctxt,name,typ,bod])
     = [Guess $ Instance ctxt name y | Guess y <- gss bod]
 
 gss (UList xs) = gssList xs
-gss o@(UApp op xs) = gssFold o ++ map (lift (App op)) (gssList xs)
+gss o@(UApp op xs) = gssFold o ++ gssApp o ++ map (lift (App op)) (gssList xs)
     
 gss (UString x) 
     | Just i <- findIndex (==x) ctrNames = [GuessCtr i True CtorName]
@@ -77,6 +77,10 @@ gssList xs = mapMaybe sames $ map diffs $ sequence $ map gss xs
             | f 0 x0 == f 0 x1 && f 2 x2 == f 2 x1 = Guess (MapCtor x1) : diffs xs
             where f i x = apply2 dataTypeCtors (Just i) Nothing Nothing x
         
+        diffs (GuessCtr 2 True x2:GuessCtr 1 True x1:GuessCtr 0 True x0:xs)
+            | f 0 x0 == f 0 x1 && f 2 x2 == f 2 x1 = Guess (Reverse $ MapCtor x1) : diffs xs
+            where f i x = apply2 dataTypeCtors (Just i) Nothing Nothing x
+        
         diffs (GuessInt 1 x1:GuessInt 2 x2:xs)
             | f 1 x1 == f 1 x2 = GuessCtr 1 False (MapField $ x2 FieldInd) : diffs xs
             where f i x = apply2 dataTypeCtors Nothing (Just i) Nothing (x FieldInd)
@@ -101,7 +105,12 @@ gssFold o@(UApp op [x,m,y]) = f True (x : follow True y) ++ f False (y : follow 
                   (h,t) = if dir then (Head,Tail) else (Tail,Head)
 
 gssFold _ = []
-    
+
+
+gssApp (UApp "App" [UApp "App" [x,y],z]) = map (lift Application) $ gss $ UList $ fromApp x ++ [y,z]
+    where fromApp (UApp "App" [x,y]) = fromApp x ++ [y]
+          fromApp x = [x]
+gssApp _ = []
     
 
 lift :: (DSL -> DSL) -> Guess -> Guess

@@ -28,3 +28,28 @@ instance Enum (Ctors a) where
     fromEnum (CtorZero{}) = 0
     fromEnum (CtorOne {}) = 1
     fromEnum (CtorTwo {}) = 2
+
+{-# DERIVE EnumCyclic #-}
+
+instance Enum (Ctors a) where
+    toEnum 0 = CtorZero{}
+    toEnum 1 = CtorOne {}
+    toEnum 2 = CtorTwo {}
+    toEnum n = error $ "toEnum " ++ show n ++ ", not defined for " ++ "Ctors"
+
+    fromEnum (CtorZero{}) = 0
+    fromEnum (CtorOne {}) = 1
+    fromEnum (CtorTwo {}) = 2
+
+
+    succ a = if b == length [CtorZero{},CtorOne{},CtorTwo{}] then toEnum 0 else toEnum (b+1)
+        where b = fromEnum a
+
+    pred a = if b == 0 then toEnum length [CtorZero{},CtorOne{},CtorTwo{}] else toEnum (b-1)
+        where b = fromEnum a
+
+{-# DERIVE Bounded #-}
+
+instance Bounded a => Bounded (Ctors a) where
+    minBound = head [CtorZero, CtorOne (const minBound 1) (const minBound 2), CtorTwo (const minBound 1)]
+    maxBound = head [CtorTwo (const maxBound 1), CtorOne (const maxBound 1) (const maxBound 2), CtorZero]

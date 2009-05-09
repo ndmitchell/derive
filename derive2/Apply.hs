@@ -22,6 +22,11 @@ apply2 dat ctr fld lst = f
             where
                 con = [ClassA (UnQual $ Ident c) [TyVar $ Ident v] | v <- dataVars dat, c <- ctx]
                 typ = foldl TyApp (TyCon $ UnQual $ Ident $ dataName dat) [TyVar $ Ident v | v <- dataVars dat]
+        
+        f (Application xs) = case app2 xs of
+            UList xs -> g xs
+            where g [x] = x
+                  g xs = UApp "App" [g $ init xs, last xs]
 
         f (MapCtor dsl) = UList [apply2 dat (Just c) Nothing lst dsl | c <- [0 .. length (dataCtors dat) - 1]]
         f (MapField dsl) = UList [apply2 dat ctr (Just i) lst dsl | i <- [1..ctorFields ctr2]]
@@ -35,9 +40,8 @@ apply2 dat ctr fld lst = f
         f Head = fst $ fromJust lst
         f Tail = snd $ fromJust lst
         f (Fold cons xs) = case app2 xs of UList xs -> g xs
-            where
-                g [x] = x
-                g (x:xs) = apply2 dat ctr fld (Just (x,g xs)) cons
+            where g [x] = x
+                  g (x:xs) = apply2 dat ctr fld (Just (x,g xs)) cons
 
         f (List xs) = UList $ map f xs
         f (Reverse xs) = case app2 xs of
