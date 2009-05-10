@@ -4,7 +4,7 @@ module Examples where
 {-# DERIVE Eq #-}
 
 -- only have () round == because they don't align properly
-instance (Eq a) => Eq (Input a) where
+instance (Eq a) => Eq (Sample a) where
     First == First = True
     Second x1 x2 == Second y1 y2 = (x1 == y1) && (x2 == y2) && True
     Third x1 == Third y1 = (x1 == y1) && True
@@ -12,18 +12,18 @@ instance (Eq a) => Eq (Input a) where
 
 {-# DERIVE Arity #-}
 
-instance Arity (Input a) where
+instance Arity (Sample a) where
     arity First{} = 0
     arity Second{} = 2
     arity Third{} = 1
 
 {-# DERIVE Enum #-}
 
-instance Enum (Input a) where
+instance Enum (Sample a) where
     toEnum 0 = First{}
     toEnum 1 = Second {}
     toEnum 2 = Third {}
-    toEnum n = error $ "toEnum " ++ show n ++ ", not defined for Input"
+    toEnum n = error $ "toEnum " ++ show n ++ ", not defined for Sample"
 
     fromEnum (First{}) = 0
     fromEnum (Second {}) = 1
@@ -31,11 +31,11 @@ instance Enum (Input a) where
 
 {-# DERIVE EnumCyclic #-}
 
-instance Enum (Input a) where
+instance Enum (Sample a) where
     toEnum 0 = First{}
     toEnum 1 = Second {}
     toEnum 2 = Third {}
-    toEnum n = error $ "toEnum " ++ show n ++ ", not defined for Input"
+    toEnum n = error $ "toEnum " ++ show n ++ ", not defined for Sample"
 
     fromEnum (First{}) = 0
     fromEnum (Second {}) = 1
@@ -50,13 +50,13 @@ instance Enum (Input a) where
 
 {-# DERIVE Bounded #-}
 
-instance Bounded a => Bounded (Input a) where
+instance Bounded a => Bounded (Sample a) where
     minBound = head [First, Second (const minBound 1) (const minBound 2), Third (const minBound 1)]
     maxBound = head [Third (const maxBound 1), Second (const maxBound 1) (const maxBound 2), First]
 
 {-# DERIVE Serial #-}
 
-instance Serial a => Serial (Input a) where
+instance Serial a => Serial (Sample a) where
     series = cons0 First \/ cons2 Second \/ cons1 Third
 
     coseries rs d = [ \t -> case t of
@@ -69,7 +69,7 @@ instance Serial a => Serial (Input a) where
 
 {-# DERIVE Ord #-}
 
-instance Ord a => Ord (Input a) where
+instance Ord a => Ord (Sample a) where
     compare a b = check a b
         where
             check (First) (First) = EQ
@@ -86,7 +86,7 @@ instance Ord a => Ord (Input a) where
 
 {-# DERIVE NFData #-}
 
-instance (NFData a) => NFData (Input a) where
+instance (NFData a) => NFData (Sample a) where
     rnf (First) = ()
     rnf (Second x1 x2) = rnf x1 `seq` rnf x2 `seq` ()
     rnf (Third x1) = rnf x1 `seq` ()
@@ -99,7 +99,7 @@ isThird  (Third {}) = True; isThird  _ = False
 
 {-# DERIVE Binary #-}
 
-instance Binary a => Binary (Input a) where
+instance Binary a => Binary (Sample a) where
     put (First) = do putWord8 0
     put (Second x1 x2) = do putWord8 1 ; put x1 ; put x2
     put (Third x1) = do putWord8 2; put x1
@@ -110,11 +110,11 @@ instance Binary a => Binary (Input a) where
             0 -> do return (First)
             1 -> do x1 <- get ; x2 <- get ; return (Second x1 x2)
             2 -> do x1 <- get ; return (Third x1)
-            _ -> error "Corrupted binary data for Input"
+            _ -> error "Corrupted binary data for Sample"
 
 {-# DERIVE BinaryDefer #-}
 
-instance BinaryDefer a => BinaryDefer (Input a) where
+instance BinaryDefer a => BinaryDefer (Sample a) where
     bothDefer = defer [\ ~(First) -> unit First
                       ,\ ~(Second x1 x2) -> unit Second << x1 << x2
                       ,\ ~(Third x1) -> unit Third << x1
@@ -122,7 +122,7 @@ instance BinaryDefer a => BinaryDefer (Input a) where
 
 {-# DERIVE BinaryOld #-}
 
-instance Binary a => Binary (Input a) where
+instance Binary a => Binary (Sample a) where
     put_ bh x = 
         case x of
             First -> do
@@ -155,7 +155,7 @@ instance Binary a => Binary (Input a) where
 
 {-# DERIVE Arbitrary #-}
 
-instance Arbitrary a => Arbitrary (Input a) where
+instance Arbitrary a => Arbitrary (Sample a) where
     arbitrary = do
         x <- choose (0,length [First{},Second{},Third{}] - 1)
         case x of
@@ -172,7 +172,7 @@ instance Arbitrary a => Arbitrary (Input a) where
 
 {-# DERIVE Arbitrary2 #-}
 
-instance Arbitrary a => Arbitrary (Input a) where
+instance Arbitrary a => Arbitrary (Sample a) where
     arbitrary = do
         x <- choose (0,length [First{},Second{},Third{}] - 1)
         case x of
@@ -185,7 +185,7 @@ instance Arbitrary a => Arbitrary (Input a) where
 
 {-# DERIVE Data #-}
 
-instance (Data a, Typeable a) => Data (Input a) where
+instance (Data a, Typeable a) => Data (Sample a) where
     gfoldl k r (First) = r First
     gfoldl k r (Second x1 x2) = r Second `k` x1 `k` x2
     gfoldl k r (Third x1) = r Third `k` x1

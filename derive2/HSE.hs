@@ -27,7 +27,7 @@ dataTypeList = DataDecl sl DataType [] (Ident "List") [Ident "a"] [nil,cons] []
 
 -- data Input a = First | Second a a | Third a
 dataTypeCtors :: Dat
-dataTypeCtors = DataDecl sl DataType [] (Ident "Input") [Ident "a"] [f "First" 0, f "Second" 2, f "Third" 1] []
+dataTypeCtors = DataDecl sl DataType [] (Ident "Sample") [Ident "a"] [f "First" 0, f "Second" 2, f "Third" 1] []
     where f s n = QualConDecl sl [] [] $ ConDecl (Ident s) $ replicate n $ UnBangedTy $ TyVar $ Ident "a"
 
 
