@@ -23,7 +23,7 @@ f
 
 \begin{document}
 
-\conferenceinfo{3rd workshop on Approaches and Applications of Inductive Programming}{date, City.} %
+\conferenceinfo{3rd workshop on Approaches and Applications of Inductive Programming}{4th September 2009, Edinburgh.} %
 \copyrightyear{2009} %
 \copyrightdata{[to be supplied]}
 
@@ -40,7 +40,11 @@ f
 \maketitle
 
 \begin{abstract}
-This paper describes how to infer a function |alpha -> beta|, given a single example pair for a particular element in |alpha|. Throughout we use the concrete example of getting type-class definitions in Haskell, where |alpha| is the set of Haskell data types and |beta| is the set of Haskell abstract syntax trees. We have produced a tool which can infer such instances, and which has seen practical use in the {\derive} tool, providing over 60\% of the type classes.
+Many functions making use of ad-hoc polymorphism (i.e. type classes in Haskell) have a very 
+
+The relationship between a Haskell data type and a corresponding type class
+
+We describe how to infer a function |alpha -> beta|, given a single value of |beta| for a particular element in |alpha|. We identify limitations to this general scheme to make the inferred function predictable -- namely that the function must be described by an appropriate domain specific language (DSL), and that the sample |alpha| element must have certain properties. Throughout we use the concrete example of generating type-class definitions in Haskell, where |alpha| is the set of Haskell data types and |beta| is the set of Haskell abstract syntax trees. We have produced a tool which can infer such instances, and which has seen practical use in the {\derive} tool, providing over 60\% of the type classes.
 \end{abstract}
 
 \category{D.3}{Software}{Programming Languages}
@@ -53,105 +57,117 @@ Haskell, todo
 
 \section{Introduction}
 
-Haskell \cite{haskell} is a modern functional programming language. In Haskell a generic function can be defined using a type class \cite{wadler:type_classes} (using the |class| keyword), and implementations can be provided for specific types (using the |instance| keyword). Generic equality is defined by the |Eq| class:
+In Haskell \cite{haskell}, \textit{type classes} \cite{wadler:type_classes} are used to provide similar operations for many data types. For each data type of interest, a user must define an appropriate instance. The instance definitions usually follow a highly regular pattern. One type class is the |NFData| class defined by \citet{trinder:strategies}, which reduces a value to normal form. For example, we can define a data type to describe which language a computer program is written in, and provide an |NFData| instance:
 
 \begin{code}
-class Eq alpha where
-    (==) :: alpha -> alpha -> Bool
+data Language  =  Haskell [Extension] Compiler
+               |  Whitespace
+               |  Java Version
+
+instance NFData Language where
+    rnf (Haskell x_1 x_2  ) = rnf x_1 `seq` rnf x_2 `seq` ()
+    rnf (Whitespace       ) = ()
+    rnf (Java x_1         ) = rnf x_1 `seq` ()
 \end{code}
 
-The |Eq| class has an operator, |(==)|. All types that are instances of the class |Eq| have the |(==)| operator available. We can define a Haskell data type, along with an instance for |Eq|, as follows:
+We also need to define an |NFData| instance for the |Extension|, |Compiler| and |Version| data types. Any instance of |NFData| follows naturally from the data types structure: for each constructor, all fields have |seq| applied before, returning |()|.
 
-\begin{code}
-data WritingImplement  =  Pencil       -- a pencil
-                       |  Pen Colour   -- a pen, plus its colour
-
-instance Eq WritingImplement where
-    (Pencil     )  == (Pencil     )  = True
-    (Pen     x  )  == (Pen     y  )  = x == y
-    _              == _              = False
-\end{code}
-
-The data type we introduce is |WritingImplement|. A |WritingImplement| is either a pencil, or a pen with a colour. |Pencil| and |Pen| are referred to as data constructors. The first line of the |Eq| instance says that any two |Pencil| values are equal. The second line says that for two |Pen| values to be equal, their colour fields must be equal. The final line says that any remaining pairs of values are not equal. Any instance of |Eq| follows naturally from the data structure: for two values to be equal they must have the same constructor, and all their fields must be equal.
-
-Writing an |Eq| instance for one data type is simple. However, as the complexity and number of data types increases, so does the effort required. The standard solution is to express the \textit{relationship} between any data type and the instance that corresponds to it, which we call an \textit{instance generator}. In standard tools such as DrIFT \cite{drift}, the author of an instance generator must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is not as straightforward as one might hope.
+Writing an |NFData| instance for one data type is simple. However, as the complexity and number of data types increases, so does the effort required. The standard solution is to express the \textit{relationship} between a data type and the instance that is associated with it. In standard tools such as DrIFT \cite{drift}, the person describing the relationship must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is not as straightforward as one might hope.
 
 \begin{figure}
 \begin{code}
-data DataName  =  First
-               |  Second  Any
-               |  Third   Any  Any
-               |  Fourth  Any  Any
+data Sample alpha  =  First
+                   |  Second  alpha alpha
+                   |  Third   alpha
 \end{code}
-\caption{The |DataName| data type.}
-\label{fig:dataname}
+\caption{The |Sample| data type.}
+\label{fig:sample}
 \end{figure}
 
-Using the techniques described in this paper, instance generators can often be automatically inferred from a single example instance. To define \textit{all} |Eq| instances, an example must be given on the |DataName| type, provided by a library (see Figure \ref{fig:dataname}):
+Using the techniques described in this paper, these relationships can often be automatically inferred from a single example instance. To define \textit{all} |NFData| instances, an example must be given for the |Sample| type defined in Figure \ref{fig:sample}:
 
 \begin{code}
-instance Eq DataName where
-    (First          )  == (First          )  = True
-    (Second  x1     )  == (Second  y1     )  = x1 == y1 && True
-    (Third   x1 x2  )  == (Third   y1 y2  )  = x1 == y1 && x2 == y2 && True
-    (Fourth  x1 x2  )  == (Fourth  y1 y2  )  = x1 == y1 && x2 == y2 && True
-    _                  == _                  = False
+instance NFData a => NFData (Sample a) where
+    rnf (First           ) = ()
+    rnf (Second x_1 x_2  ) = rnf x_1 `seq` rnf x_2 `seq` ()
+    rnf (Third x_1       ) = rnf x_1 `seq` ()
 \end{code}
 
-The |DataName| instance follows the same pattern as for |WritingImplement|, but with the addition of |&& True|, whose purpose is explained in \S\ref{sec:fold}.
+The |NFData| instance for |Sample| follows the same pattern as for |Language|. From this single example, we can infer the relationship. However, there are many relationships between the data type and the result -- for example the function might always produce the instance for |Sample|, regardless of the input type. To overcome this problem, we require that the relationship be written in a domain specific language (DSL), and by imposing certain restrictions, we can ensure that any generated relationship is indeed correct.
 
-This paper contributes a method for inferring a relationship between a value and a piece of program code, without resorting to unguided search. In our experience, over 60\% of Haskell class instances can be determined using this technique.
+\subsection{Contributions}
 
-\subsection{Road Map}
+This paper makes the following contributions:
 
-We first formulate the problem abstractly (simple), then given concrete instantiations of each section.
+\begin{itemize}
+\item We describe a scheme which allows us to infer predictable and correct relationships. \ref?
+\item We describe how this scheme is applicable to instance generation. \ref?
+\item We outline a method for guessing values in our DSL, without resorting to unguided search. \ref?
+\item We give measured results, including reasons why our inference fails \ref?. In our experience, over 60\% of Haskell class instances can be determined using this technique.
+\end{itemize}
 
-\section{Abstractly}
+\section{Our Derivation Scheme}
 
-Given an unknown function |alpha -> beta|, and a single example of the result for some given value in |alpha|, can we infer the function? What restrictions need to be imposed to infer the function reliably and quickly?
+In this section we seek to define a general derivation scheme, relating inputs to outputs, which we can use in our specific example of class instance generation. In general terms, a function takes an input to an output. In our case, we restrict functions to only those that can be described by a DSL. Our scheme can be implemented in Haskell as follows:
 
 \begin{code}
 data Input
 data Output
 data DSL
 
-input :: Input -- a canonical input example
-output :: Output -- given input
-
 apply :: Input -> DSL -> Output
-guess :: Output -> [DSL]
-
--- equivalence of DSL terms
-d_1 ~== d_2 = forall i `elem` Input `o` apply i d_1 == apply i d_2
-
--- guess is correct
-forall o `elem` guess output `o` apply input o == output
-
--- predictability
-forall d_1, d_2 `elem` DSL `o` apply input d_1 == apply input d_2 => d_1 ~== d_2
 \end{code}
+
+The |apply| function takes an |Input|, and a |DSL| (representing a function), and generates an |Output|.
+
+Now let's move on and look at our derivation scheme. Given a single result, of the |Output| type, for a particular |Input| sample, we want to guess a particular DSL.
+
+\begin{code}
+sample :: Input
+guess :: Output -> [DSL]
+\end{code}
+
+
+Here |sample| is whatever sample needs to be generated. The |guess| function generates a (possibly empty) set of DSL's. Given these DSL's, we want to determine what is necessary for them to be correct, and to be predictable.
 
 \subsection{Correctness}
 
-Correctness of guess can be assured with:
+A guess is correct iff:
+
+\begin{code}
+-- guess is correct
+forall o `elem` guess output `o` apply input o == output
+\end{code}
+
+Given that |guess| requires correctness, it is easy to write a helper. Now |guess'| can be written without regard to correctness.
 
 \begin{code}
 guess x = [y | y <- guess' x, apply input y == output]
 \end{code}
 
-Now |guess'| can be written without regard to correctness.
-
 \subsection{Predictability}
+
+\begin{code}
+-- equivalence of DSL terms
+d_1 ~== d_2 = forall i `elem` Input `o` apply i d_1 == apply i d_2
+
+-- predictability
+forall d_1, d_2 `elem` DSL `o` apply input d_1 == apply input d_2 => d_1 ~== d_2
+\end{code}
+
+We define two DSL's to be similar \todo{better word} |(~==)|, if for all possible inputs they will produce results which are equivalent. In a similar way we can classify two functions as equal if for all possible input/output pairs they are the same.
 
 The predictability lemma requires that if a DSL successfully guesses the input/output pair, it must be equivalent to all other possible DSL. Note that the predictability lemma does not mention |guess|, although it may require a specially chosen |input| value.
 
-By combining the predictability lemma with the correctness lemma, we can guarantee that if |guess| returns any results, any result is equally good to any other. This frees |guess| from any burden. Combined with defining |guess| in terms of |guess'| allows us to write any terminating expression for |guess| and still get correct behavior.
+By combining the predictability lemma with the correctness lemma, we can guarantee that if |guess| returns any results, any result is equally good to any other. This frees |guess| from any burden. Combined with defining |guess| in terms of |guess'| allows us to write any terminating expression for |guess| and still get correct behaviour.
 
 \section{Concretely}
 
+In this section we map the abstract aspects from the previous section into concrete things in our instance generation scheme.
+
 \subsection{Output}
 
-Our output language is the language of Haskell declarations. Because of the tool we're writing, we don't have a choice about the output domain. Internally we use haskell-src-exts, but that has a big tree. To simplify things we use a universal data type, we translate to and from hse \ref{todo}.
+Our output language is the language of Haskell declarations. Because of the tool we're writing, we don't have a choice about the output domain. Internally we use haskell-src-exts, but that has a big tree. To simplify things we use a universal data type, we translate to and from haskell-src-exts \ref?.
 
 \begin{code}
 data Output = OString String
@@ -175,29 +191,44 @@ Note the details we choose to represent and the details we abstract away. For ex
 
 \subsection{DSL}
 
-The DSL we have most freedom over.
+The DSL we have most freedom over. We construct the DSL from a number of parts.
 
 \subsubsection{Constants}
 
 One useful thing is to represent is constants, so we can lift the |Output| type in to |DSL|.
 
 \begin{code}
-data DSL = DString String
-         | DInt Int
-         | DList [DSL]
-         | DApp String [DSL]
+data DSL = String String
+         | Int Int
+         | List [DSL]
+         | App String DSL
 \end{code}
+
+We decide that if the DSL inside |App| doesn't evaluate to a List, then it's wrong.
 
 \subsubsection{Operations}
 
 \begin{code}
 data DSL = ...
-         | Append DSL DSL
+         | Concat DSL
          | ShowInt DSL
-         | DApp String [DSL]
+         | Reverse DSL
 \end{code}
 
+The DSL inside |Concat| must evaluate to a list of list or a list of string. The DSL inside |ShowInt| must evaluate to an Int. Reverse must operate over a list.
+
 These operations are fairly general.
+
+\subsubsection{Fold}
+
+\begin{code}
+data DSL = ...
+         | Fold DSL DSL
+         | Head
+         | Tail
+\end{code}
+
+Describe the fold here.
 
 \subsubsection{Constructors}
 
@@ -214,43 +245,85 @@ data DSL = ...
 \subsubsection{Fields}
 
 \begin{code}
-data DSL = 
-
+data DSL = ...
+         | MapField DSL
+         | FieldInd
+\end{code}
 
 \subsubsection{Custom items}
 
 \begin{code}
 data DSL = ...
-         | Instance 
+         | Instance [String] String DSL{-[InstDecl]-}
+         | DataName
+         | Application DSL{-List-}
 \end{code}
+
+These are generalisations of things which aren't otherwise inferable.
 
 
 
 \subsection{Restrictions for predictability}
 
-You can only refer to the arity of something if you also refer to it's constructor name. You can't have a constructor name as a constant. Consider:
+You can only refer to the arity of something if you also refer to it's constructor name. Every |MapCtor| must contain a |CtorName| somewhere within it. You can't have a constructor name as a constant. Consider:
 
 \begin{code}
 instance Arities Ctors where
-    arities _ = [0,1,2,2]
+    arities _ = [0,2,1]
 \end{code}
 
 However, it's easy to write:
 
 \begin{code}
-instance Arities Ctors where
-    arities _ = map fst [(0,"CZero"),(1,"COne"),(2,"CTwo"),(2,"CThree")]
+instance Arities Sample where
+    arities _ = [0 `const` CtorZero{}, 2 `const` Second{}, 1 `const` Third{}]
 \end{code}
 
+You can't have a string ended in either Sample or a constructor name, without it being either |DataName| or |CtorName|.
+With these restrictions you do indeed have the property that each input/output pair ensures a unique DSL. This explains why it's important that the arities and indexes are not the same for all items, i.e. why |Second| doesn't take 1 argument and |Third| takes 2.
+
 \section{Implementing |guess|}
+
+Since we know that all answers are just as good as each other (predictability), and that given the restrictions listed in ?, if the answer is correct then they must all be correct, the guess function only needs to be a best attempt. This makes the guess function much easier to see.
+
+\begin{code}
+data Guess = Guess DSL
+           | GuessInt Int (DSL -> DSL)
+           | GuessCtr Int Bool DSL  -- 0 based index, does it mention CtorName
+\end{code}
+
+The only hard thing to guess are lists. The idea of a list is that all elements must have the same |Guess| framework. We can promote |Guess| to any of the others. We do the guessing of lists by first guessing different ones, then guessing similar ones.
 
 \section{Implementation Details}
 
 SYB stuff goes in here. Haskell-src-exts.
 
+We skip src loc in haskell-src-exts, as it's irrelevant.
+
 Post-generation optimisation tweaks. i.e. |a && True => a|. Could perhaps use HLint in a future version.
 
+\begin{code}
+simplify :: Biplate alpha Exp => alpha -> alpha
+simplify = transformBi fExp
+    where
+        x ~= y = prettyPrint x == y
+
+        fExp (App op (List xs))
+            | op ~= "length" = Lit $ Int $ fromIntegral $ length xs
+            | op ~= "head" = head xs
+        fExp (InfixApp (Lit (Int i)) op (Lit (Int j)))
+            | op ~= "-" = Lit $ Int $ i - j
+            | op ~= ">" = Con $ UnQual $ Ident $ show $ i > j
+        fExp (InfixApp x op y) | op ~= "`const`" = x
+        fExp (App (App con x) y) | con ~= "const" = x
+        fExp (Paren (Var x)) = Var x
+        fExp (Paren (Lit x)) = Lit x
+        fExp x = x
+\end{code}
+
 \section{Results}
+
+Inference time to write the derivations for everything to a file is under a tenth of a second. To write the data to the screen takes 3 tenths of a second. We conclude that guesses aren't too slow!
 
 \subsection{Limitations of Automatic Derivation}
 \label{sec:automatic_failure}
@@ -293,7 +366,7 @@ instance Data \? <| dataname |> where
     ) |>
 \end{code}
 
-\section{Extensions}
+\subsection{Extensions}
 
 How would we increase it to get more power.
 
@@ -322,7 +395,9 @@ We have presented a mechanism for automatically deriving instance generators for
 Computers are ideally suited to applying repetitive patterns, but specifying these patterns can be complex and error prone. By specifying the result, instead of the pattern, a user can focus on what they want, rather than the mechanism by which this is realized.
 
 
+\subsection*{Acknowledgements}
 
+Thanks to Stefan O'Rear help with the \derive{} tool.
 
 
 \balance
