@@ -87,7 +87,6 @@ data Universe = UString String
               | UInt Integer
               | UApp String [Universe]
               | UList [Universe]
-              | UMaybe (Maybe Universe)
               | UIgnore
               deriving (Eq,Show,Data,Typeable)
 
