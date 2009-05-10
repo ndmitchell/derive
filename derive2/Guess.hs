@@ -20,7 +20,7 @@ instance Show Guess where
     show (GuessInt i f) = "(" ++ show i ++ " -> " ++ show (f $ String "?") ++ ")"
     show (GuessCtr i b x) = "(" ++ show i ++ " " ++ show b ++ " " ++ show x ++ ")"
 
-ctrNames = ["CtorZero","CtorOne","CtorTwo"]
+ctrNames = map ctorName $ dataCtors dataTypeCtors
 
 
 guess :: Res -> [DSL]
@@ -32,8 +32,9 @@ gss :: Universe -> [Guess]
 gss (UApp "InstDecl" [UList ctxt,name,typ,bod])
     | UApp "UnQual" [UApp "Ident" [UString name]] <- name
     , UList [UApp "TyApp"
-        [UApp "TyCon" [UApp "UnQual" [UApp "Ident" [UString "Ctors"]]]
+        [UApp "TyCon" [UApp "UnQual" [UApp "Ident" [UString nam]]]
         ,UApp "TyVar" [UApp "Ident" [UString var]]]] <- typ
+    , nam == dataName dataTypeCtors
     , ctxt <- [x | UApp "ClassA" [UApp "UnQual" [UApp "Ident" [UString x]],_] <- ctxt]
     = [Guess $ Instance ctxt name y | Guess y <- gss bod]
 

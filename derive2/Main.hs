@@ -16,5 +16,5 @@ main = do
 tester :: String -> Res -> IO ()
 tester name res = do
     putStrLn $ "Testing for " ++ name
-    -- putStr   $ showRes res
+    putStr   $ showRes res
     putStrLn $ showRes $ simplifyRes $ apply dataTypeList $ head $ guess res
