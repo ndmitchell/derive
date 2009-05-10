@@ -41,15 +41,15 @@ gss (UList xs) = gssList xs
 gss o@(UApp op xs) = gssFold o ++ gssApp o ++ map (lift (App op)) (gssList xs)
     
 gss (UString x) 
-    | Just i <- findIndex (==x) ctrNames = [GuessCtr i True CtorName]
-    | x == "Ctors" = [Guess DataName]
+    | Just i <- findIndex (`isSuffixOf` x) ctrNames = [GuessCtr i True $ String (take (length x - length (ctrNames !! i)) x) `append` CtorName]
+    | "Ctors" `isSuffixOf` x = [Guess $ String (take (length x - 5) x) `append` DataName]
     | otherwise =
-         [GuessInt (read [last x]) $ \d -> append (String $ init x) (ShowInt d) | x /= "", isDigit (last x)] ++
+         [lift (\d -> append (String $ init x) (ShowInt d)) g | x /= "", isDigit (last x), g <- gss $ UInt $ read [last x]] ++
          [Guess $ String x]
 
-gss (UInt i) = [GuessCtr 1 False CtorInd | i == 1] ++
+gss (UInt i) = [GuessInt j id | let j = fromInteger i, fromIntegral j == i] ++
+               [GuessCtr 1 False CtorInd | i == 1] ++
                [GuessCtr 1 False CtorArity | i == 2] ++
-               [GuessInt j id | let j = fromInteger i, fromIntegral j == i] ++
                [Guess $ Int i]
 
 gss x = error $ show ("fallthrough",x)

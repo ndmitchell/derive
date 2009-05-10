@@ -3,8 +3,9 @@
 module HSE(module HSE, module Language.Haskell.Exts) where
 
 import Language.Haskell.Exts hiding (List, App, String, Int)
-import qualified Language.Haskell.Exts
+import qualified Language.Haskell.Exts as H
 import Data.Data
+import Data.Generics.PlateData
 import Data.Maybe
 import Unsafe.Coerce
 import Control.Monad.State
@@ -35,6 +36,24 @@ dataTypeCtors = DataDecl sl DataType [] (Ident "Ctors") [Ident "a"] [f "CtorZero
 
 isUnknownDeclPragma UnknownDeclPragma{} = True
 isUnknownDeclPragma _ = False
+
+
+simplifyRes :: Res -> Res
+simplifyRes = transformBi fExp
+    where
+        x ~= y = prettyPrint x == y
+    
+        fExp (H.App op (H.List xs))
+            | op ~= "length" = Lit $ H.Int $ fromIntegral $ length xs
+            | op ~= "head" = head xs
+        fExp (InfixApp (Lit (H.Int i)) op (Lit (H.Int j)))
+            | op ~= "-" = Lit $ H.Int $ i - j
+            | op ~= ">" = Con $ UnQual $ Ident $ show $ i > j
+        fExp (InfixApp x op y) | op ~= "`const`" = x
+        fExp (H.App (H.App con x) y) | con ~= "const" = x
+        fExp (Paren (Var x)) = Var x
+        fExp (Paren (Lit x)) = Lit x
+        fExp x = x
 
 
 ---------------------------------------------------------------------
