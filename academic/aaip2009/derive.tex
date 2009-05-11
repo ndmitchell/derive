@@ -14,10 +14,23 @@
 \newcommand{\derive}{\textsc{Derive}}
 
 \hsdef{\begin{comment}
-f
+Show,Enum,Ord,Bounded,Serial,Arbitrary,Monoid,Binary
+alpha,beta
 \end{comment}}
 \begin{comment}
 \begin{code}
+import Data.Data
+import Data.Monoid hiding (First)
+import Control.Parallel.Strategies
+
+data Version
+data Extension
+data Compiler
+
+class Arities a where arities :: a -> [Int]
+\end{code}
+\h{.hse}\begin{code}
+import Language.Haskell.Exts
 \end{code}
 \end{comment}
 
@@ -30,7 +43,7 @@ f
 \titlebanner{\today{} - \currenttime{}}        % These are ignored unless
 \preprintfooter{}   % 'preprint' option specified.
 
-\title{Deriving a DSL from one example}
+\title{Deriving a DSL from One Example}
 % \subtitle{}
 
 \authorinfo{Neil Mitchell}
@@ -40,11 +53,9 @@ f
 \maketitle
 
 \begin{abstract}
-Many functions making use of ad-hoc polymorphism (i.e. type classes in Haskell) have a very 
+Given an appropriate domain specific language (DSL), it is possible to describe the relationship between Haskell data types and many generic functions, typically type class instances. While describing the relationship is possible, it is not always an easy task. There is an alternative -- simply give one example output for a carefully chosen input, and have the relationship derived.
 
-The relationship between a Haskell data type and a corresponding type class
-
-We describe how to infer a function |alpha -> beta|, given a single value of |beta| for a particular element in |alpha|. We identify limitations to this general scheme to make the inferred function predictable -- namely that the function must be described by an appropriate domain specific language (DSL), and that the sample |alpha| element must have certain properties. Throughout we use the concrete example of generating type-class definitions in Haskell, where |alpha| is the set of Haskell data types and |beta| is the set of Haskell abstract syntax trees. We have produced a tool which can infer such instances, and which has seen practical use in the {\derive} tool, providing over 60\% of the type classes.
+When deriving a relationship from only one example, it is important that the derived relationship is the intended one. We identify general restrictions on the DSL, and on the provided example, to ensure a level of predictability. We then apply these restrictions in practice, to derive the relationship between Haskell data types and generic functions. We have used our scheme in the Derive tool, where 60\% of type classes are derived from a single example.
 \end{abstract}
 
 \category{D.3}{Software}{Programming Languages}
@@ -110,7 +121,7 @@ This paper makes the following contributions:
 
 In this section we seek to define a general derivation scheme, relating inputs to outputs, which we can use in our specific example of class instance generation. In general terms, a function takes an input to an output. In our case, we restrict functions to only those that can be described by a DSL. Our scheme can be implemented in Haskell as follows:
 
-\begin{code}
+\h{.short}\begin{code}
 data Input
 data Output
 data DSL
@@ -134,7 +145,7 @@ Here |sample| is whatever sample needs to be generated. The |guess| function gen
 
 A guess is correct iff:
 
-\begin{code}
+\ignore\begin{code}
 -- guess is correct
 forall o `elem` guess output `o` apply input o == output
 \end{code}
@@ -147,7 +158,7 @@ guess x = [y | y <- guess' x, apply input y == output]
 
 \subsection{Predictability}
 
-\begin{code}
+\ignore\begin{code}
 -- equivalence of DSL terms
 d_1 ~== d_2 = forall i `elem` Input `o` apply i d_1 == apply i d_2
 
@@ -197,23 +208,41 @@ The DSL we have most freedom over. We construct the DSL from a number of parts.
 
 One useful thing is to represent is constants, so we can lift the |Output| type in to |DSL|.
 
+\begin{figure}
 \begin{code}
-data DSL = String String
-         | Int Int
-         | List [DSL]
-         | App String DSL
+data DSL
+    -- Constants
+    = String String
+    | Int Int
+    | List [DSL]
+    | App String DSL
+    -- Operations
+    | Concat DSL
+    | ShowInt DSL
+    | Reverse DSL
+    -- Fold
+    | Fold DSL DSL
+    | Head
+    | Tail
+    -- Constructors
+    | CtorIndex
+    | CtorArity
+    | CtorName
+    | MapCtor DSL
+    -- Fields
+    | MapField DSL
+    | FieldInd
+    -- Custom
+    | Instance [String] String DSL{-[InstDecl]-}
+    | DataName
+    | Application DSL{-List-}
 \end{code}
+\caption{DSL data type}
+\end{figure}
 
 We decide that if the DSL inside |App| doesn't evaluate to a List, then it's wrong.
 
 \subsubsection{Operations}
-
-\begin{code}
-data DSL = ...
-         | Concat DSL
-         | ShowInt DSL
-         | Reverse DSL
-\end{code}
 
 The DSL inside |Concat| must evaluate to a list of list or a list of string. The DSL inside |ShowInt| must evaluate to an Int. Reverse must operate over a list.
 
@@ -221,43 +250,13 @@ These operations are fairly general.
 
 \subsubsection{Fold}
 
-\begin{code}
-data DSL = ...
-         | Fold DSL DSL
-         | Head
-         | Tail
-\end{code}
-
 Describe the fold here.
 
 \subsubsection{Constructors}
 
 We also want to talk about constructors:
 
-\begin{code}
-data DSL = ...
-         | CtorIndex
-         | CtorArity
-         | CtorName
-         | MapCtor DSL
-\end{code}
-
 \subsubsection{Fields}
-
-\begin{code}
-data DSL = ...
-         | MapField DSL
-         | FieldInd
-\end{code}
-
-\subsubsection{Custom items}
-
-\begin{code}
-data DSL = ...
-         | Instance [String] String DSL{-[InstDecl]-}
-         | DataName
-         | Application DSL{-List-}
-\end{code}
 
 These are generalisations of things which aren't otherwise inferable.
 
@@ -268,15 +267,15 @@ These are generalisations of things which aren't otherwise inferable.
 You can only refer to the arity of something if you also refer to it's constructor name. Every |MapCtor| must contain a |CtorName| somewhere within it. You can't have a constructor name as a constant. Consider:
 
 \begin{code}
-instance Arities Ctors where
+instance Arities (Sample alpha) where
     arities _ = [0,2,1]
 \end{code}
 
 However, it's easy to write:
 
 \begin{code}
-instance Arities Sample where
-    arities _ = [0 `const` CtorZero{}, 2 `const` Second{}, 1 `const` Third{}]
+instance Arities (Sample alpha) where
+    arities _ = [0 `const` First{}, 2 `const` Second{}, 1 `const` Third{}]
 \end{code}
 
 You can't have a string ended in either Sample or a constructor name, without it being either |DataName| or |CtorName|.
@@ -300,9 +299,9 @@ SYB stuff goes in here. Haskell-src-exts.
 
 We skip src loc in haskell-src-exts, as it's irrelevant.
 
-Post-generation optimisation tweaks. i.e. |a && True => a|. Could perhaps use HLint in a future version.
+Post-generation optimisation tweaks. i.e. \ignore|a && True => a|. Could perhaps use HLint in a future version.
 
-\begin{code}
+\h{.hse}\begin{code}
 simplify :: Biplate alpha Exp => alpha -> alpha
 simplify = transformBi fExp
     where
@@ -336,7 +335,7 @@ The instance generation scheme given is not complete -- there exist instances wh
 
 \item[Type-based definitions:] For example, the |Monoid| class requires items of the same type to be processed using |mappend|, but items of a different type use |mempty|. Automatic derivation has no notion of type-specific behaviour.
 
-\item [Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |DataName|, record definitions could be determined, but this change would increase the complexity of all other example instances.
+\item [Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |Sample|, record definitions could be determined, but this change would increase the complexity of all other example instances.
 
 \end{description}
 
@@ -346,16 +345,15 @@ The instance generation scheme given is not complete -- there exist instances wh
 Many instance generators can be expressed by example -- including some from the standard Haskell libraries (|Enum|, |Ord|, |Bounded|) and publicly distributed libraries (|Serial|, |Arbitrary|). The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over each value, and the application of an argument to join the fields. An example instance can be given as:
 
 \begin{code}
-instance Data DataName where
-    gfoldl k r (First          ) = r First
-    gfoldl k r (Second  x1     ) = r Second  `k` x1
-    gfoldl k r (Third   x1 x2  ) = r Third   `k` x1 `k` x2
-    gfoldl k r (Fourth  x1 x2  ) = r Fourth  `k` x1 `k` x2
+instance Data alpha => Data (Sample alpha) where
+    gfoldl k r (First            ) = r First
+    gfoldl k r (Second  x_1 x_2  ) = r Second  `k` x_1 `k` x_2
+    gfoldl k r (Third   x_1      ) = r Third   `k` x_1
 \end{code}
 
 \noindent The generator function is inferred as:
 
-\begin{code}
+\ignore\begin{code}
 instance Data \? <| dataname |> where
     <| MAP ctors (
         gfoldl k r
