@@ -67,6 +67,7 @@ todo
 Haskell, todo
 
 \section{Introduction}
+\label{sec:introduction}
 
 In Haskell \cite{haskell}, \textit{type classes} \cite{wadler:type_classes} are used to provide similar operations for many data types. For each data type of interest, a user must define an appropriate instance. The instance definitions usually follow a highly regular pattern. Many libraries define new type classes, for example \citet{trinder:strategies} define the |NFData| type class, which reduces a value to normal form. As an example, we can define a data type to describe which language a computer program is written in, and provide an |NFData| instance:
 
@@ -192,26 +193,16 @@ We wish to allow generation of any sequence of Haskell declarations, where a dec
 
 \begin{itemize}
 \item[String] A sequence of Haskell declarations can be represented as a string, however this lack of structure has several disadvantages. It is easy when constructing strings to generate invalid programs, the indentation and layout of Haskell are hard to generate in a compositional way and it is hard to recover structure that is likely to be useful for deriving relationships.
-\item[Pretty printing combinators] Previous tools such as DrIFT \cite{drift} have generated Haskell code using pretty printing combinators. These combinators supply more structure than strings, but the structure is linked to the presentation, rather than the meaning of constructs.
-\item[Typed abstract syntax tree] The standard way of working with Haskell source code is using a typed abstract syntax tree -- an abstract syntax tree where different types of fragment (i.e. declarations, expressions and patterns) are restricted to different positions in the tree. This approach preserves all the structure, and makes it reasonably easy to ensure the generated program is syntactically valid. By combining a typed abstract syntax tree with a parser and pretty printer we can convert to strings where necessary.
-\item[Untyped abstract syntax tree] An untyped abstract syntax tree is one where all fragments have the same type, and the types do not restrict where they may occur. The removal of types increases the number of invalid programs that can be written -- for example a pattern could occur when a declaration was expected. However, by removing the types we increase the uniformity of the tree, in turn simplifying operations that wish to operate on the tree in a uniform manner.
+\item[Pretty printing combinators] Some tools such as DrIFT \cite{drift} generate Haskell code using pretty printing combinators. These combinators supply more structure than strings, but the structure is linked to the presentation, rather than the meaning of constructs.
+\item[Typed abstract syntax tree (AST)] The standard way of working with Haskell source code is using a typed AST -- an AST where different types of fragment (i.e. declarations, expressions and patterns) are restricted to different positions in the tree. The first version of \derive{} used a typed AST, specifically Template Haskell \cite{template_haskell}. This approach preserves all the structure, and makes it reasonably easy to ensure the generated program is syntactically valid. By combining a typed AST with a parser and pretty printer we can convert to strings where necessary.
+\item[Untyped abstract syntax tree (AST)] An untyped AST is one where all fragments have the same type, and the types do not restrict where they may occur. The removal of types increases the number of invalid programs that can be written -- for example a pattern could occur when a declaration was expected. However, by removing the types we increase the uniformity of the tree, in turn simplifying operations that wish to operate on the tree in a uniform manner.
 \end{itemize}
 
-For our purposes, it is clear that both string and pretty printing combinators are unsuitable -- they lack sufficient structure to implement the |derive| operation. The first version of \derive{} used a typed abstract syntax tree, specifically Template Haskell \cite{template_haskell}. The use of Template Haskell gave a number of advantages -- it is built in to GHC and can represent a large range of Haskell programs.
+For our purposes, it is clear that both string and pretty printing combinators are unsuitable -- they lack sufficient structure to implement the |derive| operation. The use of a typed AST made some things harder, using a typed AST meant that some operations had to be duplicated for each type of interest -- which for Template Haskell means 26 separate data types. Many of the operations were complicated by the introduction of a type, in particular it requires the DSL to track the output type, and propagate type information through the |derive| function. For that purpose we decided to usee an untyped AST. We choose universal, but suspect you could acheive the same thing with GADT's and a typed abstract syntax tree. Unfortunately this type information would propagate though everywhere, resulting in lots of complication. To generate an untyped AST it makes sense to start from an existing typed AST and translate.
 
-For the current version of \derive{}, we reevaluated the options. Many of the operations were complicated by the introduction of a type, in particular it requires the DSL to track the output type, and propagate type information through the |derive| function. In addition, being tied to Template Haskell was not the advantage we had originally hoped, it's reasonably complex and changes with GHC version.
+The use of Template Haskell gave a number of advantages -- it is built in to GHC and can represent a large range of Haskell programs. In addition, being tied to Template Haskell was not the advantage we had originally hoped, it's reasonably complex and changes with GHC version. The use of Template Haskell also had other disadvantages, it is tightly integrated in to GHC which makes it difficult to change, and as it is tightly integrated to GHC it tends to evolve at a slower rate. It doesn't support as many language extensions. It has a difficult to work with API, especially the |Q| monad. It's difficult to separate from GHC, to run as a standalone program.
 
-Derive 1 used Template Haskell, but that sucked. Because of the tool we're writing, we don't have a choice about the output domain. Internally we use haskell-src-exts, but that has a big tree.
-\item[Universal abstract syntax tree] The typed one but flattened.
-\end{itemize}
-
-We choose universal, but suspect you could acheive the same thing with GADT's and a typed abstract syntax tree. Unfortunately this type information would propagate though everywhere, resulting in lots of complication. Our output language is the language of Haskell declarations. To simplify things we use a universal data type, we translate to and from haskell-src-exts \ref?.
-
-
-
-One option would be to generate a string, which can be parsed to form declarations -- however this approach lacks safety,
-
-Concretely, our universal data type is:
+We instead decided to use haskell-src-exts \cite{haskell_src_exts}, which is a big tree. We then translate it to a universal data type, as described in \S\ref{sec:universe}. Concretely, our universal data type is:
 
 \begin{code}
 data Output  =  OString String
@@ -220,85 +211,120 @@ data Output  =  OString String
              |  OApp String [Output]
 \end{code}
 
+Here |OString| and |OInt| represent concrete terminals. The |OList| constructor generates a list from a sequence of  |Output| values. The most interesting constructor is |OApp|, which constructs a value in the resultant typed tree. For example |Just [1]| would be represented as |OApp "Just" [OList [OInt 1]]|.
+
 \subsection{Input}
 
-We have more freedom over input. We choose which information to present in a data type, for example we can choose to make the derivation depend on the module name, or not. We choose not too, however this does eliminate some derivations \ref{typeable}. In \ref{extensions} we describe how you could beef up the power.
+While the output type is largely dictated by the necessity to generate Haskell, we have much more freedom over the input type. The input type represents Haskell data types, but we can choose which details to provide, which in turn impacts on which possible relationships we can represent. For example, we can choose to include the module name in which the data is defined in, or we can choose to omit this detail. We choose not too, however this does eliminate some derivations, for example the |Typeable| type class \cite{syb1}.
 
-Our |Input| language is that of algebraically constructed Haskell data types:
+For our |Input| type we use that of algebraically constructed Haskell data types. We include details such as the airty of constructors, and the number of type variants, but omit details such as types and record field names. Our |Input| type is:
 
 \begin{code}
 data Input = Input {dataName :: String, dataVars :: Int, dataCtors :: [Ctor]}
 data Ctor = Ctor {ctorName :: String, ctorIndex :: Int, ctorArity :: Int}
 \end{code}
 
-Note the details we choose to represent and the details we abstract away. For example, we allow derivations to depend on the arity or index of a constructor, but not the types of the constructors arguments.
+And values corresponding to the |Sample| data type from Figure \ref{fig:sample}, and the |Language| data type from \S\ref{sec:introduction}.
+
+\begin{code}
+languageType :: Input
+languageType = Input "Language" 0
+    [Ctor "Haskell" 0 2
+    ,Ctor "Whitespace" 1 0
+    ,Ctor "Java" 2 1]
+
+sampleType :: Input
+sampleType = Input "Sample" 1
+    [Ctor "First" 0 0
+    ,Ctor "Second" 1 2
+    ,Ctor "Third" 2 1]
+\end{code}
+
+The |Input| constructor records the name of the data type, and the number of type variables the data type takes. For each constructor we record it's name, the 0-based index of the type, and the arity of the constructor. For example, we allow derivations to depend on the arity or index of a constructor, but not the types of the constructors arguments. In \S\ref{extensions} we describe phow you could beef up the power.
 
 \subsection{DSL}
-
-The DSL we have most freedom over. We construct the DSL from a number of parts.
-
-\subsubsection{Constants}
-
-One useful thing is to represent is constants, so we can lift the |Output| type in to |DSL|.
 
 \begin{figure}
 \begin{code}
 data DSL
     -- Constants
     = String String
-    | Int Int
+    | Int Integer
     | List [DSL]
-    | App String DSL
+    | App String DSL{-[alpha]-}
     -- Operations
-    | Concat DSL
-    | ShowInt DSL
-    | Reverse DSL
+    | Concat DSL{-[[alpha]]-}
+    | ShowInt DSL{-Int-}
+    | Reverse DSL{-[alpha]-}
     -- Fold
     | Fold DSL DSL
     | Head
     | Tail
     -- Constructors
+    | MapCtor DSL
     | CtorIndex
     | CtorArity
     | CtorName
-    | MapCtor DSL
     -- Fields
     | MapField DSL
     | FieldInd
     -- Custom
-    | Instance [String] String DSL{-[InstDecl]-}
     | DataName
-    | Application DSL{-List-}
+    | Application DSL{-[Exp]-}
+    | Instance [String] String DSL{-[InstDecl]-}
 \end{code}
 \caption{DSL data type}
+\label{fig:dsl}
 \end{figure}
 
-We decide that if the DSL inside |App| doesn't evaluate to a List, then it's wrong.
+The type we have most freedom over is the DSL, and we present our DSL type in \ref{fig:dsl}. We have divided the DSL in to sections, which we present separately. Each constructor has an interpretation, and a set of circumstances in which it is valid to occur. Our DSL evaluates in to an |Output| type, so we can view the semantics through the |apply| function. The complete |apply| function is given in Appendix \ref{sec:apply}.
+
+It would be possible to encode many of the invariants if we used a DSL represented as a GADT \cite{GADT}. However, for simplicity we choose not to.
+
+\subsubsection{Constants}
+
+It is useful to represent is constants, so we can lift the |Output| type in to |DSL|. The |String|, |Int|, |List| and |App| constructors are equivalent to the |Output| variants, with the exception of |App|. Instead of |App| a list of arguments, similarly to |OApp|, we take a single |DSL|. We do require the |DSL| to evaluate to a list, which is used as the list of arguments. We consider a violation of this to be an error.
 
 \subsubsection{Operations}
 
-The DSL inside |Concat| must evaluate to a list of list or a list of string. The DSL inside |ShowInt| must evaluate to an Int. Reverse must operate over a list.
-
-These operations are fairly general.
+We provide a limited set of operations that operate on types. The argument to |Concat| must evaluate to either a list of lists, or a list of strings, which are then concatentated. The |ShowInt| argument must be an |Int|, which is then shown to be a |String|. The |Reverse| operation reverses a list. All these operations are relatively simple, and could be appropriate to many DSL's. Note that we do not provide an append or |(++)| operation, however one can be created from |List| and |Concat|.
 
 \subsubsection{Fold}
 
-Describe the fold here.
+The |Fold| operation can implement either a |foldr1| or |foldl1|. The first argument to the |Fold| constructor is the function -- a DSL operation contains both |Head| and |Tail| constructors. The second argument must evaluate to a list that has at least one element. If the list has exactly one element, then that is the result. If there is more than one result, then the |Head| is replaced with the first element, and the |Tail| is replaced with the fold over the remaining elements. This can be described by:
+
+\ignore\begin{code}
+Fold fn [x]) = x
+Fold fn (x:xs)) = fn[x / Head, Fold fn xs / Tail]
+\end{code}
+
+For example, to implement the |concat| fold in terms of an |Append| constructor would be |Fold (Append Head Tail)|. Of course, in contrast to the provided |Concat|, this would crash if there were no elements in the list. The fold operation is more complicated than the others, but a general operation not specific to our problem, and is certainly useful.
 
 \subsubsection{Constructors}
 
-We also want to talk about constructors:
+To insert information from constructors we provide a |MapCtor| operation. This operation generates a list, with one copy of the DSL for each constructor. Within the operation for |MapCtor| we allow the |CtorIndex|, |CtorArity| and |CtorName| constructors, which correspond to the information contained within each constructor -- if these operations are encountered elsewhere they are an error. They all produce an integer value.
 
 \subsubsection{Fields}
 
-These are generalisations of things which aren't otherwise inferable.
+The |MapField| operation is similar to |MapCtor|, it maps over each field within a constructor. The operation is only valid within a |MapCtor|. Within a |MapField|, the |FieldInd| operation returns the 1-based index. While most things in Haskell are 0-based, it actually seemed more natural to use 1-based, as they usually correspond to indexes on variables.
 
+\subsubsection{Custom}
 
+The final operations are all very specific to our particular problem, and each encode specific situations which are problematic. The first is |DataName|, which returns the string corresponding to the name of the data type. The haskell-src-exts library has binary application, where multiple applications are often chained. Sometimes it is useful to have a vector application operation, which we construct with the |Application| operation.
+
+The last operation is |Instance|, and is quite specific to our problem. For many data types, there is a very specific pattern for instance definitions. For example, given the type |Either alpha beta|, a typical instantiation might be:
+
+\begin{code}
+instance (Show alpha, Ord alpha, Show beta, Ord beta) => ShowOrd (Either alpha beta) where
+    ...
+\end{code}
+
+This pattern can be abstracted by saying what context is required for each type variable (i.e. |Show| and |Ord| in this example), what the main class is (i.e. |ShowOrd|), and a DSL to generate the body -- which we do with the |Instance| operation. If we were to attempt to infer this pattern without a specific |Instance| operation, we would need to be able to operate over the type variables of a data type, which would almost always result in this particular type.
 
 \subsection{Restrictions for predictability}
 \label{sec:predictability}
 
-You can only refer to the arity of something if you also refer to it's constructor name. Every |MapCtor| must contain a |CtorName| somewhere within it. You can't have a constructor name as a constant. Consider:
+Every |MapCtor| must contain a |CtorName| somewhere within it. You can't have a constructor name or data name as a constant. Consider:
 
 \begin{code}
 instance Arities (Sample alpha) where
@@ -333,9 +359,14 @@ The only hard thing to guess are lists. The idea of a list is that all elements 
 \section{Implementation Details}
 \label{sec:implementation}
 
+\subsection{Typed AST to Untyped AST}s
+\label{sec:universe}
+
 SYB stuff goes in here. Haskell-src-exts.
 
 We skip src loc in haskell-src-exts, as it's irrelevant.
+
+\subsection{Post Generation Optimisation}
 
 Post-generation optimisation tweaks. i.e. \ignore|a && True => a|. Could perhaps use HLint in a future version.
 
@@ -437,9 +468,14 @@ Computers are ideally suited to applying repetitive patterns, but specifying the
 Thanks to Stefan O'Rear help with the \derive{} tool.
 
 
-\balance
-
 \bibliographystyle{plainnat}
 \bibliography
+
+\appendix
+\section{The |apply| function}
+
+\begin{code}
+apply = -- \todo{insert apply here}
+\end{code}
 
 \end{document}
