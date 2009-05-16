@@ -68,7 +68,7 @@ Haskell, todo
 
 \section{Introduction}
 
-In Haskell \cite{haskell}, \textit{type classes} \cite{wadler:type_classes} are used to provide similar operations for many data types. For each data type of interest, a user must define an appropriate instance. The instance definitions usually follow a highly regular pattern. One type class is the |NFData| class defined by \citet{trinder:strategies}, which reduces a value to normal form. For example, we can define a data type to describe which language a computer program is written in, and provide an |NFData| instance:
+In Haskell \cite{haskell}, \textit{type classes} \cite{wadler:type_classes} are used to provide similar operations for many data types. For each data type of interest, a user must define an appropriate instance. The instance definitions usually follow a highly regular pattern. Many libraries define new type classes, for example \citet{trinder:strategies} define the |NFData| type class, which reduces a value to normal form. As an example, we can define a data type to describe which language a computer program is written in, and provide an |NFData| instance:
 
 \begin{code}
 data Language  =  Haskell [Extension] Compiler
@@ -81,9 +81,9 @@ instance NFData Language where
     rnf (Java x_1         ) = rnf x_1 `seq` ()
 \end{code}
 
-We also need to define an |NFData| instance for the |Extension|, |Compiler| and |Version| data types. Any instance of |NFData| follows naturally from the data types structure: for each constructor, all fields have |seq| applied before, returning |()|.
+We also need to define |NFData| instances for the data types |Extension|, |Compiler| and |Version|. Any instance of |NFData| follows naturally from the structure of a data type: for each constructor, all fields have |seq| applied before, returning |()|.
 
-Writing an |NFData| instance for one data type is simple. However, as the complexity and number of data types increases, so does the effort required. The standard solution is to express the \textit{relationship} between a data type and the instance that is associated with it. In standard tools such as DrIFT \cite{drift}, the person describing the relationship must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying an instance generator is not as straightforward as one might hope.
+Writing an |NFData| instance for one data type is simple -- but the effort required increases as the data types get more complex and numerous. The standard solution is to express the \textit{relationship} between a data type and associated instance. In standard tools such as DrIFT \cite{drift}, the person describing the relationship must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying the relationship is not as straightforward as one might hope.
 
 \begin{figure}
 \begin{code}
@@ -95,84 +95,85 @@ data Sample alpha  =  First
 \label{fig:sample}
 \end{figure}
 
-Using the techniques described in this paper, these relationships can often be automatically inferred from a single example instance. To define \textit{all} |NFData| instances, an example must be given for the |Sample| type defined in Figure \ref{fig:sample}:
+Using the techniques described in this paper, these relationships can often be automatically inferred from a single example. To define the relationship for \textit{all} |NFData| instances, we require an example to be given for the |Sample| data type defined in Figure \ref{fig:sample}:
 
 \begin{code}
-instance NFData a => NFData (Sample a) where
+instance NFData alpha => NFData (Sample alpha) where
     rnf (First           ) = ()
     rnf (Second x_1 x_2  ) = rnf x_1 `seq` rnf x_2 `seq` ()
     rnf (Third x_1       ) = rnf x_1 `seq` ()
 \end{code}
 
-The |NFData| instance for |Sample| follows the same pattern as for |Language|. From this single example, we can infer the relationship. However, there are many relationships between the data type and the result -- for example the function might always produce the instance for |Sample|, regardless of the input type. To overcome this problem, we require that the relationship be written in a domain specific language (DSL), and by imposing certain restrictions, we can ensure that any generated relationship is indeed correct.
+The |NFData| instance for |Sample| follows the same pattern as for |Language|. From this single example, we can infer the relationship. However, there are many possible relationships between the data type and the result -- for example the function might always generate the instance for |Sample|, regardless of the input type. We overcome this problem by requiring that the relationship be written in a domain specific language (DSL), and that the example has certain properties (see \S\ref{sec:scheme}). With our restrictions, we can regain predictability.
 
 \subsection{Contributions}
 
 This paper makes the following contributions:
 
 \begin{itemize}
-\item We describe a scheme which allows us to infer predictable and correct relationships. \ref?
-\item We describe how this scheme is applicable to instance generation. \ref?
-\item We outline a method for guessing values in our DSL, without resorting to unguided search. \ref?
-\item We give measured results, including reasons why our inference fails \ref?. In our experience, over 60\% of Haskell class instances can be determined using this technique.
+\item We describe a scheme which allows us to infer predictable and correct relationships (\S\ref{sec:scheme}).
+\item We describe how this scheme is applicable to instance generation, both in a high-level manner (\S\ref{sec:instances}), and more detailed practical concerns (\S\ref{sec:implementation}).
+\item We outline a method for deriving function in our DSL, without resorting to unguided search (\S\ref{sec:guess}).
+\item We give measured results (\S\ref{sec:results}), including reasons why our inference fails (\S\ref{sec:failures}). In our experience, over 60\% of Haskell class instances can be determined using this technique.
 \end{itemize}
 
 \section{Our Derivation Scheme}
+\label{sec:scheme}
 
-In this section we seek to define a general derivation scheme, relating inputs to outputs, which we can use in our specific example of class instance generation. In general terms, a function takes an input to an output. In our case, we restrict functions to only those that can be described by a DSL. Our scheme can be implemented in Haskell as follows:
+In this section we define a general derivation scheme, relating inputs to outputs, which we can later use in our specific example of type class instance derivation. In general terms, a function takes an input to an output. In our case, we restrict functions to only those that can be described by a DSL. Therefore, we need a function to serve as an interpreter for our DSL (which we call |apply|), which takes an input and a DSL and produces an output. Our scheme can be implemented in Haskell as follows:
 
 \h{.short}\begin{code}
 data Input
 data Output
 data DSL
 
-apply :: Input -> DSL -> Output
+apply :: DSL -> Input -> Output
 \end{code}
 
-The |apply| function takes an |Input|, and a |DSL| (representing a function), and generates an |Output|.
-
-Now let's move on and look at our derivation scheme. Given a single result, of the |Output| type, for a particular |Input| sample, we want to guess a particular DSL.
+Now we consider our derivation scheme. Given a single result of the |Output| type, for a particular |Input| sample, we want to derive a particular DSL. However, we may not always be able to derive an appropriate DSL, so our derivation function must allow the possibility of failure. Instead of maybe producing a single DSL result, we instead choose to produce a list of DSL results, following the lead of \citet{wadler:list_of_successes}. Once again, we can implement this in Haskell as:
 
 \begin{code}
 sample :: Input
-guess :: Output -> [DSL]
+derive :: Output -> [DSL]
 \end{code}
 
-
-Here |sample| is whatever sample needs to be generated. The |guess| function generates a (possibly empty) set of DSL's. Given these DSL's, we want to determine what is necessary for them to be correct, and to be predictable.
+We require our scheme to have two particular properties -- correctness (it works) and predictability (its what the user intended). We now define each of these properties more formally, along with the necessary restrictions to achieve them in general.
 
 \subsection{Correctness}
 
-A guess is correct iff:
+A guess is correct if all derived DSL's, when applied to the sample input, produce the given output:
 
 \ignore\begin{code}
--- guess is correct
-forall o `elem` guess output `o` apply input o == output
+forall d `elem` derive output `o` apply d sample == output
 \end{code}
 
-Given that |guess| requires correctness, it is easy to write a helper. Now |guess'| can be written without regard to correctness.
+Given an arbitrary |derive'| function, which does not necessarily ensure correctness, it is easy to write a wrapper which is guaranteed correct, by simply filtering out the incorrect DSL's. By using a wrapper, we can remove some constraints from the |derive'| function -- either simplifying the implementation, or gaining a higher assurance of correctness.
 
 \begin{code}
-guess x = [y | y <- guess' x, apply input y == output]
+derive x = [y | y <- derive' x, apply y sample == output]
 \end{code}
 
 \subsection{Predictability}
 
-\ignore\begin{code}
--- equivalence of DSL terms
-d_1 ~== d_2 = forall i `elem` Input `o` apply i d_1 == apply i d_2
+We define two DSL's to be congruent |(~==)|, if for each input they both produce the same result -- i.e. |apply d_1 == apply d_2|.
 
+\ignore\begin{code}
+d_1 ~== d_2 = forall i `elem` Input `o` apply d_1 i == apply d_2 i
+\end{code}
+
+We want all derived results to be congruent. But more strongly, we want all possible results to be congruent
+
+\begin{code}
 -- predictability
 forall d_1, d_2 `elem` DSL `o` apply input d_1 == apply input d_2 => d_1 ~== d_2
 \end{code}
-
-We define two DSL's to be similar \todo{better word} |(~==)|, if for all possible inputs they will produce results which are equivalent. In a similar way we can classify two functions as equal if for all possible input/output pairs they are the same.
 
 The predictability lemma requires that if a DSL successfully guesses the input/output pair, it must be equivalent to all other possible DSL. Note that the predictability lemma does not mention |guess|, although it may require a specially chosen |input| value.
 
 By combining the predictability lemma with the correctness lemma, we can guarantee that if |guess| returns any results, any result is equally good to any other. This frees |guess| from any burden. Combined with defining |guess| in terms of |guess'| allows us to write any terminating expression for |guess| and still get correct behaviour.
 
-\section{Concretely}
+\section{Deriving Instances}
+\label{sec:instances}
 
 In this section we map the abstract aspects from the previous section into concrete things in our instance generation scheme.
 
@@ -281,7 +282,8 @@ instance Arities (Sample alpha) where
 You can't have a string ended in either Sample or a constructor name, without it being either |DataName| or |CtorName|.
 With these restrictions you do indeed have the property that each input/output pair ensures a unique DSL. This explains why it's important that the arities and indexes are not the same for all items, i.e. why |Second| doesn't take 1 argument and |Third| takes 2.
 
-\section{Implementing |guess|}
+\section{Guessing Instances}
+\label{sec:guess}
 
 Since we know that all answers are just as good as each other (predictability), and that given the restrictions listed in ?, if the answer is correct then they must all be correct, the guess function only needs to be a best attempt. This makes the guess function much easier to see.
 
@@ -294,6 +296,7 @@ data Guess = Guess DSL
 The only hard thing to guess are lists. The idea of a list is that all elements must have the same |Guess| framework. We can promote |Guess| to any of the others. We do the guessing of lists by first guessing different ones, then guessing similar ones.
 
 \section{Implementation Details}
+\label{sec:implementation}
 
 SYB stuff goes in here. Haskell-src-exts.
 
@@ -321,11 +324,12 @@ simplify = transformBi fExp
 \end{code}
 
 \section{Results}
+\label{sec:results}
 
 Inference time to write the derivations for everything to a file is under a tenth of a second. To write the data to the screen takes 3 tenths of a second. We conclude that guesses aren't too slow!
 
 \subsection{Limitations of Automatic Derivation}
-\label{sec:automatic_failure}
+\label{sec:failure}
 
 The instance generation scheme given is not complete -- there exist instances whose generator cannot be determined. The Derive tool \cite{derive} is a program for generating instances for user defined data types. Of the 24 instances supported by the Derive tool, 15 are expressed by example, while 9 require manually written instance generators. There are several reasons some instances cannot be determined:
 
@@ -386,7 +390,7 @@ We have presented a mechanism for automatically deriving instance generators for
 
 \begin{itemize}
 \item Using automatic instance generation allows the underlying tool to change the API for specifying instances, without requiring human intervention to modify the generators -- they can simply be regenerated. This freedom allows instances to be expressed in new ways. Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor.
-\item The provided data type (Figure \ref{fig:dataname}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names (see \S\ref{sec:automatic_failure}). An alternative approach would be to introduce new data types with features specifically targeted for certain types of definition. Care would have to be taken to ensure that these extensions do not substantially increase the complexity of writing examples.
+\item The provided data type (Figure \ref{fig:sample}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names (see \S\ref{sec:automatic_failure}). An alternative approach would be to introduce new data types with features specifically targeted for certain types of definition. Care would have to be taken to ensure that these extensions do not substantially increase the complexity of writing examples.
 \item We could make everything more type safe using GADT's.
 \end{itemize}
 
