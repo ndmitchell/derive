@@ -220,8 +220,8 @@ While the output type is largely dictated by the necessity to generate Haskell, 
 For our |Input| type we use that of algebraically constructed Haskell data types. We include details such as the airty of constructors, and the number of type variants, but omit details such as types and record field names. Our |Input| type is:
 
 \begin{code}
-data Input = Input {dataName :: String, dataVars :: Int, dataCtors :: [Ctor]}
-data Ctor = Ctor {ctorName :: String, ctorIndex :: Int, ctorArity :: Int}
+data Input = Input {dataName :: String, dataVars :: Integer, dataCtors :: [Ctor]}
+data Ctor = Ctor {ctorName :: String, ctorIndex :: Integer, ctorArity :: Integer}
 \end{code}
 
 And values corresponding to the |Sample| data type from Figure \ref{fig:sample}, and the |Language| data type from \S\ref{sec:introduction}.
@@ -324,37 +324,73 @@ This pattern can be abstracted by saying what context is required for each type 
 \subsection{Restrictions for predictability}
 \label{sec:predictability}
 
-Every |MapCtor| must contain a |CtorName| somewhere within it. You can't have a constructor name or data name as a constant. Consider:
+In order to ensure predictability there must be no non-congruent DSL values which give equal results when applied to the sample input. However, currently this not true. Consider the simple counterexample of |DataName| vs |String "Sample"|. When applied to the sample input, both will generate |OString "Sample"|, but when applied to another data  type they will generate different values. To regain predictability we impose two additional invariants on the |DSL|:
+
+\begin{enumerate}
+\item The strings |Sample|, |First|, |Second| and |Third| cannot be the suffix of any |String| operation. In the above example, the DSL |String "Sample"| would therefore be invalid.
+\item Within |MapCtor| we require that the contained DSL \textit{must} include a |CtorName|.
+\end{enumerate}
+
+We have already seen an example of the first restriction in practice, now let us examine the second. Let us consider a practical example, consider:
 
 \begin{code}
 instance Arities (Sample alpha) where
     arities _ = [0,2,1]
 \end{code}
 
-However, it's easy to write:
+This could either infer that the |arities| function always returns |[0,2,1]|, or perhaps the arities function returns the arities of each successive constructor. While it is easy as humans to infer the intention, there is a potential ambiguity. Using the second restriction, we conclude that this must always represent the constant operation. Of course, if we want to write a correct |arities| operation, it is easy to write:
 
 \begin{code}
 instance Arities (Sample alpha) where
     arities _ = [0 `const` First{}, 2 `const` Second{}, 1 `const` Third{}]
 \end{code}
 
-You can't have a string ended in either Sample or a constructor name, without it being either |DataName| or |CtorName|.
-With these restrictions you do indeed have the property that each input/output pair ensures a unique DSL. This explains why it's important that the arities and indexes are not the same for all items, i.e. why |Second| doesn't take 1 argument and |Third| takes 2.
+This code may seem less efficient, but any good program optimiser would certainly generate identical code. We return to the issue of simplification in \S\ref{sec:simplify}. Given that no constructor names may occur in |String| operations, and that |CtorName| must occur within every |MapCtor|, we can be sure that all constructor patterns are appropriately parameterised. The only other possible source of ambiguity is if two items could be generated within a constructor with the same value -- for example if all indexes and arities in the sample data type were equal. However, we have avoided this particular problem by ensuring that |Second| has index 1 has arity 2, while |Third| has the opposite.
 
-\section{Guessing Instances}
+\section{Deriving Instances}
 \label{sec:guess}
 
-what properties do we want? termination, power (producing a value if you can).
+This section covers the implementation of the |derive| function, as described in \ref{sec:scheme}. We believe the scheme we produce always generates correct DSL's, but it is unnecessary to prove this property (see \S\ref{sec:correctness}). We have also shown that our DSL and sample input guarantee predictability without regard to the |derive| function, provided we don't generate DSL's violating the restrictions outlined in \S\ref{sec:predictability}.
 
-Since we know that all answers are just as good as each other (predictability), and that given the restrictions listed in ?, if the answer is correct then they must all be correct, the guess function only needs to be a best attempt. This makes the guess function much easier to see.
+Given that we don't need to worry about predictability and correctness, we can focus on other issues. Naturally, we want the |derive| function to terminate, and ideally terminate within a reasonable time bound. But the main issue is that we desire that if there is a possible derivation, that the scheme find it. Namely:
 
 \begin{code}
-data Guess = Guess DSL
-           | GuessInt Int (DSL -> DSL)
-           | GuessCtr Int Bool DSL  -- 0 based index, does it mention CtorName
+forall o `elem` Output, d `elem` DSL `o` null (derive o) => apply d sample /= o
 \end{code}
 
+We are unaware of a |derive| implementation that meets such a property. However, we aim to come as close as we can, i.e. to have the property be true for as many output values as possible.
+
+There are many possible approaches for structuring a |derive| function, and we hope that the scheme we have described provides ample opportunity for experimentation. We have structure our particular scheme around the the notion of a parameterised guess. The central idea is that each fragment of output is related to a guess -- a DSL parameterised by some aspect, i.e. within a |MapCtor| the guesses will be parameterised by a constructor. We then infer a list of guesses, starting at the leaf nodes and working up. When we attempt to generalise over all constructors, say to generate a |MapCtor|, we check that one of the guesses is suitable for all items, and then lift that guess from a guess parameterised by constructor, to one parameterised by nothing. Our central |Guess| type is:
+
+\begin{code}
+data Guess  =  Guess DSL
+            |  GuessCtr Int Bool DSL
+            |  GuessInt Int (DSL -> DSL)
+
+derive :: Output -> [DSL]
+derive o = [d | Guess d <- guess o]
+
+guess :: Output -> [Guess]
+\end{code}
+
+The |Guess| constructor represents a guess that is not parameterised by a constructor or field name, i.e. does not necessarily come below a |MapCtor| or |MapField|. Another way of viewing it is that a |Guess| is parameterised by the entire data type. A |GuessCtr| is paramterised by a constructor, where the first field is the 0-based index of the constructor, and the second field is a boolean which is |True| if the associate DSL contains |CtorName|, and |False| if it does not. The final constructor, |GuessInt i f| is a guess parameterised by an integer, where applying |f (Int i)| results in an appropriate DSL. A |GuessInt| can become either a constant, a |GuessCtr| where the integer is derived from either the arity or index, or a |MapField|.
+
+Since we start at the bottom and guess upwards, we consider each guess type individually. They are then composed.
+
+\subsection{Constants}
+
+These are relatively easy. Strings and Int's.
+
+\subsection{Custom values}
+
+These are just specific checks.
+
+\subsection{Lists}
+
 The only hard thing to guess are lists. The idea of a list is that all elements must have the same |Guess| framework. We can promote |Guess| to any of the others. We do the guessing of lists by first guessing different ones, then guessing similar ones.
+
+\subsection{Folds}
+
 
 \section{Implementation Details}
 \label{sec:implementation}
@@ -366,7 +402,10 @@ SYB stuff goes in here. Haskell-src-exts.
 
 We skip src loc in haskell-src-exts, as it's irrelevant.
 
-\subsection{Post Generation Optimisation}
+\subsection{DSL Optimisation}
+
+\subsection{Output Optimisation}
+\label{sec:simplify}
 
 Post-generation optimisation tweaks. i.e. \ignore|a && True => a|. Could perhaps use HLint in a future version.
 
@@ -389,10 +428,14 @@ simplify = transformBi fExp
         fExp x = x
 \end{code}
 
+\subsection{DSL Usage}
+
+What can we do with DSLs? The world is our Oyster, we can generate |Data| based reflective code, we can generate concrete instances, we can write out an instance generator.
+
+Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor.
+
 \section{Results}
 \label{sec:results}
-
-Inference time to write the derivations for everything to a file is under a tenth of a second. To write the data to the screen takes 3 tenths of a second. We conclude that guesses aren't too slow!
 
 \subsection{Limitations of Automatic Derivation}
 \label{sec:failure}
@@ -434,9 +477,21 @@ instance Data \? <| dataname |> where
     ) |>
 \end{code}
 
+\subsection{Tricks for Increasing Power}
+
+Take a look at Binary, which writes out tags in clever ways.
+
+\subsection{Timing Properties}
+
+Inference time to write the derivations for everything to a file is under a tenth of a second. To write the data to the screen takes 3 tenths of a second. We conclude that guesses aren't too slow!
+
 \subsection{Extensions}
 
 How would we increase it to get more power.
+
+Record names could be added. The difficulty here is that record names can be shared between constructors, in different orders, some constructors may not have record names etc. For a system such as F#, where only one constructor is allowed and all fields must be named, this may be more feasible.
+
+Another property is types. The problem here is that types are two numerous, and while extensions could provide one or two -- for example |Functor|, they won't be able to do a huge number.
 
 \section{Related Work}
 \label{sec:related}
@@ -455,17 +510,16 @@ The concepts in this paper are applicable outside the domain of instances in Has
 We have presented a mechanism for automatically deriving instance generators for Haskell type classes. Our technique has been implemented in the Derive tool \cite{derive}, where 60\% of instance generators are specified by example. The ease of creating new instances has enabled several users to contribute instance generators to the Derive tool. We see several lines of future work:
 
 \begin{itemize}
-\item Using automatic instance generation allows the underlying tool to change the API for specifying instances, without requiring human intervention to modify the generators -- they can simply be regenerated. This freedom allows instances to be expressed in new ways. Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor.
+\item Using automatic instance generation allows the underlying tool to change the API for specifying instances, without requiring human intervention to modify the generators -- they can simply be regenerated. This freedom allows instances to be expressed in new ways.
 \item The provided data type (Figure \ref{fig:sample}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names (see \S\ref{sec:automatic_failure}). An alternative approach would be to introduce new data types with features specifically targeted for certain types of definition. Care would have to be taken to ensure that these extensions do not substantially increase the complexity of writing examples.
 \item We could make everything more type safe using GADT's.
 \end{itemize}
 
 Computers are ideally suited to applying repetitive patterns, but specifying these patterns can be complex and error prone. By specifying the result, instead of the pattern, a user can focus on what they want, rather than the mechanism by which this is realized.
 
-
 \subsection*{Acknowledgements}
 
-Thanks to Stefan O'Rear help with the \derive{} tool.
+Thanks to Stefan O'Rear help with the first version of the \derive{} tool.
 
 
 \bibliographystyle{plainnat}
