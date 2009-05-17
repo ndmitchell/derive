@@ -17,4 +17,4 @@ tester :: String -> Out -> IO ()
 tester name out = do
     putStrLn $ "Testing for " ++ name
     putStr   $ showOut out
-    putStrLn $ showOut $ simplifyOut $ apply list $ head $ derive out
+    putStrLn $ showOut $ simplifyOut $ apply (head $ derive out) list
