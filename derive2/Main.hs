@@ -4,7 +4,7 @@ module Main where
 import HSE
 import Apply
 import DSL
-import Guess
+import Derive
 import Data.List
 
 main = do
@@ -13,8 +13,8 @@ main = do
     mapM_ (uncurry tester) todo
 
 
-tester :: String -> Res -> IO ()
-tester name res = do
+tester :: String -> Out -> IO ()
+tester name out = do
     putStrLn $ "Testing for " ++ name
-    putStr   $ showRes res
-    putStrLn $ showRes $ simplifyRes $ apply dataTypeList $ head $ guess res
+    putStr   $ showOut out
+    putStrLn $ showOut $ simplifyOut $ apply list $ head $ derive out

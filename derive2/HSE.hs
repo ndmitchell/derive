@@ -7,6 +7,7 @@ import qualified Language.Haskell.Exts as H
 import Data.Data
 import Data.Generics.PlateData
 import Data.Maybe
+import Data.List
 import Unsafe.Coerce
 import Control.Monad.State
 
@@ -17,18 +18,13 @@ import Control.Monad.State
 sl = SrcLoc "" 0 0
 
 -- data List a = Nil | Cons a (List a)
-dataTypeList :: Dat
-dataTypeList = DataDecl sl DataType [] (Ident "List") [Ident "a"] [nil,cons] []
-    where
-        nil = QualConDecl sl [] [] $ ConDecl (Ident "Nil") []
-        cons = QualConDecl sl [] [] $ ConDecl (Ident "Cons")
-            [UnBangedTy $ TyVar $ Ident "a", UnBangedTy $ TyApp (TyCon $ UnQual $ Ident "List") (TyVar $ Ident "a")]
+list :: Input
+list = Input "List" 1 [Ctor "Nil" 0 0, Ctor "Cons" 1 2]
 
 
--- data Input a = First | Second a a | Third a
-dataTypeCtors :: Dat
-dataTypeCtors = DataDecl sl DataType [] (Ident "Sample") [Ident "a"] [f "First" 0, f "Second" 2, f "Third" 1] []
-    where f s n = QualConDecl sl [] [] $ ConDecl (Ident s) $ replicate n $ UnBangedTy $ TyVar $ Ident "a"
+-- data Sample a = First | Second a a | Third a
+sample :: Input
+sample = Input "Sample" 1 [Ctor "First" 0 0, Ctor "Second" 1 2, Ctor "Third" 2 1]
 
 
 ---------------------------------------------------------------------
@@ -38,8 +34,8 @@ isUnknownDeclPragma UnknownDeclPragma{} = True
 isUnknownDeclPragma _ = False
 
 
-simplifyRes :: Res -> Res
-simplifyRes = transformBi fExp
+simplifyOut :: Out -> Out
+simplifyOut = transformBi fExp
     where
         x ~= y = prettyPrint x == y
     
@@ -58,81 +54,68 @@ simplifyRes = transformBi fExp
 
 ---------------------------------------------------------------------
 
-showRes x = unlines $ map prettyPrint x
-
-type Dat = Decl
-type Ctr = QualConDecl
-type Res = [Decl]
+showOut x = unlines $ map prettyPrint x
 
 
-dataVars :: Dat -> [String]
-dataVars (DataDecl _ _ _ _ x _ _) = map prettyPrint x
+data Input = Input {dataName :: String, dataVars :: Integer, dataCtors :: [Ctor]}
+data Ctor = Ctor {ctorName :: String, ctorIndex :: Integer, ctorArity :: Integer}
 
-dataName :: Dat -> String
-dataName (DataDecl _ _ _ x _ _ _) = prettyPrint x
 
-dataCtors :: Dat -> [Ctr]
-dataCtors (DataDecl _ _ _ _ _ x _) = x
+dataTypeInput :: Decl -> Input
+dataTypeInput (DataDecl _ _ _ name vars ctors _) = Input (prettyPrint name) (genericLength vars) (zipWith f [0..] ctors)
+    where f index (QualConDecl _ _ _ (ConDecl name fields)) = Ctor (prettyPrint name) index (genericLength fields)
 
-ctorName :: Ctr -> String
-ctorName (QualConDecl _ _ _ (ConDecl x _)) = prettyPrint x
 
-ctorFields :: Ctr -> Int
-ctorFields (QualConDecl _ _ _ (ConDecl _ x)) = length x
+type Out = [Decl]
 
 
 
-
-data Universe = UString String
-              | UInt Integer
-              | UApp String [Universe]
-              | UList [Universe]
-              | UIgnore
+data Output = OString String
+            | OInt Integer
+            | OApp String [Output]
+            | OList [Output]
+            | OIgnore
               deriving (Eq,Show,Data,Typeable)
 
 
-toUniverse :: Data a => a -> Universe
-toUniverse x
-    | t == typeOf "" = UString $ coerce x
-    | c == "[]" = UList $ fList x
-    | t == typeOf sl = UIgnore
-    | t == typeOf (1 :: Integer) = UInt $ coerce x
-    | otherwise = UApp (showConstr $ toConstr x) (filter (/= UIgnore) $ gmapQ toUniverse x)
+toOutput :: Data a => a -> Output
+toOutput x
+    | t == typeOf "" = OString $ coerce x
+    | c == "[]" = OList $ fList x
+    | t == typeOf sl = OIgnore
+    | t == typeOf (1 :: Integer) = OInt $ coerce x
+    | otherwise = OApp (showConstr $ toConstr x) (filter (/= OIgnore) $ gmapQ toOutput x)
     where
         t = typeOf x
         c = show $ fst $ splitTyConApp t
 
-        fList :: Data a => a -> [Universe]
-        fList = gmapQl (++) [] $ \x -> if typeOf x == t then fList x else [toUniverse x]
+        fList :: Data a => a -> [Output]
+        fList = gmapQl (++) [] $ \x -> if typeOf x == t then fList x else [toOutput x]
 
-fromUniverse :: Data a => Universe -> a
-fromUniverse (UList xs) = res
+fromOutput :: Data a => Output -> a
+fromOutput (OList xs) = res
     where res = f xs
           f [] = fromConstr $ readCon dat "[]"
           f (x:xs) = fromConstrB (g x (f xs `asTypeOf` res)) $ readCon dat "(:)"
           dat = dataTypeOf res
           typ = typeOf res
           
-          g :: (Data a, Data b) => Universe -> a -> b
-          g x xs = r2 where r2 = if typeOf r2 == typeOf xs then coerce xs else fromUniverse x
+          g :: (Data a, Data b) => Output -> a -> b
+          g x xs = r2 where r2 = if typeOf r2 == typeOf xs then coerce xs else fromOutput x
 
-fromUniverse (UApp str args) = res
+fromOutput (OApp str args) = res
     where dat = dataTypeOf res
           res = evalState (fromConstrM f $ readCon dat str) args
-          f :: Data a => State [Universe] a
+          f :: Data a => State [Output] a
           f = res where res = if typeOf (fromState res) == typeOf sl then return $ coerce sl else
-                              do x:xs <- get; put xs; return $ fromUniverse x
+                              do x:xs <- get; put xs; return $ fromOutput x
 
-fromUniverse (UString x) = coerce x
-
-fromUniverse (UInt x) = coerce x
-
--- fromUniverse (UApp str args) = fromJust $ readConstr dat str
-fromUniverse x = error $ show ("fromUniverse",x)
+fromOutput (OString x) = coerce x
+fromOutput (OInt x) = coerce x
 
 
 coerce x = fromMaybe (error "Error in coerce") $ cast x
 readCon dat x = fromMaybe (error $ "Error in readCon, " ++ x) $ readConstr dat x
-uni x = toUniverse x
+out x = toOutput x
 fromState :: State a x -> x
 fromState = undefined
