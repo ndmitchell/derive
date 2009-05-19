@@ -1,4 +1,4 @@
-\documentclass[preprint]{sigplanconf}
+\documentclass[preprint,draft]{sigplanconf}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -161,7 +161,8 @@ forall d `elem` derive output `o` apply d sample == output
 Given an arbitrary |derive'| function, which does not necessarily ensure correctness, it is easy to write a wrapper which is guaranteed correct, by simply filtering out the incorrect DSL's. By using a wrapper, we can remove some constraints from the |derive'| function -- either simplifying the implementation, or gaining a higher assurance of correctness.
 
 \begin{code}
-derive output = [d | d <- derive' output, apply d sample == output]
+derive output =
+    [d | d <- derive' output, apply d sample == output]
 \end{code}
 
 \subsection{Predictability}
@@ -181,7 +182,8 @@ forall d_1,d_2 `elem` derive output `o` d_1 ~== d_2
 Unfortunately, this property is very dependent on the |derive| function. Given two different implementations of |derive|, which produce different (but still correct) relationships for a particular example, the user would have lost predictability. Therefore, we require a stronger property to ensure predictability. Not only must all results from |derive| be congruent, but all results satisfying the correctness property must be congruent:
 
 \ignore\begin{code}
-forall d_1, d_2 `elem` DSL `o` apply d_1 sample == apply d_2 sample => d_1 ~== d_2
+forall d_1, d_2 `elem` DSL `o`
+    apply d_1 sample == apply d_2 sample => d_1 ~== d_2
 \end{code}
 
 It is important that the predictability lemma does require any conditions on |derive|, although it may require a specially chosen |sample| value. To prove the predictability property does not require knowledge of the |derive| function, and can be proven given a particular DSL and sample value.
@@ -201,12 +203,12 @@ In this section we apply the scheme from the previous section to the problem of 
 
 We wish to allow generation of any sequence of Haskell declarations, where a declaration is typically a function definition or type class instance. There are several options for how to represent the type of a sequence of declarations:
 
-\begin{itemize}
+\begin{description}
 \item[String] A sequence of Haskell declarations can be represented as a string, however this lack of structure has several disadvantages. It is easy when constructing strings to generate invalid programs, the indentation and layout of Haskell are hard to generate in a compositional way and it is hard to recover structure that is likely to be useful for deriving relationships.
 \item[Pretty printing combinators] Some tools such as DrIFT \cite{drift} generate Haskell code using pretty printing combinators. These combinators supply more structure than strings, but the structure is linked to the presentation, rather than the meaning of constructs.
 \item[Typed abstract syntax tree (AST)] The standard way of working with Haskell source code is using a typed AST -- an AST where different types of fragment (i.e. declarations, expressions and patterns) are restricted to different positions in the tree. The first version of \derive{} used a typed AST, specifically Template Haskell \cite{template_haskell}. This approach preserves all the structure, and makes it reasonably easy to ensure the generated program is syntactically valid. By combining a typed AST with a parser and pretty printer we can convert to strings where necessary.
 \item[Untyped abstract syntax tree (AST)] An untyped AST is one where all fragments have the same type, and the types do not restrict where they may occur. The removal of types increases the number of invalid programs that can be written -- for example a pattern could occur when a declaration was expected. However, by removing the types we increase the uniformity of the tree, in turn simplifying operations that wish to operate on the tree in a uniform manner.
-\end{itemize}
+\end{description}
 
 For our purposes, it is clear that both string and pretty printing combinators are unsuitable -- they lack sufficient structure to implement the |derive| operation. The use of a typed AST made some things harder, using a typed AST meant that some operations had to be duplicated for each type of interest -- which for Template Haskell means 26 separate data types. Many of the operations were complicated by the introduction of a type, in particular it requires the DSL to track the output type, and propagate type information through the |derive| function. For that purpose we decided to usee an untyped AST. We choose universal, but suspect you could acheive the same thing with GADT's and a typed abstract syntax tree. Unfortunately this type information would propagate though everywhere, resulting in lots of complication. To generate an untyped AST it makes sense to start from an existing typed AST and translate.
 
@@ -230,8 +232,10 @@ While the output type is largely dictated by the necessity to generate Haskell, 
 For our |Input| type we use that of algebraically constructed Haskell data types. We include details such as the airty of constructors, and the number of type variants, but omit details such as types and record field names. Our |Input| type is:
 
 \h{.default .two}\begin{code}
-data Input = Input {dataName :: String, dataVars :: Integer, dataCtors :: [Ctor]}
-data Ctor = Ctor {ctorName :: String, ctorIndex :: Integer, ctorArity :: Integer}
+data Input = Input
+    {dataName :: String, dataVars :: Integer, dataCtors :: [Ctor]}
+data Ctor = Ctor
+    {ctorName :: String, ctorIndex :: Integer, ctorArity :: Integer}
 \end{code}
 
 And values corresponding to the |Sample| data type from Figure \ref{fig:sample}, and the |Language| data type from \S\ref{sec:introduction}.
@@ -325,8 +329,8 @@ The final operations are all very specific to our particular problem, and each e
 The last operation is |Instance|, and is quite specific to our problem. For many data types, there is a very specific pattern for instance definitions. For example, given the type \h{type}|Either alpha beta|, a typical instantiation might be:
 
 \ignore\begin{code}
-instance (Show alpha, Ord alpha, Show beta, Ord beta) => ShowOrd (Either alpha beta) where
-    ...
+instance (Show alpha, Ord alpha, Show beta, Ord beta) =>
+    ShowOrd (Either alpha beta) where ellipses
 \end{code}
 
 This pattern can be abstracted by saying what context is required for each type variable (i.e. |Show| and |Ord| in this example), what the main class is (i.e. |ShowOrd|), and a DSL to generate the body -- which we do with the |Instance| operation. If we were to attempt to infer this pattern without a specific |Instance| operation, we would need to be able to operate over the type variables of a data type, which would almost always result in this particular type.
@@ -352,7 +356,9 @@ This could either infer that the |arities| function always returns |[0,2,1]|, or
 
 \begin{code}
 instance Arities (Sample alpha) where
-    arities _ = [0 `const` First{}, 2 `const` Second{}, 1 `const` Third{}]
+    arities _ =  [0 `const` First{}
+                 ,2 `const` Second{}
+                 ,1 `const` Third{}]
 \end{code}
 
 This code may seem less efficient, but any good program optimiser would certainly generate identical code. We return to the issue of simplification in \S\ref{sec:simplify}. Given that no constructor names may occur in |String| operations, and that |CtorName| must occur within every |MapCtor|, we can be sure that all constructor patterns are appropriately parameterised. The only other possible source of ambiguity is if two items could be generated within a constructor with the same value -- for example if all indexes and arities in the sample data type were equal. However, we have avoided this particular problem by ensuring that |Second| has index 1 has arity 2, while |Third| has the opposite.
@@ -540,6 +546,8 @@ Thanks to Stefan O'Rear help with the first version of the \derive{} tool.
 \section{The |apply| function}
 \label{sec:apply}
 
+We use view patterns as implemented in GHC 6.10 \cite{ghc}.
+
 \begin{code}
 apply :: DSL -> Input -> Output
 apply dsl input = applyEnv dsl Env{envInput=input}
@@ -555,48 +563,50 @@ data Env = Env
 applyEnv :: DSL -> Env -> Output
 applyEnv dsl env@(Env input ctor field fold) = f dsl
     where
-        dataVariables = genericTake (dataVars input) $ map (:[]) ['a'..]
+    vars = genericTake (dataVars input) $ map (:[]) ['a'..]
 
-        f (Instance ctx hd body) =
-                OApp "InstDecl" [out con, out $ UnQual $ Ident hd, out [typ], f body]
-            where
-                con = [ClassA (UnQual $ Ident c) [TyVar $ Ident v] | v <- dataVariables, c <- ctx]
-                typ = foldl TyApp (TyCon $ UnQual $ Ident $ dataName input) [TyVar $ Ident v | v <- dataVariables]
+    f (Instance ctx hd body) =
+        OApp "InstDecl"
+            [out 
+                [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
+                | v <- vars, c <- ctx]
+            , out $ UnQual $ Ident hd
+            , out [foldl TyApp
+                (TyCon $ UnQual $ Ident $ dataName input)
+                [TyVar $ Ident v | v <- vars]]
+            , f body]
 
-        f (Application xs) = case f xs of
-            OList xs -> g xs
-            where g [x] = x
-                  g xs = OApp "App" [g $ init xs, last xs]
+    f (Application (f -> OList xs)) = g xs
+            where  g [x]  = x -- \todo{fold of some sort}
+                   g xs   = OApp "App" [g $ init xs, last xs]
 
-        f (MapCtor dsl) = OList [applyEnv dsl env{envCtor=c} | c <- dataCtors input]
-        f (MapField dsl) = OList [applyEnv dsl env{envField=i} | i <- [1.. fromIntegral $ ctorArity ctor]]
+    f (MapCtor dsl) = OList  [  applyEnv dsl env{envCtor=c}
+         |  c <- dataCtors input]
+    f (MapField dsl) = OList [applyEnv dsl env{envField=i}
+         | i <- [1.. fromIntegral $ ctorArity ctor]]
 
-        f DataName = OString $ dataName input
-        f CtorName = OString $ ctorName ctor
-        f CtorArity = OInt $ ctorArity ctor
-        f CtorIndex = OInt $ ctorIndex ctor
-        f FieldIndex = OInt $ field
+    f DataName = OString $ dataName input
+    f CtorName = OString $ ctorName ctor
+    f CtorArity = OInt $ ctorArity ctor
+    f CtorIndex = OInt $ ctorIndex ctor
+    f FieldIndex = OInt $ field
 
-        f Head = fst fold
-        f Tail = snd fold
-        f (Fold cons xs) = case f xs of OList xs -> g xs
-            where g [x] = x
+    f Head = fst fold
+    f Tail = snd fold
+    f (Fold cons (f -> OList xs)) = g xs
+            where g [x] = x -- \todo{fold of some sort}
                   g (x:xs) = applyEnv cons env{envFold=(x,g xs)}
 
-        f (List xs) = OList $ map f xs
-        f (Reverse xs) = case f xs of
-            OList xs -> OList $ reverse xs
-        f (Concat xs) = case f xs of
-            OList [] -> OList []
-            OList xs -> foldr1 g xs
-        f (String x) = OString x
-        f (Int x) = OInt x
-        f (ShowInt x) = case f x of OInt x -> OString (show x)
-        f (App x ys) = case f ys of
-            OList ys -> OApp x ys
-
-        g (OList x) (OList y) = OList (x++y)
-        g (OString x) (OString y) = OString (x++y)
+    f (List xs) = OList $ map f xs
+    f (Reverse (f -> OList xs)) = OList $ reverse xs
+    f (Concat (f -> OList [])) = OList []
+    f (Concat (f -> OList xs)) = foldr1 g xs
+            where  g (OList    x) (OList    y) = OList    (x++y)
+                   g (OString  x) (OString  y) = OString  (x++y)
+    f (String x) = OString x
+    f (Int x) = OInt x
+    f (ShowInt (f -> OInt x)) = OString $ show x
+    f (App x (f -> OList ys)) = OApp x ys
 
 -- for information on |out|, see \S\ref{sec:universe}
 out :: Data alpha => alpha -> Output
