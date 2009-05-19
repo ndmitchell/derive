@@ -40,8 +40,8 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
         f DataName = OString $ dataName input
         f CtorName = OString $ ctorName ctor
         f CtorArity = OInt $ ctorArity ctor
-        f CtorInd = OInt $ ctorIndex ctor
-        f FieldInd = OInt $ field
+        f CtorIndex = OInt $ ctorIndex ctor
+        f FieldIndex = OInt $ field
 
         f Head = fst fold
         f Tail = snd fold

@@ -17,9 +17,9 @@ data DSL = App String DSL{-List-}
          | MapCtor DSL
          | DataName
          | CtorName
-         | CtorInd
+         | CtorIndex
          | CtorArity
-         | FieldInd
+         | FieldIndex
          
          | Fold DSL DSL
          | Head
@@ -52,9 +52,9 @@ dslEq :: DSL
 dslEq = box $ Instance ["Eq"] "Eq" $ box $ _1 "InsDecl" $ _1 "FunBind" $ match `append` dull
     where
         match = MapCtor $ _5 "Match" (o $ Symbol "==") (List [vars "x",vars "y"]) (o (Nothing :: Maybe Type)) (_1 "UnGuardedRhs" bod) (o $ BDecls [])
-        vars x = _2 "PApp" (_1 "UnQual" $ _1 "Ident" CtorName) (MapField (_1 "PVar" $ _1 "Ident" $ append (String x) (ShowInt FieldInd)))
+        vars x = _2 "PApp" (_1 "UnQual" $ _1 "Ident" CtorName) (MapField (_1 "PVar" $ _1 "Ident" $ append (String x) (ShowInt FieldIndex)))
         bod = Fold (_3 "InfixApp" Head (o $ QVarOp $ UnQual $ Symbol "&&") Tail) $ MapField pair `append` o [Con $ UnQual $ Ident "True"]
         pair = _3 "InfixApp" (var "x") (o $ QVarOp $ UnQual $ Symbol "==") (var "y")
-        var x = _1 "Var" $ _1 "UnQual" $ _1 "Ident" $ append (String x) (ShowInt FieldInd)
+        var x = _1 "Var" $ _1 "UnQual" $ _1 "Ident" $ append (String x) (ShowInt FieldIndex)
 
         dull = o [Match sl (Symbol "==") [PWildCard,PWildCard] Nothing (UnGuardedRhs $ Con $ UnQual $ Ident "False") (BDecls [])]

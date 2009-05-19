@@ -49,7 +49,7 @@ guess (OString x)
          [Guess $ String x]
 
 guess (OInt i) = [GuessInt j id | let j = fromInteger i, fromIntegral j == i] ++
-               [GuessCtr 1 False CtorInd | i == 1] ++
+               [GuessCtr 1 False CtorIndex | i == 1] ++
                [GuessCtr 1 False CtorArity | i == 2] ++
                [Guess $ Int i]
 
@@ -83,12 +83,12 @@ guessList xs = mapMaybe sames $ map diffs $ sequence $ map guess xs
             where f i x = applyEnv x Env{envInput=sample, envCtor=dataCtors sample !! i}
         
         diffs (GuessInt 1 x1:GuessInt 2 x2:xs)
-            | f 1 x1 == f 1 x2 = GuessCtr 1 False (MapField $ x2 FieldInd) : diffs xs
-            where f i x = applyEnv (x FieldInd) Env{envInput=sample, envField=i}
+            | f 1 x1 == f 1 x2 = GuessCtr 1 False (MapField $ x2 FieldIndex) : diffs xs
+            where f i x = applyEnv (x FieldIndex) Env{envInput=sample, envField=i}
         
         diffs (GuessInt 2 x2:GuessInt 1 x1:xs)
-            | f 1 x1 == f 1 x2 = GuessCtr 1 False (Reverse $ MapField $ x2 FieldInd) : diffs xs
-            where f i x = applyEnv (x FieldInd) Env{envInput=sample, envField=i}
+            | f 1 x1 == f 1 x2 = GuessCtr 1 False (Reverse $ MapField $ x2 FieldIndex) : diffs xs
+            where f i x = applyEnv (x FieldIndex) Env{envInput=sample, envField=i}
         
         diffs (x:xs) = lift box x : diffs xs
         diffs [] = []
