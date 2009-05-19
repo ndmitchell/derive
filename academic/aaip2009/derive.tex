@@ -14,23 +14,32 @@
 \newcommand{\derive}{\textsc{Derive}}
 
 \hsdef{\begin{comment}
-Show,Enum,Ord,Bounded,Serial,Arbitrary,Monoid,Binary
-alpha,beta
+Show,Enum,Ord,Bounded,Serial,Arbitrary,Monoid,Binary,Functor
+ShowOrd,Either,Typeable
+alpha,beta,d_1,d_2,Q,Append,i,f
 \end{comment}}
 \begin{comment}
-\begin{code}
+\h{.default .two}\begin{code}
 import Data.Data
+import Data.List
+import Language.Haskell.Exts hiding (Int,String,App,List)
 import Data.Monoid hiding (First)
 import Control.Parallel.Strategies
 
-data Version
-data Extension
-data Compiler
+data Version; instance NFData Version
+data Extension; instance NFData Extension
+data Compiler; instance NFData Compiler
 
 class Arities a where arities :: a -> [Int]
+derive' :: Output -> [DSL]
+(~==) :: DSL -> DSL -> Bool
+instance Typeable1 Sample
+instance Eq Output
+instance Eq (Input -> Output)
 \end{code}
 \h{.hse}\begin{code}
 import Language.Haskell.Exts
+import Data.Generics.PlateData
 \end{code}
 \end{comment}
 
@@ -61,15 +70,15 @@ When deriving a relationship from only one example, it is important that the der
 \category{D.3}{Software}{Programming Languages}
 
 \terms
-todo
+Languages
 
 \keywords
-Haskell, todo
+Haskell, Domain Specific Languages
 
 \section{Introduction}
 \label{sec:introduction}
 
-In Haskell \cite{haskell}, \textit{type classes} \cite{wadler:type_classes} are used to provide similar operations for many data types. For each data type of interest, a user must define an appropriate instance. The instance definitions usually follow a highly regular pattern. Many libraries define new type classes, for example \citet{trinder:strategies} define the |NFData| type class, which reduces a value to normal form. As an example, we can define a data type to describe which language a computer program is written in, and provide an |NFData| instance:
+In Haskell \cite{haskell}, \textit{type classes} \cite{wadler:type_classes} are used to provide similar operations for many data types. For each data type of interest, a user must define an appropriate instance. The instance definitions usually follow a highly regular pattern. Many libraries define new type classes, for example \citet{trinder:strategies} define the |NFData| type class, which reduces a value to normal form. As an example, we can define a data type to describe some computer programming languages, and provide an |NFData| instance:
 
 \begin{code}
 data Language  =  Haskell [Extension] Compiler
@@ -87,7 +96,7 @@ We also need to define |NFData| instances for the data types |Extension|, |Compi
 Writing an |NFData| instance for one data type is simple -- but the effort required increases as the data types get more complex and numerous. The standard solution is to express the \textit{relationship} between a data type and associated instance. In standard tools such as DrIFT \cite{drift}, the person describing the relationship must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying the relationship is not as straightforward as one might hope.
 
 \begin{figure}
-\begin{code}
+\h{.default .two}\begin{code}
 data Sample alpha  =  First
                    |  Second  alpha alpha
                    |  Third   alpha
@@ -96,7 +105,7 @@ data Sample alpha  =  First
 \label{fig:sample}
 \end{figure}
 
-Using the techniques described in this paper, these relationships can often be automatically inferred from a single example. To define the relationship for \textit{all} |NFData| instances, we require an example to be given for the |Sample| data type defined in Figure \ref{fig:sample}:
+Using the techniques described in this paper, these relationships can often be automatically inferred from a single example. To define the relationship for \textit{all} |NFData| instances, we require an example to be given for the |Sample| data type defined in Figure~\ref{fig:sample}:
 
 \begin{code}
 instance NFData alpha => NFData (Sample alpha) where
@@ -114,8 +123,8 @@ This paper makes the following contributions:
 \begin{itemize}
 \item We describe a scheme which allows us to infer predictable and correct relationships (\S\ref{sec:scheme}).
 \item We describe how this scheme is applicable to instance generation, both in a high-level manner (\S\ref{sec:instances}), and more detailed practical concerns (\S\ref{sec:implementation}).
-\item We outline a method for deriving function in our DSL, without resorting to unguided search (\S\ref{sec:guess}).
-\item We give measured results (\S\ref{sec:results}), including reasons why our inference fails (\S\ref{sec:failures}). In our experience, over 60\% of Haskell class instances can be determined using this technique.
+\item We outline a method for deriving a relationship in our DSL, without resorting to unguided search (\S\ref{sec:guess}).
+\item We give measured results (\S\ref{sec:results}), including reasons why our inference fails (\S\ref{sec:failure}). In our experience, over 60\% of Haskell class instances can be determined using this technique.
 \end{itemize}
 
 \section{Our Derivation Scheme}
@@ -141,6 +150,7 @@ derive :: Output -> [DSL]
 We require our scheme to have two particular properties -- correctness (it works) and predictability (its what the user intended). We now define each of these properties more formally, along with the necessary restrictions to achieve them in general.
 
 \subsection{Correctness}
+\label{sec:correctness}
 
 A guess is correct if all derived DSL's, when applied to the sample input, produce the given output:
 
@@ -151,7 +161,7 @@ forall d `elem` derive output `o` apply d sample == output
 Given an arbitrary |derive'| function, which does not necessarily ensure correctness, it is easy to write a wrapper which is guaranteed correct, by simply filtering out the incorrect DSL's. By using a wrapper, we can remove some constraints from the |derive'| function -- either simplifying the implementation, or gaining a higher assurance of correctness.
 
 \begin{code}
-derive x = [y | y <- derive' x, apply y sample == output]
+derive output = [d | d <- derive' output, apply d sample == output]
 \end{code}
 
 \subsection{Predictability}
@@ -204,7 +214,7 @@ The use of Template Haskell gave a number of advantages -- it is built in to GHC
 
 We instead decided to use haskell-src-exts \cite{haskell_src_exts}, which is a big tree. We then translate it to a universal data type, as described in \S\ref{sec:universe}. Concretely, our universal data type is:
 
-\begin{code}
+\h{.default .two}\begin{code}
 data Output  =  OString String
              |  OInt Integer
              |  OList [Output]
@@ -215,11 +225,11 @@ Here |OString| and |OInt| represent concrete terminals. The |OList| constructor 
 
 \subsection{Input}
 
-While the output type is largely dictated by the necessity to generate Haskell, we have much more freedom over the input type. The input type represents Haskell data types, but we can choose which details to provide, which in turn impacts on which possible relationships we can represent. For example, we can choose to include the module name in which the data is defined in, or we can choose to omit this detail. We choose not too, however this does eliminate some derivations, for example the |Typeable| type class \cite{syb1}.
+While the output type is largely dictated by the necessity to generate Haskell, we have much more freedom over the input type. The input type represents Haskell data types, but we can choose which details to provide, which in turn impacts on which possible relationships we can represent. For example, we can choose to include the module name in which the data is defined in, or we can choose to omit this detail. We choose not too, however this does eliminate some derivations, for example the |Typeable| type class \cite{lammel:syb}.
 
 For our |Input| type we use that of algebraically constructed Haskell data types. We include details such as the airty of constructors, and the number of type variants, but omit details such as types and record field names. Our |Input| type is:
 
-\begin{code}
+\h{.default .two}\begin{code}
 data Input = Input {dataName :: String, dataVars :: Integer, dataCtors :: [Ctor]}
 data Ctor = Ctor {ctorName :: String, ctorIndex :: Integer, ctorArity :: Integer}
 \end{code}
@@ -240,22 +250,22 @@ sampleType = Input "Sample" 1
     ,Ctor "Third" 2 1]
 \end{code}
 
-The |Input| constructor records the name of the data type, and the number of type variables the data type takes. For each constructor we record it's name, the 0-based index of the type, and the arity of the constructor. For example, we allow derivations to depend on the arity or index of a constructor, but not the types of the constructors arguments. In \S\ref{extensions} we describe phow you could beef up the power.
+The |Input| constructor records the name of the data type, and the number of type variables the data type takes. For each constructor we record it's name, the 0-based index of the type, and the arity of the constructor. For example, we allow derivations to depend on the arity or index of a constructor, but not the types of the constructors arguments. In \S\ref{sec:extensions} we describe phow you could beef up the power.
 
 \subsection{DSL}
 
 \begin{figure}
-\begin{code}
+\h{.default .two}\begin{code}
 data DSL
     -- Constants
     = String String
     | Int Integer
     | List [DSL]
-    | App String DSL{-[alpha]-}
+    | App String DSL{-|[alpha]|-}
     -- Operations
-    | Concat DSL{-[[alpha]]-}
-    | ShowInt DSL{-Int-}
-    | Reverse DSL{-[alpha]-}
+    | Concat DSL{-|[[alpha]]|-}
+    | ShowInt DSL{-|Int|-}
+    | Reverse DSL{-|[alpha]|-}
     -- Fold
     | Fold DSL DSL
     | Head
@@ -267,11 +277,11 @@ data DSL
     | CtorName
     -- Fields
     | MapField DSL
-    | FieldInd
+    | FieldIndex
     -- Custom
     | DataName
-    | Application DSL{-[Exp]-}
-    | Instance [String] String DSL{-[InstDecl]-}
+    | Application DSL{-|[Exp]|-}
+    | Instance [String] String DSL{-|[InstDecl]|-}
 \end{code}
 \caption{DSL data type}
 \label{fig:dsl}
@@ -279,7 +289,7 @@ data DSL
 
 The type we have most freedom over is the DSL, and we present our DSL type in \ref{fig:dsl}. We have divided the DSL in to sections, which we present separately. Each constructor has an interpretation, and a set of circumstances in which it is valid to occur. Our DSL evaluates in to an |Output| type, so we can view the semantics through the |apply| function. The complete |apply| function is given in Appendix \ref{sec:apply}.
 
-It would be possible to encode many of the invariants if we used a DSL represented as a GADT \cite{GADT}. However, for simplicity we choose not to.
+It would be possible to encode many of the invariants if we used a DSL represented as a GADT \cite{spj:gadt}. However, for simplicity we choose not to.
 
 \subsubsection{Constants}
 
@@ -298,7 +308,7 @@ Fold fn [x]) = x
 Fold fn (x:xs)) = fn[x / Head, Fold fn xs / Tail]
 \end{code}
 
-For example, to implement the |concat| fold in terms of an |Append| constructor would be |Fold (Append Head Tail)|. Of course, in contrast to the provided |Concat|, this would crash if there were no elements in the list. The fold operation is more complicated than the others, but a general operation not specific to our problem, and is certainly useful.
+For example, to implement the |concat| fold in terms of an |Append| constructor would be \ignore|Fold (Append Head Tail)|. Of course, in contrast to the provided |Concat|, this would crash if there were no elements in the list. The fold operation is more complicated than the others, but a general operation not specific to our problem, and is certainly useful.
 
 \subsubsection{Constructors}
 
@@ -306,15 +316,15 @@ To insert information from constructors we provide a |MapCtor| operation. This o
 
 \subsubsection{Fields}
 
-The |MapField| operation is similar to |MapCtor|, it maps over each field within a constructor. The operation is only valid within a |MapCtor|. Within a |MapField|, the |FieldInd| operation returns the 1-based index. While most things in Haskell are 0-based, it actually seemed more natural to use 1-based, as they usually correspond to indexes on variables.
+The |MapField| operation is similar to |MapCtor|, it maps over each field within a constructor. The operation is only valid within a |MapCtor|. Within a |MapField|, the |FieldIndex| operation returns the 1-based index. While most things in Haskell are 0-based, it actually seemed more natural to use 1-based, as they usually correspond to indexes on variables.
 
 \subsubsection{Custom}
 
 The final operations are all very specific to our particular problem, and each encode specific situations which are problematic. The first is |DataName|, which returns the string corresponding to the name of the data type. The haskell-src-exts library has binary application, where multiple applications are often chained. Sometimes it is useful to have a vector application operation, which we construct with the |Application| operation.
 
-The last operation is |Instance|, and is quite specific to our problem. For many data types, there is a very specific pattern for instance definitions. For example, given the type |Either alpha beta|, a typical instantiation might be:
+The last operation is |Instance|, and is quite specific to our problem. For many data types, there is a very specific pattern for instance definitions. For example, given the type \h{type}|Either alpha beta|, a typical instantiation might be:
 
-\begin{code}
+\ignore\begin{code}
 instance (Show alpha, Ord alpha, Show beta, Ord beta) => ShowOrd (Either alpha beta) where
     ...
 \end{code}
@@ -333,7 +343,7 @@ In order to ensure predictability there must be no non-congruent DSL values whic
 
 We have already seen an example of the first restriction in practice, now let us examine the second. Let us consider a practical example, consider:
 
-\begin{code}
+\h{.two}\begin{code}
 instance Arities (Sample alpha) where
     arities _ = [0,2,1]
 \end{code}
@@ -354,7 +364,7 @@ This section covers the implementation of the |derive| function, as described in
 
 Given that we don't need to worry about predictability and correctness, we can focus on other issues. Naturally, we want the |derive| function to terminate, and ideally terminate within a reasonable time bound. But the main issue is that we desire that if there is a possible derivation, that the scheme find it. Namely:
 
-\begin{code}
+\ignore\begin{code}
 forall o `elem` Output, d `elem` DSL `o` null (derive o) => apply d sample /= o
 \end{code}
 
@@ -401,6 +411,8 @@ The only hard thing to guess are lists. The idea of a list is that all elements 
 SYB stuff goes in here. Haskell-src-exts.
 
 We skip src loc in haskell-src-exts, as it's irrelevant.
+
+We also convert back.
 
 \subsection{DSL Optimisation}
 
@@ -486,10 +498,11 @@ Take a look at Binary, which writes out tags in clever ways.
 Inference time to write the derivations for everything to a file is under a tenth of a second. To write the data to the screen takes 3 tenths of a second. We conclude that guesses aren't too slow!
 
 \subsection{Extensions}
+\label{sec:extensions}
 
 How would we increase it to get more power.
 
-Record names could be added. The difficulty here is that record names can be shared between constructors, in different orders, some constructors may not have record names etc. For a system such as F#, where only one constructor is allowed and all fields must be named, this may be more feasible.
+Record names could be added. The difficulty here is that record names can be shared between constructors, in different orders, some constructors may not have record names etc. For a system such as F\#, where only one constructor is allowed and all fields must be named, this may be more feasible.
 
 Another property is types. The problem here is that types are two numerous, and while extensions could provide one or two -- for example |Functor|, they won't be able to do a huge number.
 
@@ -497,8 +510,6 @@ Another property is types. The problem here is that types are two numerous, and 
 \label{sec:related}
 
 The purpose of this work is to find a pattern, and generalise that pattern to other situations. Genetic algorithms \cite{genetic_algorithms} are often used to automatically find a pattern in a data set. Genetic algorithms work by evolving a hypothesis (a gene sequence) and testing on a sample problem. They are well suited to search problems where the utility function is continuous -- close hypotheses have similar fitness. The main difference from this paper is that the hypothesis is random, whereas ours is strongly directed by the shape of the example.
-
-The area of optical character recognition \cite{ocr} has some similar characteristics -- a page is analysed to look for common patterns (pictures or text passages), which can be processed further. This is related to the process of using the fold pattern (\S\ref{sec:fold}), where a repeating pattern is detected. The difference is that character recognition works on image data, which does not have the same precision as program code.
 
 The closest work we are aware of is that of the theorem proving community. Induction is a very common tactic for writing proofs, and well supported in systems such as HOL Light \cite{hol_light}. Typically the user must suggest the use of induction, which the system checks for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful.
 
@@ -511,7 +522,7 @@ We have presented a mechanism for automatically deriving instance generators for
 
 \begin{itemize}
 \item Using automatic instance generation allows the underlying tool to change the API for specifying instances, without requiring human intervention to modify the generators -- they can simply be regenerated. This freedom allows instances to be expressed in new ways.
-\item The provided data type (Figure \ref{fig:sample}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names (see \S\ref{sec:automatic_failure}). An alternative approach would be to introduce new data types with features specifically targeted for certain types of definition. Care would have to be taken to ensure that these extensions do not substantially increase the complexity of writing examples.
+\item The provided data type (Figure \ref{fig:sample}) allows many instances to be inferred -- but more would be desirable. One approach to specifying more instances would be to augment the existing data type with additional features, such as record names (see \S\ref{sec:failure}). An alternative approach would be to introduce new data types with features specifically targeted for certain types of definition. Care would have to be taken to ensure that these extensions do not substantially increase the complexity of writing examples.
 \item We could make everything more type safe using GADT's.
 \end{itemize}
 
@@ -527,9 +538,68 @@ Thanks to Stefan O'Rear help with the first version of the \derive{} tool.
 
 \appendix
 \section{The |apply| function}
+\label{sec:apply}
 
 \begin{code}
-apply = -- \todo{insert apply here}
+apply :: DSL -> Input -> Output
+apply dsl input = applyEnv dsl Env{envInput=input}
+
+
+data Env = Env
+    {envInput :: Input
+    ,envCtor :: Ctor
+    ,envField :: Integer
+    ,envFold :: (Output,Output)
+    }
+
+applyEnv :: DSL -> Env -> Output
+applyEnv dsl env@(Env input ctor field fold) = f dsl
+    where
+        dataVariables = genericTake (dataVars input) $ map (:[]) ['a'..]
+
+        f (Instance ctx hd body) =
+                OApp "InstDecl" [out con, out $ UnQual $ Ident hd, out [typ], f body]
+            where
+                con = [ClassA (UnQual $ Ident c) [TyVar $ Ident v] | v <- dataVariables, c <- ctx]
+                typ = foldl TyApp (TyCon $ UnQual $ Ident $ dataName input) [TyVar $ Ident v | v <- dataVariables]
+
+        f (Application xs) = case f xs of
+            OList xs -> g xs
+            where g [x] = x
+                  g xs = OApp "App" [g $ init xs, last xs]
+
+        f (MapCtor dsl) = OList [applyEnv dsl env{envCtor=c} | c <- dataCtors input]
+        f (MapField dsl) = OList [applyEnv dsl env{envField=i} | i <- [1.. fromIntegral $ ctorArity ctor]]
+
+        f DataName = OString $ dataName input
+        f CtorName = OString $ ctorName ctor
+        f CtorArity = OInt $ ctorArity ctor
+        f CtorIndex = OInt $ ctorIndex ctor
+        f FieldIndex = OInt $ field
+
+        f Head = fst fold
+        f Tail = snd fold
+        f (Fold cons xs) = case f xs of OList xs -> g xs
+            where g [x] = x
+                  g (x:xs) = applyEnv cons env{envFold=(x,g xs)}
+
+        f (List xs) = OList $ map f xs
+        f (Reverse xs) = case f xs of
+            OList xs -> OList $ reverse xs
+        f (Concat xs) = case f xs of
+            OList [] -> OList []
+            OList xs -> foldr1 g xs
+        f (String x) = OString x
+        f (Int x) = OInt x
+        f (ShowInt x) = case f x of OInt x -> OString (show x)
+        f (App x ys) = case f ys of
+            OList ys -> OApp x ys
+
+        g (OList x) (OList y) = OList (x++y)
+        g (OString x) (OString y) = OString (x++y)
+
+-- for information on |out|, see \S\ref{sec:universe}
+out :: Data alpha => alpha -> Output
 \end{code}
 
 \end{document}
