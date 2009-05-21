@@ -6,6 +6,7 @@ import Apply
 import DSL
 import Derive
 import Data.List
+import Control.Monad
 
 main = do
     ParseOk (Module _ _ _ _ _ _ decls) <- parseFile "Examples.hs"
@@ -17,4 +18,7 @@ tester :: String -> Out -> IO ()
 tester name out = do
     putStrLn $ "Testing for " ++ name
     putStr   $ showOut out
-    putStrLn $ showOut $ simplifyOut $ apply (head $ derive out) list
+    let d:_ = derive out
+    when (not $ apply d sample `outEq` out) $
+        error "tester: Correctness invariant breached"
+    putStrLn $ showOut $ simplifyOut $ apply d list
