@@ -291,9 +291,73 @@ data DSL
 \label{fig:dsl}
 \end{figure}
 
-The type we have most freedom over is the DSL, and we present our DSL type in \ref{fig:dsl}. We have divided the DSL in to sections, which we present separately. Each constructor has an interpretation, and a set of circumstances in which it is valid to occur. Our DSL evaluates in to an |Output| type, so we can view the semantics through the |apply| function. The complete |apply| function is given in Appendix \ref{sec:apply}.
+\begin{figure}
+\begin{code}
+apply :: DSL -> Input -> Output
+apply dsl input = applyEnv dsl Env{envInput=input}
 
-It would be possible to encode many of the invariants if we used a DSL represented as a GADT \cite{spj:gadt}. However, for simplicity we choose not to.
+
+data Env = Env  {envInput :: Input
+                ,envCtor :: Ctor
+                ,envField :: Integer
+                ,envFold :: (Output,Output) }
+
+applyEnv :: DSL -> Env -> Output
+applyEnv dsl env@(Env input ctor field fold) = f dsl
+    where
+    vars = genericTake (dataVars input) $ map (:[]) ['a'..]
+
+    f (Instance ctx hd body) =
+        OApp "InstDecl"
+            [out
+                [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
+                | v <- vars, c <- ctx]
+            , out $ UnQual $ Ident hd
+            , out [foldl TyApp
+                (TyCon $ UnQual $ Ident $ dataName input)
+                [TyVar $ Ident v | v <- vars]]
+            , f body]
+
+    f (Application (f -> OList xs)) =
+        foldl1 (\a b -> OApp "App" [a,b]) xs
+
+    f (MapCtor dsl) = OList  [  applyEnv dsl env{envCtor=c}
+         |  c <- dataCtors input]
+    f (MapField dsl) = OList [applyEnv dsl env{envField=i}
+         | i <- [1.. fromIntegral $ ctorArity ctor]]
+
+    f DataName = OString $ dataName input
+    f CtorName = OString $ ctorName ctor
+    f CtorArity = OInt $ ctorArity ctor
+    f CtorIndex = OInt $ ctorIndex ctor
+    f FieldIndex = OInt field
+
+    f Head = fst fold
+    f Tail = snd fold
+    f (Fold cons (f -> OList xs)) =
+        foldr1 (\a b -> applyEnv cons env{envFold=(a,b)}) xs
+
+    f (List xs) = OList $ map f xs
+    f (Reverse (f -> OList xs)) = OList $ reverse xs
+    f (Concat (f -> OList [])) = OList []
+    f (Concat (f -> OList xs)) = foldr1 g xs
+            where  g (OList    x) (OList    y) = OList    (x++y)
+                   g (OString  x) (OString  y) = OString  (x++y)
+    f (String x) = OString x
+    f (Int x) = OInt x
+    f (ShowInt (f -> OInt x)) = OString $ show x
+    f (App x (f -> OList ys)) = OApp x ys
+
+-- for information on |out|, see \S\ref{sec:universe}
+out :: Data alpha => alpha -> Output
+\end{code}
+\caption{The |apply| function.}
+\label{fig:apply}
+\end{figure}
+
+The type we have most freedom over is the DSL, and we present our DSL type in \ref{fig:dsl}. We have divided the DSL in to sections, which we present separately. Each constructor has an interpretation, and a set of circumstances in which it is valid to occur. It would be possible to encode many of the invariants if we used a DSL represented as a GADT \cite{spj:gadt}. However, for simplicity we choose not to.
+
+Our DSL evaluates in to an |Output| type, so we can view the semantics through the |apply| function. The complete |apply| function is given in Figure \ref{fig:apply}. We use view patterns as implemented in GHC 6.10 \cite{ghc} to make the presentation more concise.
 
 \subsubsection{Constants}
 
@@ -541,75 +605,5 @@ Thanks to Stefan O'Rear help with the first version of the \derive{} tool.
 
 \bibliographystyle{plainnat}
 \bibliography
-
-\appendix
-\section{The |apply| function}
-\label{sec:apply}
-
-We use view patterns as implemented in GHC 6.10 \cite{ghc}.
-
-\begin{code}
-apply :: DSL -> Input -> Output
-apply dsl input = applyEnv dsl Env{envInput=input}
-
-
-data Env = Env
-    {envInput :: Input
-    ,envCtor :: Ctor
-    ,envField :: Integer
-    ,envFold :: (Output,Output)
-    }
-
-applyEnv :: DSL -> Env -> Output
-applyEnv dsl env@(Env input ctor field fold) = f dsl
-    where
-    vars = genericTake (dataVars input) $ map (:[]) ['a'..]
-
-    f (Instance ctx hd body) =
-        OApp "InstDecl"
-            [out 
-                [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
-                | v <- vars, c <- ctx]
-            , out $ UnQual $ Ident hd
-            , out [foldl TyApp
-                (TyCon $ UnQual $ Ident $ dataName input)
-                [TyVar $ Ident v | v <- vars]]
-            , f body]
-
-    f (Application (f -> OList xs)) = g xs
-            where  g [x]  = x -- \todo{fold of some sort}
-                   g xs   = OApp "App" [g $ init xs, last xs]
-
-    f (MapCtor dsl) = OList  [  applyEnv dsl env{envCtor=c}
-         |  c <- dataCtors input]
-    f (MapField dsl) = OList [applyEnv dsl env{envField=i}
-         | i <- [1.. fromIntegral $ ctorArity ctor]]
-
-    f DataName = OString $ dataName input
-    f CtorName = OString $ ctorName ctor
-    f CtorArity = OInt $ ctorArity ctor
-    f CtorIndex = OInt $ ctorIndex ctor
-    f FieldIndex = OInt $ field
-
-    f Head = fst fold
-    f Tail = snd fold
-    f (Fold cons (f -> OList xs)) = g xs
-            where g [x] = x -- \todo{fold of some sort}
-                  g (x:xs) = applyEnv cons env{envFold=(x,g xs)}
-
-    f (List xs) = OList $ map f xs
-    f (Reverse (f -> OList xs)) = OList $ reverse xs
-    f (Concat (f -> OList [])) = OList []
-    f (Concat (f -> OList xs)) = foldr1 g xs
-            where  g (OList    x) (OList    y) = OList    (x++y)
-                   g (OString  x) (OString  y) = OString  (x++y)
-    f (String x) = OString x
-    f (Int x) = OInt x
-    f (ShowInt (f -> OInt x)) = OString $ show x
-    f (App x (f -> OList ys)) = OApp x ys
-
--- for information on |out|, see \S\ref{sec:universe}
-out :: Data alpha => alpha -> Output
-\end{code}
 
 \end{document}
