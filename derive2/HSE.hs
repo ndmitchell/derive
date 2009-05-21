@@ -8,6 +8,7 @@ import Data.Data
 import Data.Generics.PlateData
 import Data.Maybe
 import Data.List
+import Data.Function
 import Unsafe.Coerce
 import Control.Monad.State
 
@@ -33,6 +34,9 @@ sample = Input "Sample" 1 [Ctor "First" 0 0, Ctor "Second" 1 2, Ctor "Third" 2 1
 isUnknownDeclPragma UnknownDeclPragma{} = True
 isUnknownDeclPragma _ = False
 
+
+outEq :: Out -> Out -> Bool
+outEq = (==) `on` transformBi (const sl)
 
 simplifyOut :: Out -> Out
 simplifyOut = transformBi fExp
