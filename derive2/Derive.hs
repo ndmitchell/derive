@@ -11,14 +11,10 @@ import Data.Maybe
 
 
 data Guess = Guess DSL
-           | GuessInt Int (DSL -> DSL)
+           | GuessFld Int DSL
            | GuessCtr Int Bool DSL  -- 0 based index, does it mention CtorName
+             deriving Show
 
-
-instance Show Guess where
-    show (Guess x) = show x
-    show (GuessInt i f) = "(" ++ show i ++ " -> " ++ show (f $ String "?") ++ ")"
-    show (GuessCtr i b x) = "(" ++ show i ++ " " ++ show b ++ " " ++ show x ++ ")"
 
 ctrNames = map ctorName $ dataCtors sample
 
@@ -48,10 +44,11 @@ guess (OString x)
          [lift (\d -> append (String $ init x) (ShowInt d)) g | x /= "", isDigit (last x), g <- guess $ OInt $ read [last x]] ++
          [Guess $ String x]
 
-guess (OInt i) = [GuessInt j id | let j = fromInteger i, fromIntegral j == i] ++
-               [GuessCtr 1 False CtorIndex | i == 1] ++
-               [GuessCtr 1 False CtorArity | i == 2] ++
-               [Guess $ Int i]
+guess (OInt i) =
+    [GuessFld (fromInteger i) FieldIndex | i `elem` [1,2]] ++
+    [GuessCtr 1 False CtorIndex | i == 1] ++
+    [GuessCtr 1 False CtorArity | i == 2] ++
+    [Guess $ Int i]
 
 guess x = error $ show ("fallthrough",x)
 
@@ -69,7 +66,7 @@ guessList xs = mapMaybe sames $ map diffs $ sequence $ map guess xs
         sames xs = do
             let (is,fs) = unzip $ map fromGuess xs
             i <- maxim is
-            return $ toGuess i $ \x -> Concat $ List $ map ($x) fs
+            return $ toGuess i $ Concat $ List fs
 
         -- Promote each Guess to be a list
         diffs :: [Guess] -> [Guess]
@@ -82,13 +79,13 @@ guessList xs = mapMaybe sames $ map diffs $ sequence $ map guess xs
             | f 0 x0 == f 0 x1 && f 2 x2 == f 2 x1 = Guess (Reverse $ MapCtor x1) : diffs xs
             where f i x = applyEnv x Env{envInput=sample, envCtor=dataCtors sample !! i}
         
-        diffs (GuessInt 1 x1:GuessInt 2 x2:xs)
-            | f 1 x1 == f 1 x2 = GuessCtr 1 False (MapField $ x2 FieldIndex) : diffs xs
-            where f i x = applyEnv (x FieldIndex) Env{envInput=sample, envField=i}
+        diffs (GuessFld 1 x1:GuessFld 2 x2:xs)
+            | f 1 x1 == f 1 x2 = GuessCtr 1 False (MapField x2) : diffs xs
+            where f i x = applyEnv x Env{envInput=sample, envField=i}
         
-        diffs (GuessInt 2 x2:GuessInt 1 x1:xs)
-            | f 1 x1 == f 1 x2 = GuessCtr 1 False (Reverse $ MapField $ x2 FieldIndex) : diffs xs
-            where f i x = applyEnv (x FieldIndex) Env{envInput=sample, envField=i}
+        diffs (GuessFld 2 x2:GuessFld 1 x1:xs)
+            | f 1 x1 == f 1 x2 = GuessCtr 1 False (Reverse $ MapField x2) : diffs xs
+            where f i x = applyEnv x Env{envInput=sample, envField=i}
         
         diffs (x:xs) = lift box x : diffs xs
         diffs [] = []
@@ -115,21 +112,21 @@ gssApp _ = []
     
 
 lift :: (DSL -> DSL) -> Guess -> Guess
-lift f x = toGuess a (f . b)
+lift f x = toGuess a (f b)
     where (a,b) = fromGuess x
 
 
 type GuessState = Maybe (Either Int (Int,Bool))
 
-fromGuess :: Guess -> (GuessState, DSL -> DSL)
-fromGuess (Guess x) = (Nothing, const x)
-fromGuess (GuessInt i f) = (Just (Left i), f)
-fromGuess (GuessCtr i b x) = (Just (Right (i,b)), const x)
+fromGuess :: Guess -> (GuessState, DSL)
+fromGuess (Guess x) = (Nothing, x)
+fromGuess (GuessFld i x) = (Just (Left i), x)
+fromGuess (GuessCtr i b x) = (Just (Right (i,b)), x)
 
-toGuess :: GuessState -> (DSL -> DSL) -> Guess
-toGuess Nothing f = Guess (f undefined)
-toGuess (Just (Left i)) f = GuessInt i f
-toGuess (Just (Right (i,b))) f = GuessCtr i b (f undefined)
+toGuess :: GuessState -> DSL -> Guess
+toGuess Nothing = Guess
+toGuess (Just (Left i)) = GuessFld i
+toGuess (Just (Right (i,b))) = GuessCtr i b
 
 
 -- return the maximum element, if one exists
