@@ -233,7 +233,7 @@ data Output  =  OString String
 
 Here |OString| and |OInt| represent concrete terminals. The |OList| constructor generates a list from a sequence of  |Output| values. The most interesting constructor is |OApp|, which constructs a value in the typed tree. For example |Just [1,2]| would be represented as |OApp "Just" [OList [OInt 1,OInt 2]]|.
 
-Our |Output| type can represent many impossible values, for example |OApp "Just" []| is an error, as is |OApp "NoConstructor" []|. We consider any |Output| value that does not have a corresponding haskell-src-exts tree to be an error. The root |Output| value must have type |[Decl]| when translated, however the inner values may have different types.
+Our |Output| type can represent many impossible values, for example |OApp "Just" []| is an error, as is |OApp "Invalid" []|, where |Invalid| it not a constructor. We consider any |Output| value that does not have a corresponding haskell-src-exts value to be an error. The root |Output| value must have type |[Decl]| when translated, i.e. must be an |OList|, and the inner values must have appropriate types.
 
 \subsection{Input}
 
@@ -278,8 +278,8 @@ data DSL
     |  App String DSL{-|[alpha]|-}
        -- Operations
     |  Concat DSL{-|[[alpha]]|-}
-    |  ShowInt DSL{-|Int|-}
     |  Reverse DSL{-|[alpha]|-}
+    |  ShowInt DSL{-|Int|-}
        -- Fold
     |  Fold DSL DSL
     |  Head
@@ -305,7 +305,6 @@ data DSL
 \begin{code}
 apply :: DSL -> Input -> Output
 apply dsl input = applyEnv dsl Env{envInput=input}
-
 
 data Env = Env  {envInput :: Input
                 ,envCtor :: Ctor
@@ -365,58 +364,91 @@ out :: Data alpha => alpha -> Output
 \label{fig:apply}
 \end{figure}
 
-Our DSL type is given in Figure \ref{fig:dsl}. The operations in the DSL are grouped into six sections, each of which we describe individually. Each operation has an interpretation, which is defined by the |apply| function in Figure \ref{fig:apply}. We use view patterns as implemented in GHC 6.10 \cite{ghc} to make the presentation more concise.
+Our DSL type is given in Figure \ref{fig:dsl}, and our |apply| function is given in Figure \ref{fig:apply}. The operations in the DSL are split into six groups -- we first give a high-level overview of the DSL, then return to each group in detail. The |apply| function is written in terms of |applyEnv|, where an environment is passed including the input data type, and perhaps a constructor in scope. Some functions in the DSL add to the environment (i.e. |MapCtor|), while some read from the environment (i.e. |CtorName|). Any operation reading a particular value from the environment must be nested within an operation placing that value in the environment.
 
-Each constructor has an interpretation, and a set of circumstances in which it is valid to occur. It would be possible to encode many of the invariants if we used a DSL represented as a GADT \cite{spj:gadt}. However, for simplicity we choose not to.
+Some operations operate only on particular types -- for example |Reverse| requires the it's argument to evaluate to |OList|. Where possible we have annotated these type restrictions in the |DSL| definition with comments. We have used view patterns, as implemented in GHC 6.10 \cite{ghc_610}, to perform matches on the evaluated argument DSLs. Our use of view patterns can be understood with the simple translation\footnote{View-patterns and pattern-guards in GHC have different fall-through semantics, but this difference does not effect our function.}:
+
+\begin{code}
+f (Reverse (f -> OList xs)) = ...
+    ==
+f (Reverse v_1) | OList xs <- f v_1 = ...
+    ==
+f (Reverse v_1) = case f v_1 of OList xs -> ...
+\end{code}
+
+Operations have restrictions on what value inner operations must be evaluate to, and what environment values must be available. It would be possible to capture many of these invariants using either phantom types \cite{phantom_types} or GADTs \cite{spj:gadt}. However, for simplicity, we choose not to.
 
 \subsubsection{Constants}
 
-It is useful to represent is constants, so we can lift the |Output| type in to |DSL|. The |String|, |Int|, |List| and |App| constructors are equivalent to the |Output| variants, with the exception of |App|. Instead of |App| a list of arguments, similarly to |OApp|, we take a single |DSL|. We do require the |DSL| to evaluate to a list, which is used as the list of arguments. We consider a violation of this to be an error.
+It is useful to represent constants in our DSL, so we can lift values of |Output| in to values of |DSL|. The |String|, |Int|, |List| operations are directly equivalent to the corresponding |Output| values. The |App| constructor is similar to |OApp|, but instead of taking a \textit{list} of arguments, |App| takes a single argument, which is required to evaluate to an |OList|. Requiring an |OList| rather than an explicit list allows the arguments to |App| to be constructed by operations such as |Reverse| or |Concat|.
 
 \subsubsection{Operations}
 
-We provide a limited set of operations that operate on types. The argument to |Concat| must evaluate to either a list of lists, or a list of strings, which are then concatentated. The |ShowInt| argument must be an |Int|, which is then shown to be a |String|. The |Reverse| operation reverses a list. All these operations are relatively simple, and could be appropriate to many DSL's. Note that we do not provide an append or |(++)| operation, however one can be created from |List| and |Concat|.
+The operations group are useful functions for manipulating lists, strings and integers. The operations have been added as they are required, based on functions in the Haskell Prelude. The |Concat| operation corresponds to |concat|, and concatenates either a list of lists, or a list of strings. The |Reverse| operation performs |reverse| on a list. The |ShowInt| operation performs |show|, converting an integer to a string. We have tried to provide the minimal set of operations, for example while |Reverse| could also reverse a string, we have not needed this functionality, so have left it unspecified. These operations are all simple, and would be appropriate for many DSLs. Note that we do not provide an append or |(++)| operation, but one can be created from |List| and |Concat|.
+
+Some examples of these operations in use are:
+
+\h{exprlist}\begin{code}
+Concat (List [String "hello ", String "world"])
+    == OString "hello world"
+Reverse (List [Int 1, Int 2, Int 3])
+    == OList [OInt 3, OInt 2, OInt 1]
+ShowInt (Int 42) = OString "42"
+\end{code}
 
 \subsubsection{Fold}
 
-The |Fold| operation can implement either a |foldr1| or |foldl1|. The first argument to the |Fold| constructor is the function -- a DSL operation contains both |Head| and |Tail| constructors. The second argument must evaluate to a list that has at least one element. If the list has exactly one element, then that is the result. If there is more than one result, then the |Head| is replaced with the first element, and the |Tail| is replaced with the fold over the remaining elements. This can be described by:
+The |Fold| operation implements a |foldr1|, but can be combined with |Reverse| to simulate a |foldl1|. The first argument to the |Fold| constructor is the function -- a DSL containing |Head| and |Tail| operations. The second argument must evaluate to a list of at least one element. If the list has exactly one element, that is the result. If there is more than one result, then the |Head| is replaced with the first element, and the |Tail| is replaced with the fold over the remaining elements. This can be described by:
 
 \ignore\begin{code}
-Fold fn [x]) = x
-Fold fn (x:xs)) = fn[x / Head, Fold fn xs / Tail]
+Fold fn [x] = x
+Fold fn (x:xs) = fn[x / Head, Fold fn xs / Tail]
 \end{code}
 
-For example, to implement the |concat| fold in terms of an |Append| constructor would be \ignore|Fold (Append Head Tail)|. Of course, in contrast to the provided |Concat|, this would crash if there were no elements in the list. The fold operation is more complicated than the others, but a general operation not specific to our problem, and is certainly useful.
+For example, to implement |concat| in terms of an |Append| operation would be \ignore|Fold (Append Head Tail)| (ignoring the case of an empty list). The fold operation is more complicated than the previous operations, but may still be useful to other DSLs.
 
 \subsubsection{Constructors}
 
-To insert information from constructors we provide a |MapCtor| operation. This operation generates a list, with one copy of the DSL for each constructor. Within the operation for |MapCtor| we allow the |CtorIndex|, |CtorArity| and |CtorName| constructors, which correspond to the information contained within each constructor -- if these operations are encountered elsewhere they are an error. They all produce an integer value.
+To insert information from constructors we provide |MapCtor|. This operation generates a list, with the argument DSL evaluated once with each different constructor in the environment. The argument to |MapCtor| may contain |CtorName|, |CtorIndex| and |CtorArity| operations, which retrieve the information associated with the constructor. |CtorName| produces a string, while the others produce an integer. An example of |MapCtor| on the |Sample| data type is:
+
+\h{exprlist}\begin{code}
+MapCtor CtorName == OList
+    [OString "First", OString "Second", OString "Third"]
+\end{code}
 
 \subsubsection{Fields}
 
-The |MapField| operation is similar to |MapCtor|, it maps over each field within a constructor. The operation is only valid within a |MapCtor|. Within a |MapField|, the |FieldIndex| operation returns the 1-based index. While most things in Haskell are 0-based, it actually seemed more natural to use 1-based, as they usually correspond to indexes on variables.
+The |MapField| operation is similar to |MapCtor|, it maps over each field within a constructor. The operation is only valid within a |MapCtor|. Within a |MapField|, the |FieldIndex| operation returns the 1-based index of the current field. While most indexing in Haskell is 0-based, fields usually correspond to indexes on variables, which seem more natural when 1-based. As an example, with |Second| as the constructor in the environment:
+
+\h{exprlist}\begin{code}
+Concat (List [List [CtorName],
+    MapField (Concat (List [String "v", ShowInt FieldInd]))])
+    == ["Second","v1","v2"]
+\end{code}
 
 \subsubsection{Custom}
 
-The final operations are all very specific to our particular problem, and each encode specific situations which are problematic. The first is |DataName|, which returns the string corresponding to the name of the data type. The haskell-src-exts library has binary application, where multiple applications are often chained. Sometimes it is useful to have a vector application operation, which we construct with the |Application| operation.
+The final operations are all very specific to our particular problem. By simplest operation in this group is |DataName|, which returns the string corresponding to the name of the data type.
 
-The last operation is |Instance|, and is quite specific to our problem. For many data types, there is a very specific pattern for instance definitions. For example, given the type \h{type}|Either alpha beta|, a typical instantiation might be:
+The second operation is |Application|. The haskell-src-exts library has binary application, where multiple applications are often chained. Sometimes it is useful to have a vector application operation, which we construct with the |Application| operation. Vector application is often used for calling constructors with arguments derived from |MapField|, such in combination with the example from the previous Fields subsection.
+
+The last operation is |Instance|, and is very specific to our problem. Many instance declarations follow a common pattern. For example, given the type \h{type}|Either alpha beta|, a typical instance declaration might be:
 
 \ignore\begin{code}
 instance (Show alpha, Ord alpha, Show beta, Ord beta) =>
     ShowOrd (Either alpha beta) where ellipses
 \end{code}
 
-This pattern can be abstracted by saying what context is required for each type variable (i.e. |Show| and |Ord| in this example), what the main class is (i.e. |ShowOrd|), and a DSL to generate the body -- which we do with the |Instance| operation. If we were to attempt to infer this pattern without a specific |Instance| operation, we would need to be able to operate over the type variables of a data type, which would almost always result in this particular type.
+The pattern is that each type variable is required to be a member of a set of type classes. This pattern is captured by the |Instance| operation, whose fields detail what classes are required for each type variable (i.e. |Show| and |Ord| in this example), what the main class is (i.e. |ShowOrd|), and a DSL to generate the body. If we were to attempt to derive this pattern without a specific |Instance| operation, we would need to be able to operate over the type variables of a data type -- which we currently cannot.s
 
 \subsection{Restrictions for predictability}
 \label{sec:predictability}
 
-In order to ensure predictability there must be no non-congruent DSL values which give equal results when applied to the sample input. However, currently this not true. Consider the simple counterexample of |DataName| vs |String "Sample"|. When applied to the sample input, both will generate |OString "Sample"|, but when applied to another data  type they will generate different values. To regain predictability we impose two additional invariants on the |DSL|:
+In order to ensure predictability there must be no non-congruent DSL values which give equal results when applied to the sample input. Currently this invariant is violated -- consider the simple counterexample of |DataName| vs |String "Sample"|. When applied to the sample input, both will generate |OString "Sample"|, but when applied to another data  type they will generate different values. To regain predictability we impose two additional invariants on the |DSL|:
 
 \begin{enumerate}
 \item The strings |Sample|, |First|, |Second| and |Third| cannot be the suffix of any |String| operation. In the above example, the DSL |String "Sample"| would therefore be invalid.
-\item Within |MapCtor| we require that the contained DSL \textit{must} include a |CtorName|.
+\item Within |MapCtor| we require that the argument DSL \textit{must} include |CtorName|.
 \end{enumerate}
 
 We have already seen an example of the first restriction in practice, now let us examine the second. Let us consider a practical example, consider:
@@ -426,7 +458,7 @@ instance Arities (Sample alpha) where
     arities _ = [0,2,1]
 \end{code}
 
-This could either infer that the |arities| function always returns |[0,2,1]|, or perhaps the arities function returns the arities of each successive constructor. While it is easy as humans to infer the intention, there is a potential ambiguity. Using the second restriction, we conclude that this must always represent the constant operation. Of course, if we want to write a correct |arities| operation, it is easy to write:
+This could either infer that the |arities| function always returns |[0,2,1]|, or it returns the arity of each constructor. While a human can spot the intention, there is a potential ambiguity. Using the second restriction, we conclude that this must represent the constant operation. To derive a version returning the arities we can write:
 
 \begin{code}
 instance Arities (Sample alpha) where
@@ -435,7 +467,7 @@ instance Arities (Sample alpha) where
                  ,1 `const` Third{}]
 \end{code}
 
-This code may seem less efficient, but any good program optimiser would certainly generate identical code. We return to the issue of simplification in \S\ref{sec:simplify}. Given that no constructor names may occur in |String| operations, and that |CtorName| must occur within every |MapCtor|, we can be sure that all constructor patterns are appropriately parameterised. The only other possible source of ambiguity is if two items could be generated within a constructor with the same value -- for example if all indexes and arities in the sample data type were equal. However, we have avoided this particular problem by ensuring that |Second| has index 1 has arity 2, while |Third| has the opposite.
+While this code code may appear less efficient, any good program optimiser will certainly generate identical code. We return to the issue of possible simplifications in \S\ref{sec:simplify}. Given that no constructor names may occur in |String| operations, and that |CtorName| must occur within every |MapCtor|, we now require that all correct |MapCtor| DSL's must be congruent. The only other possible source of ambiguity is if two items could be generated within a constructor with the same value -- for example if all indexes and arities in the sample data type were equal. However, we have avoided this particular problem by ensuring that |Second| has index 1 has arity 2, while |Third| has the opposite.
 
 \section{Deriving Instances}
 \label{sec:guess}
