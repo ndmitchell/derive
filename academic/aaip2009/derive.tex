@@ -10,12 +10,13 @@
 \include{paper}
 
 %include paper.fmt
+%format `k` = "\backtick{k}"
 
 \newcommand{\derive}{\textsc{Derive}}
 
 \hsdef{\begin{comment}
 Show,Enum,Ord,Bounded,Serial,Arbitrary,Monoid,Binary,Functor
-ShowOrd,Either,Typeable
+ShowOrd,Either,Typeable,Invalid
 alpha,beta,d_1,d_2,Q,Append,i,f
 \end{comment}}
 \begin{comment}
@@ -368,7 +369,7 @@ Our DSL type is given in Figure \ref{fig:dsl}, and our |apply| function is given
 
 Some operations operate only on particular types -- for example |Reverse| requires the it's argument to evaluate to |OList|. Where possible we have annotated these type restrictions in the |DSL| definition with comments. We have used view patterns, as implemented in GHC 6.10 \cite{ghc_610}, to perform matches on the evaluated argument DSLs. Our use of view patterns can be understood with the simple translation\footnote{View-patterns and pattern-guards in GHC have different fall-through semantics, but this difference does not effect our function.}:
 
-\begin{code}
+\ignore\begin{code}
 f (Reverse (f -> OList xs)) = ...
     ==
 f (Reverse v_1) | OList xs <- f v_1 = ...
@@ -393,7 +394,7 @@ Concat (List [String "hello ", String "world"])
     == OString "hello world"
 Reverse (List [Int 1, Int 2, Int 3])
     == OList [OInt 3, OInt 2, OInt 1]
-ShowInt (Int 42) = OString "42"
+ShowInt (Int 42) == OString "42"
 \end{code}
 
 \subsubsection{Fold}
@@ -422,7 +423,7 @@ The |MapField| operation is similar to |MapCtor|, it maps over each field within
 
 \h{exprlist}\begin{code}
 Concat (List [List [CtorName],
-    MapField (Concat (List [String "v", ShowInt FieldInd]))])
+    MapField (Concat (List [String "v", ShowInt FieldIndex]))])
     == ["Second","v1","v2"]
 \end{code}
 
@@ -448,10 +449,11 @@ In order to ensure predictability there must be no non-congruent DSL values whic
 
 \begin{enumerate}
 \item The strings |Sample|, |First|, |Second| and |Third| cannot be the suffix of any |String| operation. In the above example, the DSL |String "Sample"| would therefore be invalid.
+\item All instances must be constructed with |Instance|, not created directly using |App|.
 \item Within |MapCtor| we require that the argument DSL \textit{must} include |CtorName|.
 \end{enumerate}
 
-We have already seen an example of the first restriction in practice, now let us examine the second. Let us consider a practical example, consider:
+We have already seen an example of the first restriction in practice, and the second restriction has similar motivation -- to avoid making something constant when it should not be. Now let us examine the third restriction, with a practical example:
 
 \h{.two}\begin{code}
 instance Arities (Sample alpha) where
@@ -462,32 +464,34 @@ This could either infer that the |arities| function always returns |[0,2,1]|, or
 
 \begin{code}
 instance Arities (Sample alpha) where
-    arities _ =  [0 `const` First{}
-                 ,2 `const` Second{}
-                 ,1 `const` Third{}]
+    arities _ =  [  const 0 First{}
+                 ,  const 2 Second{}
+                 ,  const 1 Third{}]
 \end{code}
 
-While this code code may appear less efficient, any good program optimiser will certainly generate identical code. We return to the issue of possible simplifications in \S\ref{sec:simplify}. Given that no constructor names may occur in |String| operations, and that |CtorName| must occur within every |MapCtor|, we now require that all correct |MapCtor| DSL's must be congruent. The only other possible source of ambiguity is if two items could be generated within a constructor with the same value -- for example if all indexes and arities in the sample data type were equal. However, we have avoided this particular problem by ensuring that |Second| has index 1 has arity 2, while |Third| has the opposite.
+While this code code may appear less efficient, any good optimiser (i.e. GHC) will generate identical code. We return to the issue of possible simplifications in \S\ref{sec:simplify}. Given that no constructor names may occur in |String| operations, and that |CtorName| must occur within every |MapCtor|, we now require that all correct |MapCtor| DSL's must be congruent. The only other possible loss of predictability is if two items could be generated within a constructor with the same value -- for example if all indexes and arities in the sample data type were equal. However, we have avoided this particular problem by ensuring that |Second| has index 1 has arity 2, while |Third| has the opposite.
+
+\todo{Proof here? At least a better argument. Perhaps a QuickCheck?}
 
 \section{Deriving Instances}
 \label{sec:guess}
 
-This section covers the implementation of the |derive| function, as described in \ref{sec:scheme}. We believe the scheme we produce always generates correct DSL's, but it is unnecessary to prove this property (see \S\ref{sec:correctness}). We have also shown that our DSL and sample input guarantee predictability without regard to the |derive| function, provided we don't generate DSL's violating the restrictions outlined in \S\ref{sec:predictability}.
+This section covers the implementation of a |derive| function, as described in \ref{sec:scheme}. There are many approaches to writing a |derive| function, ours merely one option -- we hope that the scheme we have described provides ample opportunity for experimentation.
 
-Given that we don't need to worry about predictability and correctness, we can focus on other issues. Naturally, we want the |derive| function to terminate, and ideally terminate within a reasonable time bound. But the main issue is that we desire that if there is a possible derivation, that the scheme find it. Namely:
+Before implementing |derive| it is useful to think about what properties it should have. It is not necessary to guarantee correctness (see \S\ref{sec:correctness}), but our method chooses to only generate correct results. We have shown that our DSL and sample input guarantee predictability without regard to the |derive| function, provided we meet the restrictions in \S\ref{sec:predictability}, which we obey. We want our |derive| function to terminate, and ideally terminate within a reasonable time bound. Finally, we would like the |derive| function to find an answer if one exists, i.e.:
 
 \ignore\begin{code}
 forall o `elem` Output, d `elem` DSL `o` null (derive o) => apply d sample /= o
 \end{code}
 
-We are unaware of a |derive| implementation that meets such a property. However, we aim to come as close as we can, i.e. to have the property be true for as many output values as possible.
+We are unaware of a |derive| implementation for our particular problem that performs acceptably\footnote{We believe enumerative search to a particular depth would succeed, but this method is clearly infeasible}. Our method is a trade off between runtime and success rate, with a particular desire to succeed for real-world examples.
 
-There are many possible approaches for structuring a |derive| function, and we hope that the scheme we have described provides ample opportunity for experimentation. We have structure our particular scheme around the the notion of a parameterised guess. The central idea is that each fragment of output is related to a guess -- a DSL parameterised by some aspect, i.e. within a |MapCtor| the guesses will be parameterised by a constructor. We then infer a list of guesses, starting at the leaf nodes and working up. When we attempt to generalise over all constructors, say to generate a |MapCtor|, we check that one of the guesses is suitable for all items, and then lift that guess from a guess parameterised by constructor, to one parameterised by nothing. Our central |Guess| type is:
+The basis of our |derive| implementation is a parameterised guess. Each fragment of output is related to a guess -- a DSL parameterised by some aspect of the environment, i.e. |OString "First"| would result in the guess |CtorName| parameterised by the first constructor. Concretely, our central |Guess| type is:
 
 \begin{code}
 data Guess  =  Guess DSL
-            |  GuessCtr Int Bool DSL
-            |  GuessInt Int (DSL -> DSL)
+            |  GuessCtr Integer DSL -- 0-based index
+            |  GuessFld Integer DSL -- 1-based index
 
 derive :: Output -> [DSL]
 derive o = [d | Guess d <- guess o]
@@ -495,23 +499,46 @@ derive o = [d | Guess d <- guess o]
 guess :: Output -> [Guess]
 \end{code}
 
-The |Guess| constructor represents a guess that is not parameterised by a constructor or field name, i.e. does not necessarily come below a |MapCtor| or |MapField|. Another way of viewing it is that a |Guess| is parameterised by the entire data type. A |GuessCtr| is paramterised by a constructor, where the first field is the 0-based index of the constructor, and the second field is a boolean which is |True| if the associate DSL contains |CtorName|, and |False| if it does not. The final constructor, |GuessInt i f| is a guess parameterised by an integer, where applying |f (Int i)| results in an appropriate DSL. A |GuessInt| can become either a constant, a |GuessCtr| where the integer is derived from either the arity or index, or a |MapField|.
+Applying |guess (OString "First")| will give the result |GuessCtr 0 CtorName|. The |GuessCtr| and |GuessFld| guesses are paramterised by either constructors or fields, and can therefore only occur within either |MapCtor| or |MapField|. The |Guess| guess is either parameterised by the entire data type, or is a constant which does not refer to the environment at all.
 
-Since we start at the bottom and guess upwards, we consider each guess type individually. They are then composed.
+To generate a guess for the entire output we start by generating guesses for the leaf nodes of the |Output| value, then work upwards combining them. If at any point we see an opportunity to apply one of our custom rules (i.e. |Instance|), we attempt to do so. The important points are how we infer guesses for atoms, how we combine guesses together (always to produce a list), and where we apply our custom rules.
 
-\subsection{Constants}
+\subsection{Guessing Constant Leafs}
 
-These are relatively easy. Strings and Int's.
+The guess for a string is trivial -- if it has a banned suffix we generate a paramterised, otherwise we just dump the constant string.
 
-\subsection{Custom values}
+The guess for App requires a guess for list, then the string to the app is always constant, and taken from the OApp.
 
-These are just specific checks.
+The most complex case is Int, which is guessed as follows:
+
+\begin{code}
+guess (OInt i) =
+    [GuessFld i FieldIndex | i `elem` [1,2]] ++
+    [GuessCtr 1 CtorIndex | i == 1] ++
+    [GuessCtr 1 CtorArity | i == 2] ++
+    [Guess $ Int i]
+\end{code}
+
+Note that we only guess something as being GuessCtr if it evaluates to constructor 1. The reasons for this are given under the list derivation. We could generate more GuessCtr's but they would be unnecessary.
 
 \subsection{Lists}
 
-The only hard thing to guess are lists. The idea of a list is that all elements must have the same |Guess| framework. We can promote |Guess| to any of the others. We do the guessing of lists by first guessing different ones, then guessing similar ones.
+The only hard thing to guess are lists. Given a list of guesses we can promote a single |Guess|, combine two adjacent elements with the same guess environment into a single element, or join a complete ordered list of fields or constructors (perhaps in reverse). If by applying these rules we get a single guess, then that guess is valid.
+
+As a side condition, in our implementation we convert a list of ordered guesses using |MapCtor| we check that they all mention the constructor name.
 
 \subsection{Folds}
+
+We search for folds on an ad-hoc basis. They are quite restricted, must start |OApp m [OApp m [x,op,y],op,z]| or the flipped variant. When searching for folds we find the fold, then try and generate a list for the bits we extract. We do this in parallel.
+
+\subsection{Application}
+
+We search for applications in parallel, then try and infer the list.
+
+\subsection{Instance}
+
+We look for instances alone, and if an instance matches we do nothing else. It's dull code, but simple.
+
 
 
 \section{Implementation Details}
@@ -642,7 +669,7 @@ Computers are ideally suited to applying repetitive patterns, but specifying the
 
 \subsection*{Acknowledgements}
 
-Thanks to Stefan O'Rear help with the first version of the \derive{} tool.
+Thanks to Stefan O'Rear help with the first version of the \derive{} tool. Thanks to Niklas Broberg for the excellent haskell-src-exts librarys.
 
 
 \bibliographystyle{plainnat}
