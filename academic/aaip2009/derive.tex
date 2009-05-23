@@ -501,29 +501,94 @@ guess :: Output -> [Guess]
 
 Applying |guess (OString "First")| will give the result |GuessCtr 0 CtorName|. The |GuessCtr| and |GuessFld| guesses are paramterised by either constructors or fields, and can therefore only occur within either |MapCtor| or |MapField|. The |Guess| guess is either parameterised by the entire data type, or is a constant which does not refer to the environment at all.
 
-To generate a guess for the entire output we start by generating guesses for the leaf nodes of the |Output| value, then work upwards combining them. If at any point we see an opportunity to apply one of our custom rules (i.e. |Instance|), we attempt to do so. The important points are how we infer guesses for atoms, how we combine guesses together (always to produce a list), and where we apply our custom rules.
+To generate a guess for the entire output we start by generating guesses for the leaf nodes of the |Output| value, then work upwards combining them. If at any point we see an opportunity to apply one of our custom rules (i.e. |Instance|), we do so. The important points are how we infer create guesses for the leaves, how we combine guesses together (always to produce a list), and where we apply our custom rules. We require that all generated guesses are correct, defined by:
+
+\ignore\begin{code}
+forall g `elem` guess output `o` applyGuess g == o
+\end{code}
+\begin{code}
+applyGuess :: Guess -> Output
+applyGuess (Guess       d) = applyEnv d (Env{envInput=sample})
+applyGuess (GuessCtr i  d) = applyEnv d (Env{envInput=sample,envCtor=dataCtors sample !! i})
+applyGuess (GuessFld i  d) = applyEnv d (Env{envInput=sample,envField=i})
+\end{code}
 
 \subsection{Guessing Constant Leafs}
 
-The guess for a string is trivial -- if it has a banned suffix we generate a paramterised, otherwise we just dump the constant string.
+\subsubsection{String}
 
-The guess for App requires a guess for list, then the string to the app is always constant, and taken from the OApp.
+To guess an |OString| value is trivial -- if it has a banned suffix (i.e. a sample constructor name or the data name) we generate an appropriately parameterised guess, otherwise we use the constant string. Some examples:
 
-The most complex case is Int, which is guessed as follows:
+\h{.exprlist}\begin{code}
+OString "hello" == String "hello"
+OString "Sample" == DataName
+OString "First" == Guess 0 CtorName
+OString "isThird" = Guess 2 (Concat (List [String "is",CtorName]))
+\end{code}
+
+\subsubsection{Application}
+
+The guess for an |OApp| is composed of two parts -- the name of the constructor to apply and the list of arguments. The name of the constructor in |App| always matches that in |OApp| exactly. The arguments to |App| are created by performing |guess| on the list, and wrapping the generated DSL in in |App op|. The guess for |OApp| can be written as:
+
+\begin{code}
+guess (OApp op xs) = map (lift (App op)) (guess (OList xs))
+
+lift :: (DSL -> DSL) -> Guess -> Guess
+lift f (Guess       d) = Guess       (f d)
+lift f (GuessCtr i  d) = GuessCtr i  (f d)
+lift f (GuessFld i  d) = GuessFld i  (f d)
+\end{code}
+
+\subsubsection{Integer}
+
+For all the previous examples we have been able to create a unique possible guess, however this is not true for integers. Given an integer it could be a constant, it could be a constructor index or arity, and it could be a field index. We can guess an |OInt| as follows:
 
 \begin{code}
 guess (OInt i) =
     [GuessFld i FieldIndex | i `elem` [1,2]] ++
     [GuessCtr 1 CtorIndex | i == 1] ++
     [GuessCtr 1 CtorArity | i == 2] ++
-    [Guess $ Int i]
+    [Guess (Int i)]
 \end{code}
 
-Note that we only guess something as being GuessCtr if it evaluates to constructor 1. The reasons for this are given under the list derivation. We could generate more GuessCtr's but they would be unnecessary.
+\noindent And some examples:
+
+\h{.exprlist}\begin{code}
+OInt 0 == [Guess (Int 0)]
+OInt 1 == [GuessFld 1 FieldIndex, GuessCtr 1 CtorArity, Guess (Int 1)]
+OInt 2 == [GuessFld 2 FieldIndex, GuessCtr 2 CtorIndex, Guess (Int 2)]
+OInt 3 == [Guess (Int 3)]
+\end{code}
+
+For the guess of an |OInt| it is interesting to note that we never generate guesses for any constructors other than index 1 (i.e. |Second|) -- the reasons are explained later in \S\ref{sec:guess_lists_sequence}. We could guess alternative constructors, but they would be unnecessary.
 
 \subsection{Lists}
 
-The only hard thing to guess are lists. Given a list of guesses we can promote a single |Guess|, combine two adjacent elements with the same guess environment into a single element, or join a complete ordered list of fields or constructors (perhaps in reverse). If by applying these rules we get a single guess, then that guess is valid.
+The hardest values to guess correctly are lists. For each element of the list, we apply |guess|, then attempt to find a list of guesses, one for each element in the list, which can be collapsed into a single guess. Therefore, the problem of guessing a list is the problem of collapsing a list of guesses to a single guess. Given such a collapse function we can write:
+
+\begin{code}
+guess (OList xs) = mapMaybe collapse (mapM guess xs)
+
+collapse :: [Guess] -> Maybe Guess
+\end{code}
+
+The |mapM| function uses the list monad to combine the lists in all possible sequences. The |collapse| function starts by putting each guess in a box, and then concatenating them all.
+
+\subsubsection{Promotion}
+
+Given a |Guess|, we can promote it to a |GuessFld| or |GuessCtr|.
+
+\subsubsection{Conjunction}
+
+If two adjacent elements have the same guess environment, they can be combined.
+
+\subsubsection{Sequence}
+\label{sec:guess_lists_sequence}
+
+Given two adjacent fields, say |[GuessFld 1 d_1, GuessFld 2 d_2]| if |applyGuess (GuessFld 1 d_2) |
+
+ or join a complete ordered list of fields or constructors (perhaps in reverse)
+
 
 As a side condition, in our implementation we convert a list of ordered guesses using |MapCtor| we check that they all mention the constructor name.
 
