@@ -227,7 +227,7 @@ We choose to base the current version of \derive{} on haskell-src-exts \cite{has
 
 \h{.default .two}\begin{code}
 data Output  =  OString String
-             |  OInt Integer
+             |  OInt Int
              |  OList [Output]
              |  OApp String [Output]
 \end{code}
@@ -244,9 +244,9 @@ Our |Input| type represents algebraically constructed Haskell data types. We inc
 
 \h{.default .two}\begin{code}
 data Input = Input
-    {dataName :: String, dataVars :: Integer, dataCtors :: [Ctor]}
+    {dataName :: String, dataVars :: Int, dataCtors :: [Ctor]}
 data Ctor = Ctor
-    {ctorName :: String, ctorIndex :: Integer, ctorArity :: Integer}
+    {ctorName :: String, ctorIndex :: Int, ctorArity :: Int}
 \end{code}
 
 \noindent Values of |Input| for the |Sample| data type (Figure \ref{fig:sample}) and the |Language| data type (\S\ref{sec:introduction}) are:
@@ -274,7 +274,7 @@ The |Input| constructor records the name of the data type, and the number of typ
 data DSL
        -- Constants
     =  String String
-    |  Int Integer
+    |  Int Int
     |  List [DSL]
     |  App String DSL{-|[alpha]|-}
        -- Operations
@@ -309,13 +309,13 @@ apply dsl input = applyEnv dsl Env{envInput=input}
 
 data Env = Env  {envInput :: Input
                 ,envCtor :: Ctor
-                ,envField :: Integer
+                ,envField :: Int
                 ,envFold :: (Output,Output) }
 
 applyEnv :: DSL -> Env -> Output
 applyEnv dsl env@(Env input ctor field fold) = f dsl
     where
-    vars = genericTake (dataVars input) $ map (:[]) ['a'..]
+    vars = take (dataVars input) $ map (:[]) ['a'..]
 
     f (Instance ctx hd body) =
         OApp "InstDecl"
@@ -331,10 +331,10 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
     f (Application (f -> OList xs)) =
         foldl1 (\a b -> OApp "App" [a,b]) xs
 
-    f (MapCtor dsl) = OList  [  applyEnv dsl env{envCtor=c}
+    f (MapCtor dsl) = OList  [applyEnv dsl env{envCtor=c}
          |  c <- dataCtors input]
     f (MapField dsl) = OList [applyEnv dsl env{envField=i}
-         | i <- [1.. fromIntegral $ ctorArity ctor]]
+         | i <- [1.. ctorArity ctor]]
 
     f DataName = OString $ dataName input
     f CtorName = OString $ ctorName ctor
@@ -473,10 +473,10 @@ While this code code may appear less efficient, any good optimiser (i.e. GHC) wi
 
 \todo{Proof here? At least a better argument. Perhaps a QuickCheck?}
 
-\section{Deriving Instances}
+\section{Implementing |derive|}
 \label{sec:guess}
 
-This section covers the implementation of a |derive| function, as described in \ref{sec:scheme}. There are many approaches to writing a |derive| function, ours merely one option -- we hope that the scheme we have described provides ample opportunity for experimentation.
+This section covers the implementation of a |derive| function, as described in \S\ref{sec:scheme}. There are many ways write a |derive| function, our approach is merely one choice -- we hope that the scheme we have described provides ample opportunity for experimentation.
 
 Before implementing |derive| it is useful to think about what properties it should have. It is not necessary to guarantee correctness (see \S\ref{sec:correctness}), but our method chooses to only generate correct results. We have shown that our DSL and sample input guarantee predictability without regard to the |derive| function, provided we meet the restrictions in \S\ref{sec:predictability}, which we obey. We want our |derive| function to terminate, and ideally terminate within a reasonable time bound. Finally, we would like the |derive| function to find an answer if one exists, i.e.:
 
@@ -490,8 +490,8 @@ The basis of our |derive| implementation is a parameterised guess. Each fragment
 
 \begin{code}
 data Guess  =  Guess DSL
-            |  GuessCtr Integer DSL -- 0-based index
-            |  GuessFld Integer DSL -- 1-based index
+            |  GuessCtr Int DSL -- 0-based index
+            |  GuessFld Int DSL -- 1-based index
 
 derive :: Output -> [DSL]
 derive o = [d | Guess d <- guess o]
