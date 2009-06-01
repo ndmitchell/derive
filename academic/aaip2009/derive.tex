@@ -331,26 +331,26 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
     f (Application (f -> OList xs)) =
         foldl1 (\a b -> OApp "App" [a,b]) xs
 
-    f (MapCtor dsl) = OList  [applyEnv dsl env{envCtor=c}
-         |  c <- dataCtors input]
-    f (MapField dsl) = OList [applyEnv dsl env{envField=i}
+    f (MapCtor   dsl) = OList [applyEnv dsl env{envCtor=c   }
+         | c <- dataCtors input]
+    f (MapField  dsl) = OList [applyEnv dsl env{envField=i  }
          | i <- [1.. ctorArity ctor]]
 
-    f DataName = OString $ dataName input
-    f CtorName = OString $ ctorName ctor
-    f CtorArity = OInt $ ctorArity ctor
-    f CtorIndex = OInt $ ctorIndex ctor
-    f FieldIndex = OInt field
+    f DataName    = OString  $ dataName input
+    f CtorName    = OString  $ ctorName ctor
+    f CtorArity   = OInt     $ ctorArity ctor
+    f CtorIndex   = OInt     $ ctorIndex ctor
+    f FieldIndex  = OInt     $ field
 
-    f Head = fst fold
-    f Tail = snd fold
+    f Head  = fst  fold
+    f Tail  = snd  fold
     f (Fold cons (f -> OList xs)) =
         foldr1 (\a b -> applyEnv cons env{envFold=(a,b)}) xs
 
     f (List xs) = OList $ map f xs
-    f (Reverse (f -> OList xs)) = OList $ reverse xs
-    f (Concat (f -> OList [])) = OList []
-    f (Concat (f -> OList xs)) = foldr1 g xs
+    f (Reverse        (f -> OList xs  )) = OList $ reverse xs
+    f (Concat         (f -> OList []  )) = OList []
+    f (Concat         (f -> OList xs  )) = foldr1 g xs
             where  g (OList    x) (OList    y) = OList    (x++y)
                    g (OString  x) (OString  y) = OString  (x++y)
     f (String x) = OString x
@@ -478,15 +478,15 @@ While this code code may appear less efficient, any good optimiser (i.e. GHC) wi
 
 This section covers the implementation of a |derive| function, as described in \S\ref{sec:scheme}. There are many ways write a |derive| function, our approach is merely one choice -- we hope that the scheme we have described provides ample opportunity for experimentation.
 
-Before implementing |derive| it is useful to think about what properties it should have. It is not necessary to guarantee correctness (see \S\ref{sec:correctness}), but our method chooses to only generate correct results. We have shown that our DSL and sample input guarantee predictability without regard to the |derive| function, provided we meet the restrictions in \S\ref{sec:predictability}, which we obey. We want our |derive| function to terminate, and ideally terminate within a reasonable time bound. Finally, we would like the |derive| function to find an answer if one exists, i.e.:
+Before implementing |derive| it is useful to think about what properties are desirable. It is not necessary to guarantee correctness (see \S\ref{sec:correctness}), but our method chooses to only generate correct results. We have shown that our DSL and sample input guarantee predictability without regard to the |derive| function, provided we meet the restrictions in \S\ref{sec:predictability}, which we obey. We want our |derive| function to terminate, and ideally terminate within a reasonable time bound. Finally, we would like the |derive| function to find an answer if one exists, i.e.:
 
 \ignore\begin{code}
 forall o `elem` Output, d `elem` DSL `o` null (derive o) => apply d sample /= o
 \end{code}
 
-We are unaware of a |derive| implementation for our particular problem that performs acceptably\footnote{We believe enumerative search to a particular depth would succeed, but this method is clearly infeasible}. Our method is a trade off between runtime and success rate, with a particular desire to succeed for real-world examples.
+We are unaware of a |derive| implementation meeting this property for our problem that also performs acceptably\footnote{We believe enumerative search to a particular depth would succeed, but this method is clearly infeasible}. Our method is a trade off between runtime and success rate, with a particular desire to succeed for real-world examples.
 
-The basis of our |derive| implementation is a parameterised guess. Each fragment of output is related to a guess -- a DSL parameterised by some aspect of the environment, i.e. |OString "First"| would result in the guess |CtorName| parameterised by the first constructor. Concretely, our central |Guess| type is:
+The basis of our |derive| implementation is a parameterised guess. Each fragment of output is related to a guess -- a DSL parameterised by some aspect of the environment. For example, |OString "First"| results in the guess |CtorName| parameterised by the first constructor. Concretely, our central |Guess| type is:
 
 \begin{code}
 data Guess  =  Guess DSL
@@ -499,36 +499,40 @@ derive o = [d | Guess d <- guess o]
 guess :: Output -> [Guess]
 \end{code}
 
-Applying |guess (OString "First")| will give the result |GuessCtr 0 CtorName|. The |GuessCtr| and |GuessFld| guesses are paramterised by either constructors or fields, and can therefore only occur within either |MapCtor| or |MapField|. The |Guess| guess is either parameterised by the entire data type, or is a constant which does not refer to the environment at all.
+Applying |guess (OString "First")| produces the resulting guess of |GuessCtr 0 CtorName|. The |GuessCtr| and |GuessFld| guesses are paramterised by either constructors or fields, and can therefore only occur within either |MapCtor| or |MapField|. The |Guess| guess is either parameterised by the entire data type, or is a constant which does not refer to the environment at all.
 
-To generate a guess for the entire output we start by generating guesses for the leaf nodes of the |Output| value, then work upwards combining them. If at any point we see an opportunity to apply one of our custom rules (i.e. |Instance|), we do so. The important points are how we infer create guesses for the leaves, how we combine guesses together (always to produce a list), and where we apply our custom rules. We require that all generated guesses are correct, defined by:
+To generate a guess for the entire output we start by generating guesses for the leaf nodes of the |Output| value, then work upwards combining them. If at any point we see an opportunity to apply one of our custom rules (i.e. |Instance|), we do so. The important points are how we create guesses for the leaves, how we combine guesses together (always to produce a list), and where we apply our custom rules. We require that all generated guesses are correct, defined by:
 
 \ignore\begin{code}
 forall g `elem` guess output `o` applyGuess g == o
 \end{code}
 \begin{code}
 applyGuess :: Guess -> Output
-applyGuess (Guess       d) = applyEnv d (Env{envInput=sample})
-applyGuess (GuessCtr i  d) = applyEnv d (Env{envInput=sample,envCtor=dataCtors sample !! i})
-applyGuess (GuessFld i  d) = applyEnv d (Env{envInput=sample,envField=i})
+applyGuess (Guess       d) = applyEnv d
+    Env{envInput=sample}
+applyGuess (GuessCtr i  d) = applyEnv d 
+    Env{envInput=sample,envCtor=dataCtors sample !! i}
+applyGuess (GuessFld i  d) = applyEnv d
+    Env{envInput=sample,envField=i}
 \end{code}
 
 \subsection{Guessing Constant Leafs}
 
 \subsubsection{String}
 
-To guess an |OString| value is trivial -- if it has a banned suffix (i.e. a sample constructor name or the data name) we generate an appropriately parameterised guess, otherwise we use the constant string. Some examples:
+To guess an |OString| value is simple -- if it has a banned suffix (i.e. a sample constructor name or the data name) we generate an appropriately parameterised guess, otherwise we use the constant string. Some examples:
 
 \h{.exprlist}\begin{code}
 OString "hello" == String "hello"
 OString "Sample" == DataName
 OString "First" == Guess 0 CtorName
-OString "isThird" = Guess 2 (Concat (List [String "is",CtorName]))
+OString "isThird" == Guess 2
+    (Concat (List [String "is",CtorName]))
 \end{code}
 
 \subsubsection{Application}
 
-The guess for an |OApp| is composed of two parts -- the name of the constructor to apply and the list of arguments. The name of the constructor in |App| always matches that in |OApp| exactly. The arguments to |App| are created by performing |guess| on the list, and wrapping the generated DSL in in |App op|. The guess for |OApp| can be written as:
+The guess for an |OApp| is composed of two parts -- the name of the constructor to apply and the list of arguments. The name of the constructor in |App| always matches that in |OApp| exactly. The arguments to |App| are created by performing |guess| on the list, and wrapping the generated DSL in |App op|. The guess for |OApp| can be written as:
 
 \begin{code}
 guess (OApp op xs) = map (lift (App op)) (guess (OList xs))
@@ -541,7 +545,7 @@ lift f (GuessFld i  d) = GuessFld i  (f d)
 
 \subsubsection{Integer}
 
-For all the previous examples we have been able to create a unique possible guess, however this is not true for integers. Given an integer it could be a constant, it could be a constructor index or arity, and it could be a field index. We can guess an |OInt| as follows:
+Given an integer there may be several different guesses that are suitable. An integer could be a constant, a constructor index or arity, or a field index. We can guess an |OInt| as follows:
 
 \begin{code}
 guess (OInt i) =
@@ -555,8 +559,10 @@ guess (OInt i) =
 
 \h{.exprlist}\begin{code}
 OInt 0 == [Guess (Int 0)]
-OInt 1 == [GuessFld 1 FieldIndex, GuessCtr 1 CtorArity, Guess (Int 1)]
-OInt 2 == [GuessFld 2 FieldIndex, GuessCtr 2 CtorIndex, Guess (Int 2)]
+OInt 1 == [Guess (Int 1)  , GuessFld 1 FieldIndex
+                          , GuessCtr 1 CtorArity]
+OInt 2 == [Guess (Int 2)  , GuessFld 2 FieldIndex
+                          , GuessCtr 2 CtorIndex]
 OInt 3 == [Guess (Int 3)]
 \end{code}
 
@@ -564,35 +570,52 @@ For the guess of an |OInt| it is interesting to note that we never generate gues
 
 \subsection{Lists}
 
-The hardest values to guess correctly are lists. For each element of the list, we apply |guess|, then attempt to find a list of guesses, one for each element in the list, which can be collapsed into a single guess. Therefore, the problem of guessing a list is the problem of collapsing a list of guesses to a single guess. Given such a collapse function we can write:
+Most of the complexity in guessing comes from lists. For each element of the list, we apply |guess|, then attempt to find a list of guesses, one corresponding to each element in the list, which can be collapsed into a single guess. Therefore, the problem of guessing a list is the problem of collapsing a list of guesses to a single guess. Given such a collapse function we can write:
 
 \begin{code}
 guess (OList xs) = mapMaybe collapse (mapM guess xs)
 
 collapse :: [Guess] -> Maybe Guess
+collapse xs = liftM Concat $ rules $
+    map (lift (\x -> List [x])) xs
 \end{code}
 
-The |mapM| function uses the list monad to combine the lists in all possible sequences. The |collapse| function starts by putting each guess in a box, and then concatenating them all.
+\begin{comment}
+\begin{code}
+rules :: [Guess] -> Maybe Guess
+\end{code}
+\end{comment}
+
+The |mapM| function uses the list monad to generate all possible sequences of lists. The |collapse| function first lifts each guess in to a singleton list, and concatenates the result afterwards, to ensure that rules can combine adjacent elements without changing the type of the underlying DSL. The function |rules| applies three rules, returning a |Just| result if any possible sequence of rule applications reduces the list to a singleton element.
 
 \subsubsection{Promotion}
 
-Given a |Guess|, we can promote it to a |GuessFld| or |GuessCtr|.
+The promotion rule changes a guess without a parameter in to one with a parameter. We can promote |Guess| to either |GuessFld| or |GuessCtr|, with any parameter value. For example |Guess d| can be promoted to either of |GuessCtr 2 d| or |GuessField 1 d|, or using any other permissible index. The promotion rule does not reduce the number of elements in the list, but allows other rules to apply, in particular the conjunction rule.
 
 \subsubsection{Conjunction}
 
-If two adjacent elements have the same guess environment, they can be combined.
+If two adjacent guesses have the same parameter value, they can be combined in to one guess. For example, given |GuessCtr 2 d_1| and |GuessCtr 2 d_2| we produce |GuessCtr 2 (Concat (List [d_1,d_2]))|. This rule shows the importance that each guess evaluates to a list.
 
 \subsubsection{Sequence}
 \label{sec:guess_lists_sequence}
 
-Given two adjacent fields, say |[GuessFld 1 d_1, GuessFld 2 d_2]| if |applyGuess (GuessFld 1 d_2) |
+The sequence rule introduces either |MapField| or |MapCtor| from a list of guesses. Given two adjacent guesses we can apply the rule:
 
- or join a complete ordered list of fields or constructors (perhaps in reverse)
+\begin{code}
+(GuessFld 1 d_1) (GuessFld 2 d_2)
+    | applyGuess (GuessFld 2 d_1) == applyGuess (GuessFld 2 d_2)
+    = GuessCtr 1 (MapField d_1)
+\end{code}
 
+The important points are that the guesses of the fields in the correct order, one of the DSL values (in this case |d_1|) is applicable to both problems, and that the resultant guess is paramterised by the |Second| constructor, which has two fields. We also permit sequences in reverse order, which we generate by reversing the list before generating a sequence and inserting a |Reverse| afterwards.
 
-As a side condition, in our implementation we convert a list of ordered guesses using |MapCtor| we check that they all mention the constructor name.
+The sequence construction for fields can be extended to constructors by demanding three guesses parameterised by consecutive constructors. For constructors we always try to use the DSL relating to the |Second| constructor, as this DSL is the only one that can possibly have a |MapField| construct within it, and we avoid generating |CtorArity| and |CtorIndex| guesses for any other constructor. In addition we also require that before creating a |MapCtor| the guess contains a |CtorName|, to ensure the restrictions from \S\ref{sec:predictability} are met.
 
 \subsection{Folds}
+
+The introduction of folds is 
+
+We insert folds in a very restricted manner. 
 
 We search for folds on an ad-hoc basis. They are quite restricted, must start |OApp m [OApp m [x,op,y],op,z]| or the flipped variant. When searching for folds we find the fold, then try and generate a list for the bits we extract. We do this in parallel.
 
