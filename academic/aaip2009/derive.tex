@@ -11,6 +11,9 @@
 
 %include paper.fmt
 %format `k` = "\backtick{k}"
+%format (list (x)) = $| x |$
+%format nil = $| |$
+%format instance_ = instance
 
 \newcommand{\derive}{\textsc{Derive}}
 
@@ -123,7 +126,7 @@ This paper makes the following contributions:
 
 \begin{itemize}
 \item We describe a scheme which allows us to infer predictable and correct relationships (\S\ref{sec:scheme}).
-\item We describe how this scheme is applicable to instance generation, both in a high-level manner (\S\ref{sec:instances}), and more detailed practical concerns (\S\ref{sec:implementation}).
+\item We describe how this scheme is applicable to instance generation, both in a high-level manner (\S\ref{sec:instances}), and more detailed practical concerns (\S\ref{sec:using}).
 \item We outline a method for deriving a relationship in our DSL, without resorting to unguided search (\S\ref{sec:guess}).
 \item We give measured results (\S\ref{sec:results}), including reasons why our inference fails (\S\ref{sec:failure}). In our experience, over 60\% of Haskell class instances can be determined using this technique.
 \end{itemize}
@@ -213,7 +216,7 @@ We wish to allow generation of any sequence of Haskell declarations, where a dec
 
 For our purposes, it is clear that both string and pretty printing combinators are unsuitable -- they lack sufficient structure to implement the |derive| operation. The choice between a typed and untyped AST is one of safety vs simplicity. The use of a typed AST in the first version of \derive{} caused several complexities -- notably the DSL was hard to represent in a well-typed manner and some functions had to be duplicated for each type. The loss of safety from untyped AST's is not great, because both DSL's and AST's are automatically generated, rather than being written by hand. Therefore, we chose to use untyped AST's for the current version of \derive{}. We discuss possible changes to regain type safety in \S\ref{sec:conclusion}.
 
-While we work internally with an untyped AST, most existing Haskell libraries for working with AST's are type, therefore we choose to take a typed AST and collapse it to a single type (details of how this is done are in \S\ref{sec:universe}). The use of Template Haskell in the first version of \derive{} gave a number of advantages -- it is built in to GHC and can represent a large range of Haskell programs. Unfortunately, there were also a number of problems:
+While we work internally with an untyped AST, most existing Haskell libraries for working with AST's are type, therefore we choose to take a typed AST and collapse it to a single type, using the Scrap Your Boilerplate generic programming facilities \cite{lammel:syb}. The use of Template Haskell in the first version of \derive{} gave a number of advantages -- it is built in to GHC and can represent a large range of Haskell programs. Unfortunately, there were also a number of problems:
 
 \begin{itemize}
 \item While being tied to GHC ensures Template Haskell is available everywhere GHC is, it means that Template Haskell cannot be upgraded separately. Users of older versions of GHC cannot take advantage of improvements in Template Haskell, and every GHC upgrade requires changes to fix \derive{}.
@@ -358,7 +361,7 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
     f (ShowInt (f -> OInt x)) = OString $ show x
     f (App x (f -> OList ys)) = OApp x ys
 
--- for information on |out|, see \S\ref{sec:universe}
+-- transform a value to the |Output| type using SYB \cite{lammel:syb}
 out :: Data alpha => alpha -> Output
 \end{code}
 \caption{The |apply| function.}
@@ -510,7 +513,7 @@ forall g `elem` guess output `o` applyGuess g == o
 applyGuess :: Guess -> Output
 applyGuess (Guess       d) = applyEnv d
     Env{envInput=sample}
-applyGuess (GuessCtr i  d) = applyEnv d 
+applyGuess (GuessCtr i  d) = applyEnv d
     Env{envInput=sample,envCtor=dataCtors sample !! i}
 applyGuess (GuessFld i  d) = applyEnv d
     Env{envInput=sample,envField=i}
@@ -613,35 +616,43 @@ The sequence construction for fields can be extended to constructors by demandin
 
 \subsection{Folds}
 
-The introduction of folds is 
-
-We insert folds in a very restricted manner. 
-
-We search for folds on an ad-hoc basis. They are quite restricted, must start |OApp m [OApp m [x,op,y],op,z]| or the flipped variant. When searching for folds we find the fold, then try and generate a list for the bits we extract. We do this in parallel.
+The addition of fold to our DSL is practically motivated -- if we did not have fold we could not express a number of real derivations. Since we are more interested in the practical uses of fold, we have not attempted to guess folders everywhere they are applicable -- merely a few useful cases. We require folds to start with either the pattern |OApp m [OApp m [x,op,y],op,z]| or |OApp m [x,op,OApp m [y,op,z]]|. Given such a pattern, we continue down the tree finding all matching patterns of |op| and |m|. After constructing a fold we attempt to guess the remaining list.
 
 \subsection{Application}
 
-We search for applications in parallel, then try and infer the list.
+Similarly to folds, the introduction of application nodes is directly in response to a practical need. Since an |Application| is a series of left-nested |App| nodes in haskell-src-exts, we look specifically for sequences of |OApp "App"| and translate them appropriately where possible.
 
 \subsection{Instance}
 
-We look for instances alone, and if an instance matches we do nothing else. It's dull code, but simple.
+As per the restrictions given in \S\ref{sec:predictability}, the only way of creating an |Instance| element in the output is to use an |Instance| DSL combinator -- it is forbidden to use |App "Instance"|. Given this restriction, we know that when finding |OApp "Instance"|, if it can be expressed in our DSL, it must use |Instance|. Using the meaning of |Instance| it is simple to detect which possible instance declarations can be expressed with our DSL, and for these we do so.
 
+\section{Using Derived Instances}
+\label{sec:using}
 
-
-\section{Implementation Details}
-\label{sec:implementation}
-
-\subsection{Typed AST to Untyped AST}s
-\label{sec:universe}
-
-SYB stuff goes in here. Haskell-src-exts.
-
-We skip src loc in haskell-src-exts, as it's irrelevant.
-
-We also convert back.
+Once we have derived a DSL, what now? We can optimise the DSL, to keep its meaning but make it simpler. We can optimise the output, to make it simpler. We can also write out the DSL in various forms. We'll use the arities from \S\ref{sec:predictability} as an example.
 
 \subsection{DSL Optimisation}
+
+We use Uniplate \cite{uniplate}.
+
+We can apply rules which can be derived from our tool:
+
+\begin{code}
+Concat (List [..., List xs, List ys, ...]) => Concat [..., List (xs++ys), ...]
+Concat (List [x]) => x
+\end{code}
+
+With these rules the resulting DSL is:
+
+\begin{code}
+instance_ [] "Arities" [
+    Function "arities" (list PWildCard) (mapCtor (application list
+
+list (instance_ [] "Arities" (function (list ("arities",list (PWildCard nil),Nothing nil,List (list (mapCtor (application
+ (list (Var (list ("const")),Int (list (ctorArity)),RecConstr (list (ctorName,ni
+l))))))),BDecls (list (nil))))))))))))\end{code}
+
+We've used the notation |list bullet| for |List [bullet]|, |"foo"| for |String "foo"|, and |app x| for |App "x"|.
 
 \subsection{Output Optimisation}
 \label{sec:simplify}
@@ -668,6 +679,14 @@ simplify = transformBi fExp
 \end{code}
 
 \subsection{DSL Usage}
+
+The most obvious thing to do with a value of our DSL is to apply it. But that's not the only thing we can do. Given the obvious and particularly simple example of arities, we get as the simplified DSL:
+
+
+
+We can apply a futurama specialisation \cite{futanama:projections} and generate an instance declaration.
+
+We can also generate SYB instances.
 
 What can we do with DSLs? The world is our Oyster, we can generate |Data| based reflective code, we can generate concrete instances, we can write out an instance generator.
 
