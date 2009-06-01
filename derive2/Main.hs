@@ -22,3 +22,10 @@ tester name out = do
     when (not $ apply d sample `outEq` out) $
         error "tester: Correctness invariant breached"
     putStrLn $ showOut $ simplifyOut $ apply d list
+
+
+testOne = do
+    ParseOk (Module _ _ _ _ _ _ decls) <- parseFile "Examples.hs"
+    let out:_ = [takeWhile (not . isUnknownDeclPragma) real | UnknownDeclPragma _ "DERIVE" name:real <- tails decls, "Arities" `isPrefixOf` name]
+    let dsl:_ = derive out
+    putStrLn $ prettyTex dsl

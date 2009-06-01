@@ -10,6 +10,11 @@ instance (Eq a) => Eq (Sample a) where
     Third x1 == Third y1 = (x1 == y1) && True
     _ == _ = False
 
+{-# DERIVE Arities #-}
+
+instance Arities (Sample a) where
+    arities _ = [const 0 First{}, const 2 Second{}, const 1 Third{}]
+
 {-# DERIVE Arity #-}
 
 instance Arity (Sample a) where

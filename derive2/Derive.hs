@@ -20,7 +20,7 @@ ctrNames = map ctorName $ dataCtors sample
 
 
 derive :: Out -> [DSL]
-derive x = [y | Guess y <- guess $ toOutput x]
+derive x = [simplifyDSL y | Guess y <- guess $ toOutput x]
 
 
 guess :: Output -> [Guess]
