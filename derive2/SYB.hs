@@ -4,6 +4,7 @@
 module SYB(dslSYB) where
 
 import HSE
+import qualified Language.Haskell.Exts as H
 import DSL
 import Control.Monad
 import Control.Monad.State hiding (lift)
@@ -66,7 +67,7 @@ derr x = error $ "Couldn't dslSYB on: " ++ show x
 
 
 dsimple :: Data a => DSL -> Maybe a
-dsimple = lift dinstance & lift dstring & lift dexp 
+dsimple = lift dinstance & lift dstring & lift dapplication & lift dmapctor & lift dsingle
 
 
 dinstance :: DSL -> Maybe Decl
@@ -74,8 +75,8 @@ dinstance x = do
     Instance _ name bod <- return x
     bod <- syb bod
     return $ InstDecl sl
-        [ClassA (UnQual $ Ident "Data") [TyVar $ Ident "a"]]
-        (UnQual $ Ident name) [TyVar $ Ident "a"]
+        [ClassA (UnQual $ Ident "Data") [TyVar $ Ident "d_type"]]
+        (UnQual $ Ident name) [TyVar $ Ident "d_type"]
         bod
 
 
@@ -85,5 +86,28 @@ dstring x = do
     return x
 
 
-dexp :: DSL -> Maybe [Exp]
-dexp x = return $ [Var $ UnQual $ Ident "TODO"]
+dmapctor :: DSL -> Maybe Exp
+dmapctor x = do
+    App "List" (List [MapCtor x]) <- return x
+    x <- syb x
+    return $ ListComp x [Generator sl (PVar $ Ident "d_ctor")
+        (H.App (v "d_dataCtors") (Paren $ ExpTypeSig sl (v "undefined") (TyVar $ Ident "d_type")))]
+
+
+dsingle :: DSL -> Maybe Exp
+dsingle (App "Lit" (List [App "Int" (List [CtorArity])])) = Just $ Paren $ H.App (v "d_ctorArity") (v "d_ctor")
+dsingle (App "Lit" (List [App "Int" (List [CtorIndex])])) = Just $ Paren $ H.App (v "d_ctorIndex") (v "d_ctor")
+dsingle (App "RecConstr" (List [App "UnQual" (List [App "Ident" (List [CtorName])]),List []])) = Just $ Paren $ H.App (v "d_ctorUndefined") (v "d_ctor")
+dsingle _ = Nothing
+
+
+dapplication :: DSL -> Maybe Exp
+dapplication x = do
+    Application (List xs) <- return x
+    syb $ f xs
+    where
+        f (x:y:z) = f (App "App" (List [x,y]) : z)
+        f [x] = x
+
+
+v = Var . UnQual . Ident

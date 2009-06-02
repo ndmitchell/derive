@@ -29,7 +29,10 @@ testOne = do
     ParseOk (Module _ _ _ _ _ _ decls) <- parseFile "Examples.hs"
     let out:_ = [takeWhile (not . isUnknownDeclPragma) real | UnknownDeclPragma _ "DERIVE" name:real <- tails decls, "Arities" `isPrefixOf` name]
     let dsl:_ = derive out
+    putStr $ showOut out
+    putStr $ showOut $ apply dsl sample
     print dsl
+    
     putStrLn $ prettyTex dsl
     case dslSYB dsl of
         Nothing -> putStrLn "No SYB derivation"
