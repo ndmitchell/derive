@@ -28,4 +28,5 @@ testOne = do
     ParseOk (Module _ _ _ _ _ _ decls) <- parseFile "Examples.hs"
     let out:_ = [takeWhile (not . isUnknownDeclPragma) real | UnknownDeclPragma _ "DERIVE" name:real <- tails decls, "Arities" `isPrefixOf` name]
     let dsl:_ = derive out
+    print dsl
     putStrLn $ prettyTex dsl

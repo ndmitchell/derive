@@ -83,6 +83,8 @@ prettyTex = f id . transform g
     where
         bracket x = "(" ++ x ++ ")"
     
+        f b (App x (List [])) = x
+        f b (App x (List xs)) = b $ unwords $ x : map (f bracket) xs
         f b (App x y) = b $ x ++ " " ++ f bracket y
         f b (Concat x) = b $ "concat " ++ f bracket x
         f b (Reverse x) = b $ "reverse " ++ f bracket x
