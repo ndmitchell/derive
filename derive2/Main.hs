@@ -4,6 +4,7 @@ module Main where
 import HSE
 import Apply
 import DSL
+import SYB
 import Derive
 import Data.List
 import Control.Monad
@@ -30,3 +31,6 @@ testOne = do
     let dsl:_ = derive out
     print dsl
     putStrLn $ prettyTex dsl
+    case dslSYB dsl of
+        Nothing -> putStrLn "No SYB derivation"
+        Just x -> putStrLn $ showOut x
