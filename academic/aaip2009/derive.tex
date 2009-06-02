@@ -13,7 +13,7 @@
 %format `k` = "\backtick{k}"
 %format (list (x)) = $| x |$
 %format nil = $| |$
-%format instance_ = instance
+%format instance_ = "\Varid{instance}"
 
 \newcommand{\derive}{\textsc{Derive}}
 
@@ -361,7 +361,8 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
     f (ShowInt (f -> OInt x)) = OString $ show x
     f (App x (f -> OList ys)) = OApp x ys
 
--- transform a value to the |Output| type using SYB \cite{lammel:syb}
+-- transform a value to the |Output| type using
+-- SYB \cite{lammel:syb}
 out :: Data alpha => alpha -> Output
 \end{code}
 \caption{The |apply| function.}
@@ -632,32 +633,42 @@ As per the restrictions given in \S\ref{sec:predictability}, the only way of cre
 Once we have derived a DSL, what now? We can optimise the DSL, to keep its meaning but make it simpler. We can optimise the output, to make it simpler. We can also write out the DSL in various forms. We'll use the arities from \S\ref{sec:predictability} as an example.
 
 \subsection{DSL Optimisation}
+\label{sec:dsl_optimisation}
 
-We use Uniplate \cite{uniplate}.
+We can determine the following equalities using rules present in our |apply| function from Figure \ref{fig:apply}.
 
-We can apply rules which can be derived from our tool:
-
-\begin{code}
-Concat (List [..., List xs, List ys, ...]) => Concat [..., List (xs++ys), ...]
-Concat (List [x]) => x
+\h{.exprlist}\begin{code}
+Concat (List (a ++ [List xs, List ys] ++ b)) ==
+    Concat (List (a ++ [List (xs++ys)] ++ b))
+Concat (List (a ++ [List []] ++ b)) == Concat (List (a++b))
+Concat (List [x]) == x
+Concat (List []) == List []
 \end{code}
 
-With these rules the resulting DSL is:
+We use Uniplate \cite{uniplate} to apply these rules.
+
+Unfortunately, even with all these rules applied the DSL for even a very simple example is quite complex. The full DSL for arities is given in Appendix \ref{sec:arities_full}. Here we give a simplified version, removing some of the haskell-src-ext nodes that are not really necessary for a human to understand the program (i.e. |Ident|, |UnQual|), and using syntactic sugar. We have translated all DSL constructors to lower-case, and used upper-case for the haskell-src-exts constructors. With these translations the resulting DSL is:
 
 \begin{code}
-instance_ [] "Arities" [
-    Function "arities" (list PWildCard) (mapCtor (application list
+list (instance_ [] "Arities" (list (InsDecl (FunBind (list (
+    Match "arities"
+        (list (PWildCard))
+        Nothing
+        (List (mapCtor (application
+            (list (Var "const",Int ctorArity,RecConstr ctorName nil))
+        )))
+        (BDecls nil)
+))))))
+\end{code}
 
-list (instance_ [] "Arities" (function (list ("arities",list (PWildCard nil),Nothing nil,List (list (mapCtor (application
- (list (Var (list ("const")),Int (list (ctorArity)),RecConstr (list (ctorName,ni
-l))))))),BDecls (list (nil))))))))))))\end{code}
-
-We've used the notation |list bullet| for |List [bullet]|, |"foo"| for |String "foo"|, and |app x| for |App "x"|.
+We can see that even with the translated from it's pretty hard to write. The full form is even harder. This example shows the utility of our work -- writing such instance declarations by hand, even for this simplest example, is hard.
 
 \subsection{Output Optimisation}
 \label{sec:simplify}
 
-Post-generation optimisation tweaks. i.e. \ignore|a && True => a|. Could perhaps use HLint in a future version.
+Post-generation optimisation tweaks. i.e. \ignore|a && True => a|. Could perhaps use HLint in a future version. Mostly these are just constant folding, often using inbuilt knowledge of particular tools. Some of these could be applied by GHC (i.e. |const|), but some are recursive and can't (i.e. |length|).
+
+We chose to give the direct rules in Uniplate. All of them simplify at the expression level, and each |fExp| declaration can be used individually. To simplify the matching we introduce |(~=)| which converts complex HSE terms in to simple strings before performing equality.
 
 \h{.hse}\begin{code}
 simplify :: Biplate alpha Exp => alpha -> alpha
@@ -678,19 +689,52 @@ simplify = transformBi fExp
         fExp x = x
 \end{code}
 
+We could also lift some of these output simplifications back in to DSL simplifications, for example the |const| one. However, this increases the complexity and we still need them for terms such as |CtorArity-1| so we don't bother.
+
 \subsection{DSL Usage}
 
-The most obvious thing to do with a value of our DSL is to apply it. But that's not the only thing we can do. Given the obvious and particularly simple example of arities, we get as the simplified DSL:
+\subsubsection{Apply the DSL}
 
+The most obvious thing to do with a value of our DSL is to apply it and generate an output, in HSE syntax. There is a package (\todo{called what}) that automatically translates HSE syntax into Template Haskell, so we can continue and use that to integrate with Template Haskell and GHC. We can wrap our tool in a command line and perform these steps online.
 
+\subsubsection{Specialised Instance Generators}
 
-We can apply a futurama specialisation \cite{futanama:projections} and generate an instance declaration.
+But that's not the only thing we can do. One option is to write out a generator specialised to generating DSL's of just this type. This corresponds to a futurama specialisation \cite{futanama:projections}. For example with the arities we could generate:
 
-We can also generate SYB instances.
+\begin{code}
+generateArities :: Input -> Output
+generateArities input = [InstDecl []
+    (UnQual $ Ident "Arities")
+    (foldl TyApp
+        (TyCon $ UnQual $ Ident $ dataName input)
+        (map (TyVar . Ident) vars))
+    [InsDecl [FunBind [Match [
+        App (Ident "arities") [PWildCard] Nothing ellipses]]]]
+    where vars = take (dataVars input) $ map (:[]) ['a'..]
+\end{code}
 
-What can we do with DSLs? The world is our Oyster, we can generate |Data| based reflective code, we can generate concrete instances, we can write out an instance generator.
+Since our |apply| function and |output| functions are both terminating, the |generateArities| function can be constructed as |generateArities input = outputToHSE . apply aritiesDSL|, then the |outputToHSE| and |apply| can be unfolded maximally until |aritiesDSL| has disappeared.
 
-Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor.
+The first version of Derive generated as it's output a string containing the function, but that was substantially because it lacked a structured DSL underneath. We haven't bothered as we don't believe the speed of constructing DSL's is too high, so the benefits would be limited. However, it's a possibility.
+
+\subsubsection{SYB Instance Generators}
+
+Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor. Another, perhaps more useful activity, is to generate SYB instances. We can use the reflective methods in |Data| \cite{lammel:syb2} to examine the data constructors etc.
+
+\begin{code}
+instance Data alpha => Arities alpha where
+    arities _ = ...
+\end{code}
+
+We have implemented such a feature, with the restrictions that:
+
+\begin{enumerate}
+\item The generated code must all be at the expression level, and not involved in name bindings.
+\end{enumerate}
+
+Results on it's success on a range of examples are given in \S\ref{sec:failure_syb}.
+
+You need to use some instance extension flags to get the right one and select if multiple ones are in scope.
 
 \section{Results}
 \label{sec:results}
@@ -706,9 +750,16 @@ The instance generation scheme given is not complete -- there exist instances wh
 
 \item[Type-based definitions:] For example, the |Monoid| class requires items of the same type to be processed using |mappend|, but items of a different type use |mempty|. Automatic derivation has no notion of type-specific behaviour.
 
-\item [Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |Sample|, record definitions could be determined, but this change would increase the complexity of all other example instances.
+\item[Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |Sample|, record definitions could be determined, but this change would increase the complexity of all other example instances.
+
+\item[Kind not |*|:] Doesn't work, i.e. |Functor|. Most of these wouldn't work for other reasons though.
 
 \end{description}
+
+\subsection{Limitations of SYB Generation}
+\label{sec:failure_syb}
+
+How many can't be turned in to SYB?
 
 \subsection{Generation of Standard Classes}
 \label{sec:automatic_success}
@@ -778,6 +829,35 @@ Computers are ideally suited to applying repetitive patterns, but specifying the
 
 Thanks to Stefan O'Rear help with the first version of the \derive{} tool. Thanks to Niklas Broberg for the excellent haskell-src-exts librarys.
 
+
+\appendix
+
+\section{Arities DSL}
+\label{sec:arities_full}
+
+This section is the full arities DSL, which is shown simplified and nicely printed in \S\ref{sec:dsl_optimisation}.
+
+\begin{code}
+List [Instance [] "Arities" (List [App "InsDecl" (
+    List [App "FunBind" (List [List [
+        App "Match" (List
+            [App "Ident" (List [String "arities"])
+            ,List [App "PWildCard" (List [])]
+            ,App "Nothing" (List [])
+            ,App "UnGuardedRhs" (List [App "List" (List [
+                MapCtor (Application (List
+                    [App "Var" (List [App "UnQual" (List [
+                        App "Ident" (List [String "const"])])])
+                    ,App "Lit" (List [App "Int" (List [CtorArity])])
+                    ,App "RecConstr" (List [App "UnQual" (List [
+                        App "Ident" (List [CtorName])]),List []])]
+                ))
+            ])])
+            ,App "BDecls" (List [List []])]
+        )
+    ]])]
+)])]
+\end{code}
 
 \bibliographystyle{plainnat}
 \bibliography
