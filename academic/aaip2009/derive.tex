@@ -204,6 +204,7 @@ To use this general scheme, we need to instantiate it to our particular problem 
 In this section we apply the scheme from the previous section to the problem of deriving type class instances. We let the output type be Haskell source code and the input type by a representation of algebraic data types. The DSL contains features such as list manipulation, constant values, folds and maps. We first describe each type in detail, then discuss the restrictions necessary to satisfy the predictability property.
 
 \subsection{Output}
+\label{sec:output}
 
 We wish to allow generation of any sequence of Haskell declarations, where a declaration is typically a function definition or type class instance. There are several possible types to represent a sequence of declarations:
 
@@ -238,6 +239,15 @@ data Output  =  OString String
 Here |OString| and |OInt| represent concrete terminals. The |OList| constructor generates a list from a sequence of  |Output| values. The most interesting constructor is |OApp|, which constructs a value in the typed tree. For example |Just [1,2]| would be represented as |OApp "Just" [OList [OInt 1,OInt 2]]|.
 
 Our |Output| type can represent many impossible values, for example |OApp "Just" []| is an error, as is |OApp "Invalid" []|, where |Invalid| it not a constructor. We consider any |Output| value that does not have a corresponding haskell-src-exts value to be an error. The root |Output| value must have type |[Decl]| when translated, i.e. must be an |OList|, and the inner values must have appropriate types.
+
+We can translate between our |Output| type, which represents a list of declarations, to the haskell-src-exts type |[Decl]|:
+
+\begin{code}
+toOutput    :: [Decl] -> Output
+fromOutput  :: Output -> [Decl]
+\end{code}
+
+We have implemented these functions using the SYB generics library \cite{lammel:syb2}. These functions are partial -- if an |Output| type does not exactly match the HSE it will crash. In effect, within our derivation framework we are operating in an untyped manner. However, provided all |DSL| values are constructed by |derive|, and that |derive| only constructs well formed |DSL| values, then our interfaces to the rest of the system are well typed.
 
 \subsection{Input}
 
@@ -322,11 +332,11 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
 
     f (Instance ctx hd body) =
         OApp "InstDecl"
-            [out
+            [ toOutput
                 [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
                 | v <- vars, c <- ctx]
-            , out $ UnQual $ Ident hd
-            , out [foldl TyApp
+            , toOutput $ UnQual $ Ident hd
+            , toOutput [foldl TyApp
                 (TyCon $ UnQual $ Ident $ dataName input)
                 [TyVar $ Ident v | v <- vars]]
             , f body]
@@ -360,10 +370,6 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
     f (Int x) = OInt x
     f (ShowInt (f -> OInt x)) = OString $ show x
     f (App x (f -> OList ys)) = OApp x ys
-
--- transform a value to the |Output| type using
--- SYB \cite{lammel:syb}
-out :: Data alpha => alpha -> Output
 \end{code}
 \caption{The |apply| function.}
 \label{fig:apply}
@@ -473,7 +479,7 @@ instance Arities (Sample alpha) where
                  ,  const 1 Third{}]
 \end{code}
 
-While this code code may appear less efficient, any good optimiser (i.e. GHC) will generate identical code. We return to the issue of possible simplifications in \S\ref{sec:simplify}. Given that no constructor names may occur in |String| operations, and that |CtorName| must occur within every |MapCtor|, we now require that all correct |MapCtor| DSL's must be congruent. The only other possible loss of predictability is if two items could be generated within a constructor with the same value -- for example if all indexes and arities in the sample data type were equal. However, we have avoided this particular problem by ensuring that |Second| has index 1 has arity 2, while |Third| has the opposite.
+While this code code may appear less efficient, any good optimiser (i.e. GHC) will generate identical code. We return to the issue of possible simplifications in \S\ref{sec:output_simplify}. Given that no constructor names may occur in |String| operations, and that |CtorName| must occur within every |MapCtor|, we now require that all correct |MapCtor| DSL's must be congruent. The only other possible loss of predictability is if two items could be generated within a constructor with the same value -- for example if all indexes and arities in the sample data type were equal. However, we have avoided this particular problem by ensuring that |Second| has index 1 has arity 2, while |Third| has the opposite.
 
 \todo{Proof here? At least a better argument. Perhaps a QuickCheck?}
 
@@ -627,15 +633,15 @@ Similarly to folds, the introduction of application nodes is directly in respons
 
 As per the restrictions given in \S\ref{sec:predictability}, the only way of creating an |Instance| element in the output is to use an |Instance| DSL combinator -- it is forbidden to use |App "Instance"|. Given this restriction, we know that when finding |OApp "Instance"|, if it can be expressed in our DSL, it must use |Instance|. Using the meaning of |Instance| it is simple to detect which possible instance declarations can be expressed with our DSL, and for these we do so.
 
-\section{Using Derived Instances}
+\section{Using Derived DSLs}
 \label{sec:using}
 
-Once we have derived a DSL, what now? We can optimise the DSL, to keep its meaning but make it simpler. We can optimise the output, to make it simpler. We can also write out the DSL in various forms. We'll use the arities from \S\ref{sec:predictability} as an example.
+This section discusses some of the operations that can be performed after a DSL has been derived. We start with showing how to simplify the DSL, then how to simplify the output produced by applications of the DSL. Finally we discuss ways of using the DSL, other than simply applying it to an input. We use the |Arities| type class from \S\ref{sec:predictability} as an example.
 
-\subsection{DSL Optimisation}
-\label{sec:dsl_optimisation}
+\subsection{DSL Simplification}
+\label{sec:dsl_simplify}
 
-We can determine the following equalities using rules present in our |apply| function from Figure \ref{fig:apply}.
+We can replace a DSL with a simplified version provided the simplified version is congruent to the original. Using the |apply| function from Figure \ref{fig:apply} we can determine a number of identities within our DSL:
 
 \h{.exprlist}\begin{code}
 Concat (List (a ++ [List xs, List ys] ++ b)) ==
@@ -645,9 +651,9 @@ Concat (List [x]) == x
 Concat (List []) == List []
 \end{code}
 
-We use Uniplate \cite{uniplate} to apply these rules.
+To simplify a DSL we apply these identities from left to right wherever they occur, using the Uniplate generics library \cite{me:uniplate}.
 
-Unfortunately, even with all these rules applied the DSL for even a very simple example is quite complex. The full DSL for arities is given in Appendix \ref{sec:arities_full}. Here we give a simplified version, removing some of the haskell-src-ext nodes that are not really necessary for a human to understand the program (i.e. |Ident|, |UnQual|), and using syntactic sugar. We have translated all DSL constructors to lower-case, and used upper-case for the haskell-src-exts constructors. With these translations the resulting DSL is:
+Unfortunately, even after simplifying the DSL, small examples still produce complex DSLs\footnote{Hence the advantage of having these relationships derived, rather than writing them by hand!}. As an example, we now give an indication of the |Arities| instance -- the full DSL is given in Appendix \ref{sec:arities_full}. To simplify the presentation we omit some haskell-src-ext nodes (i.e. |Ident|, |UnQual|), and add some syntactic sugar. We have translated all DSL constructors to lower-case, and used upper-case for the haskell-src-exts constructors. With these translations the resulting DSL is:
 
 \begin{code}
 list (instance_ [] "Arities" (list (InsDecl (FunBind (list (
@@ -661,48 +667,44 @@ list (instance_ [] "Arities" (list (InsDecl (FunBind (list (
 ))))))
 \end{code}
 
-We can see that even with the translated from it's pretty hard to write. The full form is even harder. This example shows the utility of our work -- writing such instance declarations by hand, even for this simplest example, is hard.
+\subsection{Output Simplification}
+\label{sec:output_simplify}
 
-\subsection{Output Optimisation}
-\label{sec:simplify}
+To obey the restrictions in \S\ref{sec:predictability} we require the addition of |const| applications in the |Arities| instance. While these |const| applications will almost certainly be optimised away by a compiler, their removal simplifies the output for human readers. After |apply| we translate the |Output| type to a haskell-src-exts type using the function |fromOutput| discussed in \S\ref{sec:output}. We then perform a number of simplifications, mainly simple constant folding, often using inbuilt knowledge of particular functions. Some of these simplifications can be applied by GHC (i.e. |const|), while others operate on recursive functions and can't be reduced by GHC (i.e. |length|).
 
-Post-generation optimisation tweaks. i.e. \ignore|a && True => a|. Could perhaps use HLint in a future version. Mostly these are just constant folding, often using inbuilt knowledge of particular tools. Some of these could be applied by GHC (i.e. |const|), but some are recursive and can't (i.e. |length|).
-
-We chose to give the direct rules in Uniplate. All of them simplify at the expression level, and each |fExp| declaration can be used individually. To simplify the matching we introduce |(~=)| which converts complex HSE terms in to simple strings before performing equality.
+We present the output simplification function directly as we have implemented it, using the Uniplate generics library \cite{me:uniplate}. All of the rules operate at the expression level, and each rule is correct individually. To easily express matches we introduce |(~=)|, which converts complex HSE terms to strings before checking equality.
 
 \h{.hse}\begin{code}
 simplify :: Biplate alpha Exp => alpha -> alpha
-simplify = transformBi fExp
+simplify = transformBi f
     where
         x ~= y = prettyPrint x == y
 
-        fExp (App op (List xs))
+        f (App op (List xs))
             | op ~= "length" = Lit $ Int $ fromIntegral $ length xs
             | op ~= "head" = head xs
-        fExp (InfixApp (Lit (Int i)) op (Lit (Int j)))
+        f (InfixApp (Lit (Int i)) op (Lit (Int j)))
             | op ~= "-" = Lit $ Int $ i - j
             | op ~= ">" = Con $ UnQual $ Ident $ show $ i > j
-        fExp (InfixApp x op y) | op ~= "`const`" = x
-        fExp (App (App con x) y) | con ~= "const" = x
-        fExp (Paren (Var x)) = Var x
-        fExp (Paren (Lit x)) = Lit x
-        fExp x = x
+        f (InfixApp x op y) | op ~= "`const`" = x
+        f (App (App con x) y) | con ~= "const" = x
+        f (Paren (Var x)) = Var x
+        f (Paren (Lit x)) = Lit x
+        f x = x
 \end{code}
 
-We could also lift some of these output simplifications back in to DSL simplifications, for example the |const| one. However, this increases the complexity and we still need them for terms such as |CtorArity-1| so we don't bother.
+Some of these simplifications could be applied directly to the DSL, for example the removal of |const|. However, other simplifications can't be performed until after |apply|, such as the reduction of |(-)| on |CtorArity-1|. Currently we do not perform any of these simplifications on the DSL, as they would still need to be applied to the output anyway.
 
 \subsection{DSL Usage}
 
-\subsubsection{Apply the DSL}
-
-The most obvious thing to do with a value of our DSL is to apply it and generate an output, in HSE syntax. There is a package (\todo{called what}) that automatically translates HSE syntax into Template Haskell, so we can continue and use that to integrate with Template Haskell and GHC. We can wrap our tool in a command line and perform these steps online.
+The simplest way to use a value of our DSL is to apply it to an input to generate an output, a haskell-src-exts program fragment. From a program fragment we can pretty-print it, and write that to a file for compilation. Alternatively we can use the package \todo{name here} to translate the output into Template Haskell, which can be integrated into GHC without a preprocessor.
 
 \subsubsection{Specialised Instance Generators}
 
-But that's not the only thing we can do. One option is to write out a generator specialised to generating DSL's of just this type. This corresponds to a futurama specialisation \cite{futanama:projections}. For example with the arities we could generate:
+From a DSL we can generate a specialised instance generator, that takes an input and produces an output directly, without the interpretative step of the |apply| function. This construction corresponds to the First Futanama Projection \cite{futanama:projections}. For example with |Arities|, we could produce:
 
 \begin{code}
-generateArities :: Input -> Output
+generateArities :: Input -> [Decl]
 generateArities input = [InstDecl []
     (UnQual $ Ident "Arities")
     (foldl TyApp
@@ -713,17 +715,18 @@ generateArities input = [InstDecl []
     where vars = take (dataVars input) $ map (:[]) ['a'..]
 \end{code}
 
-Since our |apply| function and |output| functions are both terminating, the |generateArities| function can be constructed as |generateArities input = outputToHSE . apply aritiesDSL|, then the |outputToHSE| and |apply| can be unfolded maximally until |aritiesDSL| has disappeared.
+Since our |apply| and |fromOutput| functions are both terminating, the |generateArities| function can be constructed as |generateArities input = fromOutput . apply aritiesDSL|. The |fromOutput| and |apply| functions can then be unfolded and reduced until |aritiesDSL| has disappeared.
 
 The first version of Derive generated as it's output a string containing the function, but that was substantially because it lacked a structured DSL underneath. We haven't bothered as we don't believe the speed of constructing DSL's is too high, so the benefits would be limited. However, it's a possibility.
 
 \subsubsection{SYB Instance Generators}
 
-Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances could be derived at run-time, removing the inconvenience of a separate preprocessor. Another, perhaps more useful activity, is to generate SYB instances. We can use the reflective methods in |Data| \cite{lammel:syb2} to examine the data constructors etc.
+Currently an instance is a fragment of compile time code, but using Haskell's reflection capabilities \cite{lammel:syb2}, instances can be derived at run-time, removing the inconvenience of a separate preprocessor. Another, perhaps more useful activity, is to generate SYB instances. We can use the reflective methods in |Data| \cite{lammel:syb2} to examine the data constructors etc.
 
 \begin{code}
-instance Data alpha => Arities alpha where
-    arities _ = ...
+instance Data d_type => Arities d_type where
+    arities _ =  [  const (d_ctorArity d_ctor) (d_ctorNull d_ctor)
+                 |  d_ctor <- d_dataCtors (undefined :: d_type)]
 \end{code}
 
 We have implemented such a feature, with the restrictions that:
@@ -732,9 +735,9 @@ We have implemented such a feature, with the restrictions that:
 \item The generated code must all be at the expression level, and not involved in name bindings.
 \end{enumerate}
 
-Results on it's success on a range of examples are given in \S\ref{sec:failure_syb}.
+It works currently only on a very small range of examples, i.e. Arities, but there is no reason it couldn't be extended to more. There are however some where it couldn't work, such as |Is|, as static components are derived from the type.
 
-You need to use some instance extension flags to get the right one and select if multiple ones are in scope.
+You need to use some instance extension flags to get the right one and select if multiple ones are in scope. In particular our results need the |ScopedTypeVariables| extension to be enabled so the same |d_type| is in scope everywhere.
 
 \section{Results}
 \label{sec:results}
@@ -747,19 +750,11 @@ The instance generation scheme given is not complete -- there exist instances wh
 \begin{description}
 
 \item[Non-inductive definitions:] For example, the |Binary| class serialises a value to disk. For each value, a tag is written to indicate the constructor. If a data type has only one constructor, the tag is omitted. These instances are not inductive -- the single constructor does not follow the same pattern.
-
 \item[Type-based definitions:] For example, the |Monoid| class requires items of the same type to be processed using |mappend|, but items of a different type use |mempty|. Automatic derivation has no notion of type-specific behaviour.
-
 \item[Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |Sample|, record definitions could be determined, but this change would increase the complexity of all other example instances.
-
 \item[Kind not |*|:] Doesn't work, i.e. |Functor|. Most of these wouldn't work for other reasons though.
 
 \end{description}
-
-\subsection{Limitations of SYB Generation}
-\label{sec:failure_syb}
-
-How many can't be turned in to SYB?
 
 \subsection{Generation of Standard Classes}
 \label{sec:automatic_success}
@@ -835,7 +830,7 @@ Thanks to Stefan O'Rear help with the first version of the \derive{} tool. Thank
 \section{Arities DSL}
 \label{sec:arities_full}
 
-This section is the full arities DSL, which is shown simplified and nicely printed in \S\ref{sec:dsl_optimisation}.
+This section is the full arities DSL, which is shown simplified and nicely printed in \S\ref{sec:dsl_simplify}.
 
 \begin{code}
 List [Instance [] "Arities" (List [App "InsDecl" (
