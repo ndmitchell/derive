@@ -194,3 +194,9 @@ instance (Data a, Typeable a) => Data (Sample a) where
     gfoldl k r (First) = r First
     gfoldl k r (Second x1 x2) = r Second `k` x1 `k` x2
     gfoldl k r (Third x1) = r Third `k` x1
+
+{-# DERIVE From #-}
+
+fromFirst (First) = tuple0 First{}
+fromSecond (Second x1 x2) = tuple2 Second{} x1 x2
+fromThird (Third x1) = tuple1 Third{} x1
