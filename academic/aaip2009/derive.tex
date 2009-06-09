@@ -14,18 +14,23 @@
 %format (list (x)) = $| x |$
 %format nil = $| |$
 %format instance_ = "\Varid{instance}"
+%format .==. = ==
 
 \newcommand{\derive}{\textsc{Derive}}
 
 \hsdef{\begin{comment}
 Show,Enum,Ord,Bounded,Serial,Arbitrary,Monoid,Binary,Functor
-ShowOrd,Either,Typeable,Invalid
-alpha,beta,d_1,d_2,Q,Append,i,f
+ShowOrd,Either,Typeable,Invalid,Uniplate,Traversable
+alpha,beta,d_1,d_2,Q,Append,i,f,x_1,x_2,x,y,m,z,d,op
+dataArity,DataArity
 \end{comment}}
 \begin{comment}
 \h{.default .two}\begin{code}
-import Data.Data
+import Data.Data hiding (Prefix)
 import Data.List
+import Data.Binary
+import Data.Maybe
+import Control.Monad
 import Language.Haskell.Exts hiding (Int,String,App,List)
 import Data.Monoid hiding (First)
 import Control.Parallel.Strategies
@@ -40,6 +45,28 @@ derive' :: Output -> [DSL]
 instance Typeable1 Sample
 instance Eq Output
 instance Eq (Input -> Output)
+bottom = undefined
+ellipses = undefined
+
+tuple0 = ()
+tuple1 = id
+tuple2 = (,,)
+
+isFirst, isSecond, isThird :: Sample a -> Bool
+
+data PrefixConstructor = Prefix Int Int
+data InfixConstructor = Int :*: Int
+
+aritiesDSL :: DSL
+
+data DCtor
+d_dataCtors :: a -> [DCtor]
+d_ctorArity :: DCtor -> Int
+d_ctorNull :: DCtor -> a
+
+-- Eq for when the types aren't equal
+(.==.) :: a -> b -> Bool
+
 \end{code}
 \h{.hse}\begin{code}
 import Language.Haskell.Exts
@@ -238,9 +265,9 @@ data Output  =  OString String
 
 Here |OString| and |OInt| represent concrete terminals. The |OList| constructor generates a list from a sequence of  |Output| values. The most interesting constructor is |OApp|, which constructs a value in the typed tree. For example |Just [1,2]| would be represented as |OApp "Just" [OList [OInt 1,OInt 2]]|.
 
-Our |Output| type can represent many impossible values, for example |OApp "Just" []| is an error, as is |OApp "Invalid" []|, where |Invalid| it not a constructor. We consider any |Output| value that does not have a corresponding haskell-src-exts value to be an error. The root |Output| value must have type |[Decl]| when translated, i.e. must be an |OList|, and the inner values must have appropriate types.
+Our |Output| type can represent many impossible values, for example |OApp "Just" []| is an error, as is |OApp "Invalid" []|, where |Invalid| it not a constructor. We consider any |Output| value that does not have a corresponding haskell-src-exts value to be an error. The root |Output| value must have type \h{.hse type}|[Decl]| when translated, i.e. must be an |OList|, and the inner values must have appropriate types.
 
-We can translate between our |Output| type, which represents a list of declarations, to the haskell-src-exts type |[Decl]|:
+We can translate between our |Output| type, which represents a list of declarations, to the haskell-src-exts type \h{.hse type}|[Decl]|:
 
 \begin{code}
 toOutput    :: [Decl] -> Output
@@ -401,10 +428,10 @@ Some examples of these operations in use are:
 
 \h{exprlist}\begin{code}
 Concat (List [String "hello ", String "world"])
-    == OString "hello world"
+    .==. OString "hello world"
 Reverse (List [Int 1, Int 2, Int 3])
-    == OList [OInt 3, OInt 2, OInt 1]
-ShowInt (Int 42) == OString "42"
+    .==. OList [OInt 3, OInt 2, OInt 1]
+ShowInt (Int 42) .==. OString "42"
 \end{code}
 
 \subsubsection{Fold}
@@ -423,7 +450,7 @@ For example, to implement |concat| in terms of an |Append| operation would be \i
 To insert information from constructors we provide |MapCtor|. This operation generates a list, with the argument DSL evaluated once with each different constructor in the environment. The argument to |MapCtor| may contain |CtorName|, |CtorIndex| and |CtorArity| operations, which retrieve the information associated with the constructor. |CtorName| produces a string, while the others produce an integer. An example of |MapCtor| on the |Sample| data type is:
 
 \h{exprlist}\begin{code}
-MapCtor CtorName == OList
+MapCtor CtorName .==. OList
     [OString "First", OString "Second", OString "Third"]
 \end{code}
 
@@ -434,7 +461,7 @@ The |MapField| operation is similar to |MapCtor|, it maps over each field within
 \h{exprlist}\begin{code}
 Concat (List [List [CtorName],
     MapField (Concat (List [String "v", ShowInt FieldIndex]))])
-    == ["Second","v1","v2"]
+    .==. ["Second","v1","v2"]
 \end{code}
 
 \subsubsection{Custom}
@@ -600,7 +627,7 @@ The |mapM| function uses the list monad to generate all possible sequences of li
 
 \subsubsection{Promotion}
 
-The promotion rule changes a guess without a parameter in to one with a parameter. We can promote |Guess| to either |GuessFld| or |GuessCtr|, with any parameter value. For example |Guess d| can be promoted to either of |GuessCtr 2 d| or |GuessField 1 d|, or using any other permissible index. The promotion rule does not reduce the number of elements in the list, but allows other rules to apply, in particular the conjunction rule.
+The promotion rule changes a guess without a parameter in to one with a parameter. We can promote |Guess| to either |GuessFld| or |GuessCtr|, with any parameter value. For example |Guess d| can be promoted to either of |GuessCtr 2 d| or |GuessFld 1 d|, or using any other permissible index. The promotion rule does not reduce the number of elements in the list, but allows other rules to apply, in particular the conjunction rule.
 
 \subsubsection{Conjunction}
 
@@ -611,7 +638,7 @@ If two adjacent guesses have the same parameter value, they can be combined in t
 
 The sequence rule introduces either |MapField| or |MapCtor| from a list of guesses. Given two adjacent guesses we can apply the rule:
 
-\begin{code}
+\ignore\begin{code}
 (GuessFld 1 d_1) (GuessFld 2 d_2)
     | applyGuess (GuessFld 2 d_1) == applyGuess (GuessFld 2 d_2)
     = GuessCtr 1 (MapField d_1)
@@ -655,7 +682,7 @@ To simplify a DSL we apply these identities from left to right wherever they occ
 
 Unfortunately, even after simplifying the DSL, small examples still produce complex DSLs\footnote{Hence the advantage of having these relationships derived, rather than writing them by hand!}. As an example, we now give an indication of the |Arities| instance -- the full DSL is given in Appendix \ref{sec:arities_full}. To simplify the presentation we omit some haskell-src-ext nodes (i.e. |Ident|, |UnQual|), and add some syntactic sugar. We have translated all DSL constructors to lower-case, and used upper-case for the haskell-src-exts constructors. With these translations the resulting DSL is:
 
-\begin{code}
+\ignore\begin{code}
 list (instance_ [] "Arities" (list (InsDecl (FunBind (list (
     Match "arities"
         (list (PWildCard))
@@ -693,7 +720,7 @@ simplify = transformBi f
         f x = x
 \end{code}
 
-Some of these simplifications could be applied directly to the DSL, for example the removal of |const|. However, other simplifications can't be performed until after |apply|, such as the reduction of |(-)| on |CtorArity-1|. Currently we do not perform any of these simplifications on the DSL, as they would still need to be applied to the output anyway.
+Some of these simplifications could be applied directly to the DSL, for example the removal of |const|. However, other simplifications can't be performed until after |apply|, such as the reduction of |(-)| on \ignore|CtorArity-1|. Currently we do not perform any of these simplifications on the DSL, as they would still need to be applied to the output anyway.
 
 \subsection{DSL Usage}
 
@@ -711,11 +738,17 @@ generateArities input = [InstDecl []
         (TyCon $ UnQual $ Ident $ dataName input)
         (map (TyVar . Ident) vars))
     [InsDecl [FunBind [Match [
-        App (Ident "arities") [PWildCard] Nothing ellipses]]]]
+        App (Ident "arities") [PWildCard] Nothing ellipses]]]]]
     where vars = take (dataVars input) $ map (:[]) ['a'..]
 \end{code}
 
-Since our |apply| and |fromOutput| functions are both terminating, the |generateArities| function can be constructed as |generateArities input = fromOutput . apply aritiesDSL|. The |fromOutput| and |apply| functions can then be unfolded and reduced until |aritiesDSL| has disappeared.
+Since our |apply| and |fromOutput| functions are both terminating, the |generateArities| function can be constructed as:
+
+\begin{code}
+generateArities = fromOutput . apply aritiesDSL
+\end{code}
+
+The |fromOutput| and |apply| functions can then be unfolded and reduced until |aritiesDSL| has disappeared.
 
 The first version of Derive generated as it's output a string containing the function, but that was substantially because it lacked a structured DSL underneath. We haven't bothered as we don't believe the speed of constructing DSL's is too high, so the benefits would be limited. However, it's a possibility.
 
@@ -735,68 +768,150 @@ We have implemented such a feature, with the restrictions that:
 \item The generated code must all be at the expression level, and not involved in name bindings.
 \end{enumerate}
 
-It works currently only on a very small range of examples, i.e. Arities, but there is no reason it couldn't be extended to more. There are however some where it couldn't work, such as |Is|, as static components are derived from the type.
+It works currently only on a very small range of examples, i.e. Arities, but there is no reason it couldn't be extended to more. There are however some where it couldn't work, such as deriving |isFirst|/|isSecond|/|isThird| functions, as static components are derived from the type.
 
-You need to use some instance extension flags to get the right one and select if multiple ones are in scope. In particular our results need the |ScopedTypeVariables| extension to be enabled so the same |d_type| is in scope everywhere.
+You need to use some instance extension flags to get the right one and select if multiple ones are in scope. In particular our results need the \ignore|ScopedTypeVariables| extension to be enabled so the same |d_type| is in scope everywhere.
 
 \section{Results}
 \label{sec:results}
 
+This section covers the practical results we've got from Derive and our automatic derivation mechanism. We first try and categorise the examples we haven't been able to do, then describe some of the tricks we have developed for specifying more and more examples in our scheme. Next we discuss possible extensions to our scheme, which could increase the power, or make fewer tricks necessary. Finally we cover the timing properties, how fast the derivation takes.
+
 \subsection{Limitations of Automatic Derivation}
 \label{sec:failure}
 
-The instance generation scheme given is not complete -- there exist instances whose generator cannot be determined. The Derive tool \cite{derive} is a program for generating instances for user defined data types. Of the 24 instances supported by the Derive tool, 15 are expressed by example, while 9 require manually written instance generators. There are several reasons some instances cannot be determined:
+The instance generation scheme given is not complete -- there exist instances whose generator cannot be determined. The Derive tool \cite{derive} is a program for generating instances for user defined data types. Of the 24 instances supported by the Derive tool, 15 are expressed by example, while 9 require manually written instance generators. All the examples which we can't infer related directly to the choice of our |Input| type -- given those restrictions it is impossible to derive them.
 
-\begin{description}
+\subsubsection{Infix Constructors}
 
-\item[Non-inductive definitions:] For example, the |Binary| class serialises a value to disk. For each value, a tag is written to indicate the constructor. If a data type has only one constructor, the tag is omitted. These instances are not inductive -- the single constructor does not follow the same pattern.
-\item[Type-based definitions:] For example, the |Monoid| class requires items of the same type to be processed using |mappend|, but items of a different type use |mempty|. Automatic derivation has no notion of type-specific behaviour.
-\item[Record-based definitions:] Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour. By extending |Sample|, record definitions could be determined, but this change would increase the complexity of all other example instances.
-\item[Kind not |*|:] Doesn't work, i.e. |Functor|. Most of these wouldn't work for other reasons though.
-
-\end{description}
-
-\subsection{Generation of Standard Classes}
-\label{sec:automatic_success}
-
-Many instance generators can be expressed by example -- including some from the standard Haskell libraries (|Enum|, |Ord|, |Bounded|) and publicly distributed libraries (|Serial|, |Arbitrary|). The |Data| class was introduced in Scrap Your Boilerplate \cite{lammel:syb}, and allows Haskell programmers to write concise queries and transformations. The fundamental operation is |gfoldl|, which involves a fold over each value, and the application of an argument to join the fields. An example instance can be given as:
+Some types have infix constructors which are dealt with specially, for example:
 
 \begin{code}
-instance Data alpha => Data (Sample alpha) where
-    gfoldl k r (First            ) = r First
-    gfoldl k r (Second  x_1 x_2  ) = r Second  `k` x_1 `k` x_2
-    gfoldl k r (Third   x_1      ) = r Third   `k` x_1
+instance Show PrefixConstructor where
+    show (Prefix x y) = "Foo " ++ show x ++ " " ++ show y
 \end{code}
 
-\noindent The generator function is inferred as:
+But:
 
-\ignore\begin{code}
-instance Data \? <| dataname |> where
-    <| MAP ctors (
-        gfoldl k r
-            (<| ctorname |> \? <| MAP [1..ctorarity] (x <| # |> ) |> ) =
-            <| FOLDR k (r \? <| ctorname |>)
-                <| MAP [1 .. ctorarity] (x <| # |> ) |>
-            |>
-    ) |>
+\begin{code}
+instance Show InfixConstructor where
+    show ((:*:) x y) = show x ++ " :*: " ++ show y
 \end{code}
+
+This mainly effects instances which are some type of show, i.e. |Show| and pretty printing. For most instances it doesn't matter, as infix constructors are usually treated exactly equal,
+
+\subsubsection{Record-based definitions}
+
+Given the data type:
+
+\begin{code}
+data Computer  =  Desktop  {memory :: Int}
+               |  Laptop   {memory :: Int, weight :: Int}
+\end{code}
+
+It is easy to write the definition:
+
+\begin{code}
+hasWeight Desktop{}  = False
+hasWeight Laptop{}   = True
+\end{code}
+
+Where |hasWeight| returns |True| if the |weight| selector is valid for that constructor, and |False| if |weight x == bottom|.
+
+Unfortunately our |Input| type does not contain enough information to do this. This restriction limits a handful of  operations, most of which directly manipulate records -- most general definitions do not require information about records. Haskell provides records, which allow fields to be labelled. The |Show| class outputs the field name if present, but the examples have no notion of label-specific behaviour.
+
+\subsection{Type-based definitions}
+\label{sec:fromCtorName}
+
+For example, the |Monoid| class requires items of the same type to be processed using |mappend|, but items of a different type use |mempty|. Automatic derivation has no notion of type-specific behaviour. Other examples include |Functor|, |Traversable| and |Uniplate|.
+
+However, the limitation not to create examples with types arises in other contexts. For example, we could write the definition:
+
+\begin{code}
+fromFirst   (First            ) = const First{}   $ tuple0
+fromSecond  (Second  x_1 x_2  ) = const Second{}  $ tuple2  x_1 x_2
+fromThird   (Third   x_1      ) = const Third{}   $ tuple1  x_1
+\end{code}
+
+This function returns the elements contained within a constructor, for example mirroring the operations provided by |fromJust|, and has seen extensive use in the Yhc compiler \cite{yhc}. However, this code generates a warning with GHC that no top-level type signatures have been given. These type signatures can be inferred, but some tools (i.e. Haddock \cite{haddock}) won't include them in documentation without them. However, we can't generate the associated type signatures in our scheme, so this can't be done.
 
 \subsection{Tricks for Increasing Power}
 
-Take a look at Binary, which writes out tags in clever ways.
+This section describes some tricks and possible pitfalls we have used for increasing the power. Using these tricks it seems to be possible to write most things.
 
-\subsection{Timing Properties}
+\subsubsection{Brackets Matter}
 
-Inference time to write the derivations for everything to a file is under a tenth of a second. To write the data to the screen takes 3 tenths of a second. We conclude that guesses aren't too slow!
+The original \derive{} program used Template Haskell, which doesn't explicitly represent brackets in the abstract syntax tree. For example, the expressions |(First)| and |First| were considered equal. However, using haskell-src-exts, this is not the case and care must be taken to given otherwise redundant brackets to make sure every constructor contains the same level of bracketing. Examples of this technique can be seen in \S\ref{sec:fromCtorName}, where the constructor |First| is bracketed even though unnecessary. These brackets can be removed by the transformations described in \S\ref{sec:output_simplify}.
+
+\subsubsection{Variable Naming}
+
+When naming variables it is important that a series of related variables follow the same pattern, i.e. in the example from \S\ref{sec:fromCtorName} we have used |Second x_1 x_2|, rather than something such as |Second x y|. By using a naming scheme we are able to guess the progression much more easily.
+
+\subsubsection{Explicit Fold Unit}
+
+When performing a fold, it is import to always explicitly include the unit. For example, in the introductory example of |NFData| the |Second| alternative is specified as |rnf x_1 `seq` rnf x_2 `seq` ()|, however we can show that:
+
+\ignore\begin{code}
+forall x `bullet` rnf x `seq` () == rnf x
+\end{code}
+
+Therefore we could write the alternative more compactly as |rnf x_1 `seq` rnf x_2|. However, doing so would mean that there was not one consistent pattern that could be applied for all constructors, and the derivation would fail. In general, when considering folds, the unit should always be written explicitly.
+
+\subsubsection{Empty Record Construction}
+
+One handy trick is the use of the empty record construction. The term |Second{}| creates a value |Second bottom bottom|, where all fields are left undefined. This construction is useful for generating examples of constructors to pass to |const| (although |"Second"| would also work -- albeit slightly ugly), and for generics or when something is evaluated lazily.
+
+\subsubsection{Explicit Arity}
+\label{sec:explicit_arity}
+
+There are some instances which aren't inductive, for example the binary instances requires a tag to be written indicating which constructor has been stored, but if only one constructor is available it can be omitted. This can be written as:
+
+\begin{code}
+instance Binary alpha => Binary (Sample alpha) where
+    put x = case x of
+        First -> do putTag 0
+        Second x_1 x_2 -> do putTag 1 ; put x_1 ; put x_2
+        Third x_1 -> do putTag 2 ; put x_1
+        where putTag = when (length [First{}, Second{}, Third{}] > 1) . putWord8
+
+    get = do
+        i <- getTag
+        case i of
+            0 -> do return (First)
+            1 -> do x_1 <- get ; x_2 <- get ; return (Second x_1 x_2)
+            2 -> do x_1 <- get ; return (Third x_1)
+            _ -> error "Corrupted binary data for Sample"
+        where getTag = if length [First{}, Second{}, Third{}] > 1 then getWord8 else return 0
+\end{code}
+
+This uses the pattern of |length [First{},Second{},Third{}]| to determine the number of constructors present. This pattern is used in other classes, for example |Enum| and |Arbitrary|. Using the simplifications in \S\ref{sec:output_simplify} we can optimise this cost away.
+
+We could of course add a |DataArity| class, implemented in \derive{}, which performs this operation at the class level.
 
 \subsection{Extensions}
 \label{sec:extensions}
 
-How would we increase it to get more power.
+There are two possible reasons for increasing the power -- to make it possible to write new derivations or to make it easier to write existing derivations. The only complex construction that occurs regularly in existing derivations is the explicit arity representation from \S\ref{sec:explicit_arity}. In the the first version of \derive{} it was automatically assumed that the number |3| could be the arity, however this is unsatisfactory -- predictability was lost. One possibility would be to write a meta function |dataArity|, which is automatically translated to the arity -- but this feels unpleasant as now the definitions can't be run as stand alone and we have effectively introduced a new language people need to know (albeit a simple and optional one).
+
+For new derivations the three obvious pieces of information to add are those listed in \S\ref{sec:failure}. Of these three, infix constructors are likely to gain fewest additional instances, so we consider the other two.
+
+\subsubsection{Record Names}
 
 Record names could be added. The difficulty here is that record names can be shared between constructors, in different orders, some constructors may not have record names etc. For a system such as F\#, where only one constructor is allowed and all fields must be named, this may be more feasible.
 
+\subsubsection{Type Information}
+
+In most of these cases the only question is whether a type is the type itself, suggesting that might be a sweet spot.
+
 Another property is types. The problem here is that types are two numerous, and while extensions could provide one or two -- for example |Functor|, they won't be able to do a huge number.
+
+However, we can't
+
+Possibly the ugliest encoding is using |length [First{}, Second{}, Third{}]| as the arity.
+
+\subsection{Timing Properties}
+
+Inference time to write the derivations for everything to a file is under a tenth of a second. To write the data to the screen takes 3 tenths of a second. We conclude that guesses aren't too slow!
 
 \section{Related Work}
 \label{sec:related}
@@ -832,7 +947,7 @@ Thanks to Stefan O'Rear help with the first version of the \derive{} tool. Thank
 
 This section is the full arities DSL, which is shown simplified and nicely printed in \S\ref{sec:dsl_simplify}.
 
-\begin{code}
+\h{.expr}\begin{code}
 List [Instance [] "Arities" (List [App "InsDecl" (
     List [App "FunBind" (List [List [
         App "Match" (List
