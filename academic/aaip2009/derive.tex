@@ -21,7 +21,7 @@
 \hsdef{\begin{comment}
 Show,Enum,Ord,Bounded,Serial,Arbitrary,Monoid,Binary,Functor
 ShowOrd,Either,Typeable,Invalid,Uniplate,Traversable
-alpha,beta,d_1,d_2,Q,Append,i,f,x_1,x_2,x,y,m,z,d,op
+alpha,beta,d_1,d_2,Q,Append,i,f,x_1,x_2,x,y,m,z,d,op,a,b,xs,ys
 dataArity,DataArity
 \end{comment}}
 \begin{comment}
@@ -47,6 +47,7 @@ instance Eq Output
 instance Eq (Input -> Output)
 bottom = undefined
 ellipses = undefined
+srcLoc :: SrcLoc
 
 tuple0 = ()
 tuple1 = id
@@ -66,6 +67,7 @@ d_ctorNull :: DCtor -> a
 
 -- Eq for when the types aren't equal
 (.==.) :: a -> b -> Bool
+instance Eq DSL
 
 \end{code}
 \h{.hse}\begin{code}
@@ -274,7 +276,15 @@ toOutput    :: [Decl] -> Output
 fromOutput  :: Output -> [Decl]
 \end{code}
 
-We have implemented these functions using the SYB generics library \cite{lammel:syb2}. These functions are partial -- if an |Output| type does not exactly match the HSE it will crash. In effect, within our derivation framework we are operating in an untyped manner. However, provided all |DSL| values are constructed by |derive|, and that |derive| only constructs well formed |DSL| values, then our interfaces to the rest of the system are well typed.
+We have implemented these functions using the SYB generics library \cite{lammel:syb2}, more generally we have implemented:
+
+\begin{code}
+toOut    :: Data alpha => alpha -> Output
+fromOut  :: Data alpha => Output -> alpha
+\end{code}
+
+
+. These functions are partial -- if an |Output| type does not exactly match the HSE it will crash. In effect, within our derivation framework we are operating in an untyped manner. However, provided all |DSL| values are constructed by |derive|, and that |derive| only constructs well formed |DSL| values, then our interfaces to the rest of the system are well typed.
 
 \subsection{Input}
 
@@ -359,11 +369,11 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
 
     f (Instance ctx hd body) =
         OApp "InstDecl"
-            [ toOutput
+            [ toOut
                 [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
                 | v <- vars, c <- ctx]
-            , toOutput $ UnQual $ Ident hd
-            , toOutput [foldl TyApp
+            , toOut $ UnQual $ Ident hd
+            , toOut [foldl TyApp
                 (TyCon $ UnQual $ Ident $ dataName input)
                 [TyVar $ Ident v | v <- vars]]
             , f body]
@@ -559,11 +569,11 @@ applyGuess (GuessFld i  d) = applyEnv d
 
 To guess an |OString| value is simple -- if it has a banned suffix (i.e. a sample constructor name or the data name) we generate an appropriately parameterised guess, otherwise we use the constant string. Some examples:
 
-\h{.exprlist}\begin{code}
-OString "hello" == String "hello"
-OString "Sample" == DataName
-OString "First" == Guess 0 CtorName
-OString "isThird" == Guess 2
+\h{exprlist}\begin{code}
+OString "hello" .==. Guess (String "hello")
+OString "Sample" .==. Guess DataName
+OString "First" .==. GuessCtr 0 CtorName
+OString "isThird" .==. GuessCtr 2
     (Concat (List [String "is",CtorName]))
 \end{code}
 
@@ -594,13 +604,13 @@ guess (OInt i) =
 
 \noindent And some examples:
 
-\h{.exprlist}\begin{code}
-OInt 0 == [Guess (Int 0)]
-OInt 1 == [Guess (Int 1)  , GuessFld 1 FieldIndex
-                          , GuessCtr 1 CtorArity]
-OInt 2 == [Guess (Int 2)  , GuessFld 2 FieldIndex
-                          , GuessCtr 2 CtorIndex]
-OInt 3 == [Guess (Int 3)]
+\h{exprlist}\begin{code}
+OInt 0 .==. [Guess (Int 0)]
+OInt 1 .==. [Guess (Int 1)  , GuessFld 1 FieldIndex
+                            , GuessCtr 1 CtorArity]
+OInt 2 .==. [Guess (Int 2)  , GuessFld 2 FieldIndex
+                            , GuessCtr 2 CtorIndex]
+OInt 3 .==. [Guess (Int 3)]
 \end{code}
 
 For the guess of an |OInt| it is interesting to note that we never generate guesses for any constructors other than index 1 (i.e. |Second|) -- the reasons are explained later in \S\ref{sec:guess_lists_sequence}. We could guess alternative constructors, but they would be unnecessary.
@@ -613,7 +623,7 @@ Most of the complexity in guessing comes from lists. For each element of the lis
 guess (OList xs) = mapMaybe collapse (mapM guess xs)
 
 collapse :: [Guess] -> Maybe Guess
-collapse xs = liftM Concat $ rules $
+collapse xs = liftM (lift Concat) $ rules $
     map (lift (\x -> List [x])) xs
 \end{code}
 
@@ -670,7 +680,7 @@ This section discusses some of the operations that can be performed after a DSL 
 
 We can replace a DSL with a simplified version provided the simplified version is congruent to the original. Using the |apply| function from Figure \ref{fig:apply} we can determine a number of identities within our DSL:
 
-\h{.exprlist}\begin{code}
+\h{exprlist}\begin{code}
 Concat (List (a ++ [List xs, List ys] ++ b)) ==
     Concat (List (a ++ [List (xs++ys)] ++ b))
 Concat (List (a ++ [List []] ++ b)) == Concat (List (a++b))
@@ -732,13 +742,14 @@ From a DSL we can generate a specialised instance generator, that takes an input
 
 \begin{code}
 generateArities :: Input -> [Decl]
-generateArities input = [InstDecl []
+generateArities input = [InstDecl srcLoc []
     (UnQual $ Ident "Arities")
-    (foldl TyApp
+    [foldl TyApp
         (TyCon $ UnQual $ Ident $ dataName input)
-        (map (TyVar . Ident) vars))
-    [InsDecl [FunBind [Match [
-        App (Ident "arities") [PWildCard] Nothing ellipses]]]]]
+        (map (TyVar . Ident) vars)]
+    [InsDecl (FunBind [Match srcLoc
+        (Ident "arities") [PWildCard] Nothing
+        ellipses (BDecls [])])]]
     where vars = take (dataVars input) $ map (:[]) ['a'..]
 \end{code}
 
@@ -947,7 +958,7 @@ Thanks to Stefan O'Rear help with the first version of the \derive{} tool. Thank
 
 This section is the full arities DSL, which is shown simplified and nicely printed in \S\ref{sec:dsl_simplify}.
 
-\h{.expr}\begin{code}
+\h{expr}\begin{code}
 List [Instance [] "Arities" (List [App "InsDecl" (
     List [App "FunBind" (List [List [
         App "Match" (List
