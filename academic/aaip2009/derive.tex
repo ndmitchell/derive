@@ -15,7 +15,7 @@
 %format nil = $| |$
 %format instance_ = "\Varid{instance}"
 %format .==. = ==
-%format bottom = "\bot{}"
+%format bot = "\bot{}"
 %format <==> = "\mathbin{\Longleftrightarrow}"
 
 \newcommand{\derive}{\textsc{Derive}}
@@ -47,7 +47,7 @@ derive' :: Output -> [DSL]
 instance Typeable1 Sample
 instance Eq Output
 instance Eq (Input -> Output)
-bottom = undefined
+bot = undefined
 ellipses = undefined
 srcLoc :: SrcLoc
 
@@ -850,7 +850,7 @@ hasWeight Desktop{}  = False
 hasWeight Laptop{}   = True
 \end{code}
 
-Where |hasWeight| returns |True| if the |weight| selector is valid for that constructor, and |False| if |weight x == bottom|. Unfortunately our |Input| type does not contain any information about records, so cannot express this definition. There are only a few type classes which exhibit label specific behaviour, such as |Show| which outputs the field name if present.
+Where |hasWeight| returns |True| if the |weight| selector is valid for that constructor, and |False| if |weight x == bot|. Unfortunately our |Input| type does not contain any information about records, so cannot express this definition. There are only a few type classes which exhibit label specific behaviour, such as |Show| which outputs the field name if present.
 
 Record fields are not present in our |Sample| type, but could be added. The difficulty is that Haskell allows for one field name to be shared by multiple constructors, and allows some constructors to have field names while others do not. This flexibility results in a massive number of possible combinations, and so a |Sample| type with sufficient generality would probably require too many constructors to be practical. Allowing records would be more practical for a language such as F\# \cite{fsharp}, where records contain only one constructor and all fields must be named.
 
@@ -895,7 +895,7 @@ Therefore we could write the |Second| alternative more compactly as |rnf x_1 `se
 
 \subsubsection{Empty Record Construction}
 
-One useful facility of Haskell records is the empty record construction. The term |Second{}| creates the value |Second bottom bottom|, leaving all fields undefined. This construction is useful for generating constructors to pass as the second argument to |const|\footnote{|"Second"| would also work, but the use of a string feels too unpleasant.}, for some generic programming operations, and for values that are evaluated lazily.
+One useful facility of Haskell records is the empty record construction. The term |Second{}| creates the value |Second bot bot|, leaving all fields undefined. This construction is useful for generating constructors to pass as the second argument to |const|\footnote{|"Second"| would also work, but the use of a string feels too unpleasant.}, for some generic programming operations, and for values that are evaluated lazily.
 
 \subsubsection{Constructor Count}
 
