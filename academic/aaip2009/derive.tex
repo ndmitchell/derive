@@ -97,8 +97,6 @@ import Data.Generics.PlateData
 
 \maketitle
 
-\todo{check for good layout}
-
 % Results: 15 success out of 24, > 60%
 
 \begin{abstract}
@@ -546,7 +544,7 @@ Before implementing |derive| it is useful to think about what properties are des
 forall o `elem` Output, d `elem` DSL `o` null (derive o) => apply d sample /= o
 \end{code}
 
-We are unaware of a |derive| implementation meeting this property for our problem that performs acceptably\footnote{We believe enumerative search to a particular depth would succeed, but this method is clearly infeasible}. Our method is a trade off between runtime and success rate, with a particular desire to succeed for real-world examples.
+We are unaware of a |derive| implementation meeting this property for our problem that performs acceptably\footnote{We believe enumerative search to a particular depth would succeed, but this method is clearly infeasible.}. Our method is a trade off between runtime and success rate, with a particular desire to succeed for real-world examples.
 
 Our |derive| implementation is based around a parameterised guess. Each fragment of output is related to a guess -- a DSL parameterised by some aspect of the environment. For example, |OString "First"| results in the guess |CtorName| parameterised by the first constructor. Concretely, our central |Guess| type is:
 
@@ -807,8 +805,6 @@ Currently the creation of dynamic instances are limited to a small number of exa
 
 The use of dynamic instances removes the inconvenience of a separate preprocessor, but only works on a restricted set of instances. Dynamic instances increase runtime, due to the overhead of reflection and the reduction of optimisation opportunities. Previously, only a handful of classes have provided dynamic instances -- the only one we are aware of is the |Binary| class. One reason for not providing dynamic instances is that they are complex to write -- use of the SYB libraries requires an intricate combination of type-level and value-level programming. Using \derive{} many type classes could have dynamic instances created with ease, by first deriving an instance from one example and then translating the DSL.
 
-\todo{proof read from here on}
-
 \section{Results}
 \label{sec:results}
 
@@ -822,7 +818,7 @@ The instance generation scheme given is not complete -- there exist instances wh
 \subsubsection{Module Names}
 \label{sec:failure_typeable}
 
-Some type classes require information on which module a type resides within, for example a |Typeable| instance \cite{lammel:syb} follows the pattern:
+Some type classes require information about the module containing a type, for example |Typeable| instances \cite{lammel:syb} follow the pattern:
 
 \begin{code}
 typename_Language = mkTyCon "ModuleName.Language"
@@ -831,11 +827,11 @@ instance Typeable Language where
     typeOf _ = mkTyConApp typename_Language []
 \end{code}
 
-The |Typeable| class performs runtime type comparison, so for each distinct type needs a distinct string on which to compare, so the module name is used to disambiguate. Our |Input| type does not include information on the module name, so cannot be used to derive |Typeable|. It would be possible to assign the defined string |"Module.Name"| as the module of the input sample, and treat it similarly to the string |"Sample"|. However, the only instance we are aware of that requires the module name is |Typeable|. Additionally, the module name is a property of the whole file, while all other |Input| information can be obtained from just the data type definition -- this locality property seems too valuable to throw away for just a single additional type class.
+The |Typeable| class performs runtime type comparison, so each distinct type needs a distinct string to compare, and the module name is used to disambiguate. Our |Input| type does not include the module name, so cannot be used to derive |Typeable|. It would be possible to define the string |"Module.Name"| as the module name of the sample, and treat it in a similar manner to the string |"Sample"|. However, the only instance we are aware of that requires the module name is |Typeable|. Currently all |Input| information can be obtained from just the data type definition -- this locality has a number of benefits, so one additional instance is not worth the change.
 
 \subsubsection{Infix Constructors}
 
-Some types have infix constructors which are dealt with specially, for example |Show| with a normal constructor appears as:
+Some instances treat infix constructors differently, for example the |Show| instance on a prefix constructor is:
 
 \begin{code}
 instance Show PrefixConstructor where
@@ -849,11 +845,11 @@ instance Show InfixConstructor where
     show (x :*: y) = show x ++ " :*: " ++ show y
 \end{code}
 
-Our |Input| type does not express whether a constructor is infix or prefix, so cannot choose the appropriate behaviour. The loss of infix information mainly effects instances which display information to the user, i.e. |Show| and pretty printing \cite{hughes:pretty_printing}. For most type classes, the infix information is not used, and infix constructors can be bracketed and treated as prefix |(:*:)|. To deal with infix constructors correctly it would be necessary to add an infix constructor to the |Sample| data type, and to modify our DSL to allow different results to be generated depending on the infix information. These changes would make it tricky to retain predictability and require all example instances to have at least one additional case defined -- we do not consider this a worthwhile trade off for a small number of additional instances.
+Our |Input| type does not express whether a constructor is infix or prefix, so cannot choose the appropriate behaviour. The loss of infix information mainly effects instances which display information to the user, i.e. |Show| and pretty printing \cite{hughes:pretty_printing}. For most type classes, the infix information is not used, and infix constructors can be bracketed and treated as prefix |(:*:)|. To deal with infix constructors would require an infix constructor to be added to |Sample| data type, and modifications to the DSL to allow different results to be generated depending on infix information. These changes would pose difficulties to predictability and require all example instances to have at least one additional case defined -- we do not consider this a worthwhile trade off for a small number of additional instances.
 
 \subsubsection{Record-based definitions}
 
-Haskell provides records, which allow some fields to be labeled. Some operations make use of the record fields within a data type, for example using the data type:
+Haskell provides records, which allow some fields to be labelled. Some operations make use of the record fields within a data type, for example using the data type:
 
 \begin{code}
 data Computer  =  Desktop  {memory :: Int}
@@ -867,14 +863,14 @@ hasWeight Desktop{}  = False
 hasWeight Laptop{}   = True
 \end{code}
 
-Where |hasWeight| returns |True| if the |weight| selector is valid for that constructor, and |False| if |weight x == bot|. Unfortunately our |Input| type does not contain any information about records, so cannot express this definition. There are only a few type classes which exhibit label specific behaviour, such as |Show| which outputs the field name if present.
+Where |hasWeight| returns |True| if the |weight| selector is valid for that constructor, and |False| if |weight x == bot|. Unfortunately our |Input| type does not contain information about records, so cannot express this definition. There are only a few type classes which exhibit label specific behaviour, such as |Show| which outputs the field name if present.
 
-Record fields are not present in our |Sample| type, but could be added. The difficulty is that Haskell allows for one field name to be shared by multiple constructors, and allows some constructors to have field names while others do not. This flexibility results in a massive number of possible combinations, and so a |Sample| type with sufficient generality would probably require too many constructors to be practical. Allowing records would be more practical for a language such as F\#, where records contain only one constructor and all fields must be named.
+Record fields are not present in our |Sample| type, but could be added. The difficulty is that Haskell allows for one field name to be shared by multiple constructors, and allows some constructors to have field names while others do not. This flexibility results in a massive number of possible combinations, and so a |Sample| type with sufficient generality would require many constructors. Allowing records would be more feasible for a language such as F\#, where records contain only one constructor and all fields must be named.
 
 \subsubsection{Type-based definitions}
 \label{sec:fromCtorName}
 
-Our |Sample| data type has a very simple type structure, and our |DSL| does not allow decisions to be made on the basis of type, but these restrictions means some type classes can't be defined. For example, a |Monoid| instance processes items of the same type using |mappend|, but items of a different type using |mempty|. There are several other examples of type specific behaviour, including |Functor|, |Traversable| and |Uniplate|.
+Our |Sample| data type has a very simple type structure, and our |DSL| does not allow decisions to be made on the basis of type -- these restrictions means some type classes can't be defined. For example, a |Monoid| instance processes items of the same type using |mappend|, but items of a different type using |mempty|. Several other type classes require type specific behaviour, including |Functor|, |Traversable| and |Uniplate|.
 
 The limitation of not including type information has other consequences, beyond not being able to derive certain type classes. For example, we can write the definition:
 
@@ -884,13 +880,13 @@ fromSecond  (Second  x_1 x_2  ) = const Second{}  $ tuple2  x_1 x_2
 fromThird   (Third   x_1      ) = const Third{}   $ tuple1  x_1
 \end{code}
 
-This function returns the elements contained within a constructor, generalising operations such |fromJust|, and has seen extensive use in the Yhc compiler \cite{yhc}. When compiled with GHC this code generates a warning that no top-level type signatures have been given. These type signatures can be inferred, but the Haddock documentation tool \cite{haddock} won't include functions missing type signatures. Without type information in |Input| we can't generate the helpful type signatures.
+This function returns the elements contained within a constructor, generalising operations such |fromJust|, and has seen extensive use in the Yhc compiler \cite{yhc}. When compiled with GHC this code generates a warning that no top-level type signatures have been given. These type signatures can be inferred, but the Haddock documentation tool \cite{haddock} won't include functions lacking type signatures. Without type information in |Input|, we can't generate appropriate type signatures.
 
 We see no easy way to include type information in our derivation scheme -- types have too much variety, and different examples react very differently to different type information. It may be possible to identify some restricted type information that could be used for a subset of type-based instances, but we have not done so.
 
 \subsection{Practical Experiences}
 
-This section describes our practical experiences with trying to specify instances in a form where they can be derived. Ideally we would like to write all instances in a natural way, but sometimes we need to make concessions to our derivation algorithm. Using the techniques given here, it seems to be possible to write most instances which are based on information included in the |Input| type.
+This section describes our practical experiences of trying to specify instances in a form where they can be derived. Ideally, we would like to write all instances in a natural way, but sometimes we need to make concessions to our derivation algorithm. Using the techniques given here, it seems possible to write most instances which are based on information included in the |Input| type.
 
 \subsubsection{Brackets Matter}
 
@@ -898,17 +894,17 @@ The original \derive{} program used Template Haskell, which doesn't explicitly r
 
 \subsubsection{Variable Naming}
 
-When naming variables it is important that a series of related variables follow the same pattern, i.e. in the example from \S\ref{sec:fromCtorName} we used |Second x_1 x_2|, rather than |Second x y|. By using a naming scheme based on sequential numbers we are able to derive the fields correctly.
+When naming variables it is important that a series of related variables follow the same pattern. In the example from \S\ref{sec:fromCtorName} we use |Second x_1 x_2|, rather than |Second x y|. By using a naming scheme based on sequential numbers we are able to derive the fields correctly.
 
 \subsubsection{Explicit Fold Base-Case}
 
-When performing a fold, it is import to always explicitly include the base-case. For example, in the introductory example of |NFData| the |Second| alternative is specified as |rnf x_1 `seq` rnf x_2 `seq` ()|, however we can show that:
+When performing a fold, it is important to explicitly include the base-case. In the introductory example of |NFData| the |Second| alternative is specified as |rnf x_1 `seq` rnf x_2 `seq` ()|, however we can show that:
 
 \ignore\begin{code}
 forall x `o` rnf x `seq` () == rnf x
 \end{code}
 
-Therefore we could write the |Second| alternative more compactly as |rnf x_1 `seq` rnf x_2|. However, doing so would mean that there was not one consistent pattern that could be applied for all constructors, and the derivation would fail. In general, when considering folds, the base-case should always be written explicitly.
+Therefore we could write the |Second| alternative more compactly as |rnf x_1 `seq` rnf x_2|. However, doing so would mean there was not one consistent pattern suitable for all constructors, and the derivation would fail. In general, when considering folds, the base-case should always be written explicitly.
 
 \subsubsection{Empty Record Construction}
 
@@ -942,75 +938,69 @@ instance Binary alpha => Binary (Sample alpha) where
 
 The value |length [First{},Second{},Third{}]| is used to compute the number of constructors in the data type, which can be tested to get the correct behaviour. This pattern is used in other classes, for example |Enum| and |Arbitrary|. Using the simplifications in \S\ref{sec:output_simplify} we can remove the test and produce code specialised to the number of constructors.
 
-The pattern for the number of constructors is useful and simple to implement, but seems a little verbose. In the first version of \derive{} the constructor count was guessed from the number 3. Unfortunately, the inclusion of this guess breaks the restrictions we have imposed for predictability. Another way of simplifying this pattern would be to introduce a meta function |ctorCount|, which expanded to the number of constructors. This solution means examples are no longer real example instances, and requires people to learn some of the DSL, something we have tried to avoid. In the end, we simply accept that the constructor count is slightly verbose.
+The pattern for the number of constructors is useful and simple to implement, but seems a little verbose. In the first version of \derive{} the constructor count was guessed from the number 3. Unfortunately, the inclusion of this guess breaks the restrictions we have imposed for predictability. Another way of simplifying this pattern would be to introduce a meta function |ctorCount|, which expanded to the number of constructors. This solution means inputs are not real example instances, and requires users to learn part of the DSL, which we have tried to avoid. In the end, we simply accept that the constructor count is slightly verbose.
 
 \subsection{Timing Properties}
 
-We have implemented the methods described in this paper, and have used them to guess all 15 examples referred to in \S\ref{sec:failure}, along with 2 additional test cases. For each example we have performed the following steps:
+We have implemented the methods described in this paper, and have used them to guess all 15 examples referred to in \S\ref{sec:failure}, along with 2 additional test cases. For each example we perform the following steps:
 
 \begin{enumerate}
 \item We derive the DSL from an example.
-\item We apply the DSL (without output optimisation) to the |Sample| data type and check it matches the input.
+\item We apply the DSL (without output optimisation) to the |Sample| data type and check it matches the input example.
 \item We apply the DSL to three other data types, namely lists, the eight element tuple and the expression type from the Yhc Core library \cite{me:yhc_core}.
 \end{enumerate}
 
-To perform all steps for 17 examples took 0.3 seconds when compiled with GHC at no optimisation on a laptop with a 2GHz CPU and 1Gb of RAM. We consider these times to be more than adequate, so have not carried out further experiments or investigated further optimisations.
+To perform all steps for 17 examples takes 0.3 seconds when compiled with GHC -O0 on a laptop with a 2GHz CPU and 1Gb of RAM. We consider these times to be more than adequate, so have not carried out further experiments or investigated additional optimisations.
 
 \section{Related Work}
 \label{sec:related}
 
-\todo{write a decent related work section}
+An earlier version of the \derive{} tool was presented in a previous paper \cite{me:yds_derive}. The previous work described only the derivation algorithm, taking an input directly to an output. There was no intermediate DSL, and no predictability. Given a single example the tool could produce multiple different answers, and would always use the first generated -- not always corresponding to the users intention. This paper presents a much more general scheme, along with many improvements to the previous work. Some of the areas of future work in the previous paper have been tackled, such as dynamic instances (see \S\ref{sec:dynamic_instances}). Crucial improvements have been made to the derivation algorithm, particularly when dealing with lists.
 
-The first version of the \derive{} tool was described in a previous paper \cite{me:yds_derive}. The original work set out to achieve the same goals, and had much the same success, but it lacked a number of critical notions. In the original work there was no explicit DSL, the derivation function was combined with the DSL. In particular the original work had no notion of predictability. The lists have also been inferred in a much better way.
-
-We are unaware of any work (other than our own) that attempts to automatically derive Haskell type classes. Therefore we split the remaining related work in to two sections -- that which hopes to specify type classes and that which hopes to derive relationships.
+We are unaware of any work (other than our own) that attempts to automatically derive Haskell type classes. Therefore we split the remaining related work in to two sections -- that which explicitly defines instance relationships, and that which tries to derive relationships.
 
 \subsection{Specifying Type Classes}
 
-There have been other attempts at writing derivable type classes. The tool with a similar spirit to \derive{} is DrIFT \cite{drift}. In constrast to our tool, there is no inference of type classes and no underlying DSL. However, to a users point of view, the tools are similar. However, because we derive examples easily it has been possible to dramatically increase the number of classes at speed -- even thought DrIFT is old, Derive supports more classes.
+From an end-user perspective, the DrIFT tool \cite{drift} is similar to \derive{} -- both take data types and produce associated instances. To add a type-class to DrIFT the programmer manually writes a translation from input types to Haskell source code, using pretty-printing combinators. There is no derivation of type classes, and no underlying DSL. As a result, for types which can be derived from an example, it is substantially easier to add them to \derive{}.
 
-The Deriveable Type Classes work \cite{hinze:derivable_type_classes} allows a user to write type class instances explicitly in terms of units, products and sums, which combine to form all data types. There are many restrictions on these types, for example record definitions aren't allowed and derivations depending on the types aren't allowed. In fact, we suspect that most instances that can be expressed in their scheme can also be derived by example.
+Another mechanism for specifying type classes is to use generic type classes \cite{hinze:derivable_type_classes}, a language extension supported by GHC. A programmer can write default instances for type classes explicitly in terms of the structure of a type, using units, products and sums. There are many restrictions on such classes, including restrictions on the type of instance methods and the structure of the input type. Using the abstraction of products and sums, it is impossible to represent many instances such as those dealing with records or containing type specific behaviour.
 
 \subsection{Deriving Relationships}
 
-The purpose of this work is to find a pattern, and generalise that pattern to other situations. Genetic algorithms \cite{genetic_algorithms} are often used to automatically find a pattern in a data set. Genetic algorithms work by evolving a hypothesis (a gene sequence) and testing on a sample problem. They are well suited to search problems where the utility function is continuous -- close hypotheses have similar fitness. The main difference from this paper is that these tools are random search, while ours is precise induction.
+The purpose of our work is to find a pattern, which is generalised to other situations. Genetic algorithms \cite{genetic_algorithms} are often used to automatically find patterns in a data set. Genetic algorithms work by evolving a hypothesis (a gene sequence) which is tested against a sample problem. While genetic algorithms are good for search, they usually use a heuristic to measure closeness -- so lack the exactness of our approach.
 
-Some work takes non-recursive equations and generalising them into recursive equations \cite{kitzelmann:inductive_synthesis,kitzelmann:data_driven_induction}, working from a program specification of possibly non-ground equations. Other work uses only ground examples \cite{kitzelmann:data_driven_induction_ground}. All these pieces of work use a set of only positive examples.
+There is much research on learning relationships from a collection of input/output pairs, often using only positive examples \cite{kitzelmann:data_driven_induction_ground}. Some work tackles this problem using exhaustive search \cite{katayama:exhaustive_generation}, a technique that could possibly replace our |derive| function. Instead of working from specific examples, some work instead attempts to generalise a set of non-recursive equations into a recursive form \cite{kitzelmann:inductive_synthesis,kitzelmann:data_driven_induction}. All these pieces of work require a set of input/output examples, in contrast to our method that requires only one output.
 
-Some work performs exhaustive search \cite{katayama:exhaustive_generation}, which is a cool technique and could perhaps be used within our work as the search mechanism.
-
-The big difference is that we start from only one example, and we restrict the problem domain in such a way that any answer we get is correct.
-
-The closest work we are aware of is that of the theorem proving community. Induction is a very common tactic for writing proofs, and well supported in systems such as HOL Light \cite{hol_light}. Typically the user must suggest the use of induction, which the system checks for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful. However, these systems all work from one positive example, attempting to determine a reasonably restricted form of example.
+The closest work we are aware of is that of the theorem proving community. Induction is a very common tactic for writing proofs, and well supported in systems such as HOL Light \cite{hol_light}. Typically the user must suggest the use of induction, which the system checks for validity. Automatic inference of an induction argument has been tried \cite{mintchev:reasoning}, but is rarely successful. However, these systems all work from one positive example, attempting to determine a reasonably restricted output type.
 
 \section{Conclusions and Future Work}
 \label{sec:conclusion}
 
 We have presented a scheme for deriving a DSL from one example, which we have used to automatically derive instance generators for Haskell type classes. Our technique has been implemented in the \derive{} tool, where 60\% of instance generators are specified by example. The ease of creating new instances has enabled several users to contribute instance generators to the \derive{} tool.
 
-One of the key strengths of our derivation scheme is that concerns of correctness and predictability are separated from the main derivation function. Correctness is easy to test for, so incorrect derivations can be simply discarded. Predictability is a property of the DSL and sample input, and can be determined in isolation from the derivation function. The derivation function merely needs to take a best guess at what derivation might work, allowing greater freedom to experiment.
+One of the key strengths of our derivation scheme is that concerns of correctness and predictability are separated from the main derivation function. Correctness is easy to test for, so incorrect derivations can simply be discarded. Predictability is a property of the DSL and sample input, and can be determined in isolation from the derivation function. The derivation function merely needs to take a best guess at what derivation might work, allowing greater freedom to experiment.
 
 We see several lines of future work:
 
 \begin{itemize}
 \item By deriving an explicit DSL, we can reuse the DSL for other purposes. We have already shown the creation of dynamic instances in \S\ref{sec:dynamic_instances}, but there are other possible uses. One possibility would be to prove properties, for example that all |Eq| instances are reflexive, or that |put|/|get| in |Binary| are inverses. Another use might be to generate human readable documentation of an instance. We suspect there are many other uses.
 \item The provided data type (Figure \ref{fig:sample}) allows many instances to be inferred -- but more would be desirable. We have discussed possible extensions in \S\ref{sec:failure}, but none seems to offer compelling benefits. An alternative approach would be to introduce new sample data types with features specifically targeted for certain types of definition. Care would have to be taken that these definitions still preserved predictability, and did not substantially increase the complexity of writing examples.
-\item While our program is written in the typed language Haskell, most of the actual DSL operations are implemented upon a universal data type with dynamic type conversions -- essentially a dynamically typed language. In order to preserve types throughout we could make use of as GADTs \cite{spj:gadt}.
-\item We have implemented our scheme specifically for instance generators in Haskell, but the same scheme could be applied to other computer languages and other situations. One possible target would be F\#, where there are interfaces instead of type classes. Another target could be the object-orientated community, who have embraced design patterns \cite{design_patterns}, which often involve recurring patterns parameterised by data type.
+\item While our program is written in a typed language, most of the actual DSL operations are implemented upon a universal data type with runtime type checking -- essentially a dynamically typed language. In order to preserve types throughout we could make use of GADTs \cite{spj:gadt}.
+\item We have implemented our scheme specifically for instance generators in Haskell, but the same scheme could be applied to other computer languages and other situations. One possible target would be F\#, where there are interfaces instead of type classes. Another target could be an object-orientated language, where design patterns \cite{design_patterns} are popular.
 \end{itemize}
 
 Computers are ideally suited to applying a known function to new parameters, but specifying these patterns can be complex and error prone. By specifying a single output, instead of the pattern, a user can focus on what they want, rather than the mechanism by which it is implemented.
 
 \subsection*{Acknowledgements}
 
-Thanks to Stefan O'Rear help with the first version of the \derive{} tool. Thanks to Niklas Broberg for the excellent haskell-src-exts library. Thanks to Hongseok Yang for fruitful discussions on the original instance generation work.
+Thanks to Stefan O'Rear for help writing the first version of the \derive{} tool. Thanks to Niklas Broberg for the excellent haskell-src-exts library. Thanks to Hongseok Yang for fruitful discussions on the original instance generation work.
 
 \appendix
 
 \section{Arities DSL}
 \label{sec:arities_full}
 
-This section is the full arities DSL, which is shown simplified and nicely printed in \S\ref{sec:dsl_simplify}.
+This section presents the full |Arities| DSL, a simplified version of which is shown in \S\ref{sec:dsl_simplify}.
 
 \h{expr}\begin{code}
 List [Instance [] "Arities" (List [App "InsDecl" (
