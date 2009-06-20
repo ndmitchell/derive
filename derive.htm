@@ -100,102 +100,45 @@ runhaskell Setup install
 	Data.Derive is not limited to any prebuild set of derivations, see later for how to add your own. Out of the box, we provide instances for the following libraries.
 </p>
 
-<h3>Prelude</h3>
-
-<p>
-	These are the standard classes defined in the <a href="http://haskell.org/onlinereport/derived.html">Haskell Report</a>, some of which the existing <tt>deriving</tt> works upon.
-</p>
-<ul>
-	<li><b>Eq</b></li>
-	<li><b>Ord</b></li>
-	<li><b>Bounded</b></li>
-	<li><b>Enum</b></li>
-	<li><b>EnumCyclic</b></li>
-	<li><b>Functor</b></li>
-        <li><b>Read</b></li>
-        <li><b>Show</b></li>
-</ul>
-
-<h3>Base</h3>
-
-<p>
-	These are instances from the base libraries, but which aren't in the Haskell 98 report.
-</p>
-<ul>
-	<li><b>Monoid</b></li>
-	<li><b>NFData</b></li>
-</ul>
-
-<h3>Query</h3>
-
-<p>
-	DrIFT defines a number of useful query functions, which are technically not instances, but can be derived in a similar manner. We support some of these as from DrIFT, some with modifications, and some which are brand new:
-</p>
-<ul>
-    <li><b>From</b></li>
-    <li><b>Has</b></li>
-    <li><b>Is</b></li>
-    <li><b>Set</b></li>
-    <li><b>LazySet</b></li>
-</ul>
-
-<h3>Generics</h3>
-
-<p>
-	We support the two classes from the first <a href="http://www.cs.vu.nl/boilerplate/">Scrap Your Boilerplate</a> paper, and the classes from the <a href="http://www-users.cs.york.ac.uk/~ndm/play/">Play library</a>:
-</p>
-<ul>
-	<li><b>Typeable</b></li>
-	<li><b>Data</b></li>
-	<li><b>Play</b></li>
-</ul>
-
-<h3>Binary</h3>
-
-<p>
-	We support the new <a href="http://www.cse.unsw.edu.au/~dons/binary.html">Binary library</a>, and the <a href="http://www-users.cs.york.ac.uk/~ndm/binarydefer/">BinaryDefer library</a>.
-</p>
-<ul>
-	<li><b>Binary</b></li>
-	<li><b>BinaryDefer</b></li>
-</ul>
-
-<h3>Testing</h3>
-
-<p>
-	We support both <a href="http://www.cs.chalmers.se/~rjmh/QuickCheck/">QuickCheck</a> and the <a href="http://www.cs.york.ac.uk/fp/darcs/smallcheck/">SmallCheck library</a>:
-</p>
-<ul>
-	<li><b>Arbitrary</b></li>
-	<li><b>Serial</b></li>
-</ul>
-
-<h3>Classhacking</h3>
-
-<p>
-	From the <a href="http://homepages.cwi.nl/~ralf/HList">HList library</a>:
-</p>
-<ul>
-	<li><b>TTypeable</b></li>
-</ul>
-
-<h3>Missing</h3>
-
-<p>
-	These derivations are in DrIFT, but not in Derive. If you need them, let us know and we'll implement them.
-</p>
-<ul>
-	<li><b>ATermConvertible</b> - encode terms in the ATerm format.</li>
-	<li><b>BitsBinary</b> - efficient binary encoding of terms.</li>
-	<li><b>FunctorM</b> - derive reasonable fmapM implementation.</li>
-	<li><b>GhcBinary</b> - byte sized binary encoding of terms.</li>
-	<li><b>HFoldable</b> - Strafunski hfoldr.</li>
-	<li><b>Haskell2Xml</b> - encode terms as XML (HaXml&lt;=1.13).</li>
-	<li><b>Observable</b> - HOOD observable.</li>
-	<li><b>RMapM</b> - derive reasonable rmapM implementation.</li>
-	<li><b>Term</b> - Strafunski representation via Dynamic.</li>
-	<li><b>XmlContent</b> - encode terms as XML (HaXml&gt;=1.14).</li>
-</ul>
+<!--
+-- GENERATED START
+-->
+<li><b><a href='http://hackage.haskell.org/'>Arbitrary</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>ArbitraryOld</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Arities</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Binary</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>BinaryDefer</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Bounded</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Data</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Default</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Enum</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>EnumCyclic</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Eq</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Fold</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Foldable</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>From</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Functor</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Has</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Is</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>LazySet</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Monoid</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>NFData</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Ord</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>PlateDirect</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>PlateTypeable</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Read</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Ref</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Serial</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Set</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Show</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Traversable</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>TTypeable</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Typeable</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Uniplate</a></b> - from the library base</li>
+<li><b><a href='http://hackage.haskell.org/'>Update</a></b> - from the library base</li>
+<!--
+-- GENERATED STOP
+-->
 
 <h2>Using the Derive program</h2>
 

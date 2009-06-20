@@ -1,48 +1,42 @@
-{-# OPTIONS_GHC -fth -cpp #-}
+{-
+import {- "binarydefer" -} Data.Binary.Defer
 
--- | Derivation for Neil Mitchell's BinaryDefer class.  XXX: do research, write useful haddock
-module Data.Derive.BinaryDefer(makeBinaryDefer) where
+{-# EXAMPLE #-}
 
-import Language.Haskell.TH.All hiding (unit)
+instance BinaryDefer a => BinaryDefer (Sample a) where
+    bothDefer = defer [\ ~(First) -> unit First
+                      ,\ ~(Second x1 x2) -> unit Second << x1 << x2
+                      ,\ ~(Third x1) -> unit Third << x1
+                      ]
 
-#ifdef GUESS
+-}
+-- GENERATED START
 
-import Data.DeriveGuess
-import Data.Binary.Defer
+module Data.Derive.BinaryDefer where
 
-instance Eq (DataName a) where
+import Data.Derive.DSL.DSL
+import Data.Derive.Internal.Derivation
 
-example = (,) "BinaryDefer" [d|
-
-    instance BinaryDefer a => BinaryDefer (DataName a) where
-        bothDefer = defer [\ ~(CtorZero) -> unit CtorZero
-                          ,\ ~(CtorOne x1) -> unit CtorOne << x1
-                          ,\ ~(CtorTwo x1 x2) -> unit CtorTwo << x1 << x2
-                          ,\ ~(CtorTwo' x1 x2) -> unit CtorTwo' << x1 << x2
-                          ]
-
-    |]
-
-#endif
+dslBinaryDefer =
+    List [Instance ["BinaryDefer"] "BinaryDefer" (List [App "InsDecl"
+    (List [App "PatBind" (List [App "PVar" (List [App "Ident" (List [
+    String "bothDefer"])]),App "Nothing" (List []),App "UnGuardedRhs"
+    (List [App "App" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "defer"])])]),App "List" (List [MapCtor (App
+    "Lambda" (List [List [App "PIrrPat" (List [App "PParen" (List [App
+    "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName])]),
+    MapField (App "PVar" (List [App "Ident" (List [Concat (List [
+    String "x",ShowInt FieldIndex])])]))])])])],Fold (App "InfixApp" (
+    List [Tail,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (
+    List [String "<<"])])]),Head])) (Concat (List [Reverse (MapField (
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (
+    List [String "x",ShowInt FieldIndex])])])]))),List [App "App" (
+    List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    String "unit"])])]),App "Con" (List [App "UnQual" (List [App
+    "Ident" (List [CtorName])])])])]]))]))])])]),App "BDecls" (List [
+    List []])])])])]
 
 makeBinaryDefer :: Derivation
-makeBinaryDefer = derivation binarydefer' "BinaryDefer"
-binarydefer' dat = [instance_context ["BinaryDefer"] "BinaryDefer" dat [ValD (
-    VarP (mkName "bothDefer")) (NormalB (AppE (VarE (mkName "defer")) (ListE ((
-    map (\(ctorInd,ctor) -> (LamE [(TildeP (ConP (mkName (ctorName ctor)) ((map
-    (\field -> (VarP (mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++
-    [])))] (foldr1With (VarE (mkName "<<")) ((map (\field -> (VarE (mkName ("x"
-    ++ show field)))) (reverse [1..ctorArity ctor]))++[(AppE (VarE (mkName
-    "unit")) (ConE (mkName (ctorName ctor))))]++[])))) (id (zip [0..] (
-    dataCtors dat))))++[])))) []]]
-    
+makeBinaryDefer = derivationDSL "BinaryDefer" dslBinaryDefer
 
-{-    
-
-derive dat = simple_instance "BinaryDefer" dat [funN "bothDefer" [ body ] ]
-    where
-        body = sclause [] (l1 "defer" (lst [ f ct | ct <- dataCtors dat ]))
-
-        f ctor = LamE [TildeP (ctp ctor 'v')] $
-                 foldl (l2 "<<") (l1 "unit" (ctc ctor)) (ctv ctor 'v')
--}
+-- GENERATED STOP

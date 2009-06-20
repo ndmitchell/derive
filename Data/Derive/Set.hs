@@ -1,3 +1,12 @@
+{-
+
+{-# TEST Computer #-}
+
+setWeight v x = x{weight=v}
+setMemory v x = x{memory=v}
+setProcessor v x = x{process=v}
+
+-}
 
 -- | A pseudo derivation.  For each field in the data type, deriving
 -- @Set@ generates @set@/FieldName/@ v x = x{@/fieldName/@ = v}@.
@@ -9,18 +18,6 @@ module Data.Derive.Set(makeSet) where
 import Language.Haskell.TH.All
 import Data.Char
 import Data.List
-
-{-
-data Computer = Laptop {weight :: Int, memory :: Int}
-              | Desktop {memory :: Int, processor :: Int}
-
-==>
-
-setWeight v x = x{weight=v}
-setMemory v x = x{memory=v}
-setProcessor v x = x{process=v}
-
--}
 
 makeSet :: Derivation
 makeSet = derivation set' "Set"

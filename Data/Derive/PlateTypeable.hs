@@ -1,48 +1,55 @@
-{-# OPTIONS_GHC -fth -cpp -fglasgow-exts -fallow-undecidable-instances #-}
+{-
+import {- "uniplate" -} Data.Generics.PlateTypeable
 
-module Data.Derive.PlateTypeable(makePlateTypeable) where
+{-# EXAMPLE #-}
 
-import Language.Haskell.TH.All
+-- instance (PlateAll a (Sample a), Typeable a) => Uniplate (Sample a) where
+--    uniplate = uniplateAll
 
+instance (Typeable t, Typeable a, Uniplate t, PlateAll a t) => PlateAll (DataName a) t where
+    plateAll (First) = plate First
+    plateAll (Second x1 x2)  = plate Second |+ x1 |+ x2
+    plateAll (Third x1) = plate Third |+ x1
 
-#ifdef GUESS
+-}
+-- GENERATED START
 
-import Data.Generics.PlateTypeable
-import Data.DeriveGuess
-import Data.Typeable
+module Data.Derive.PlateTypeable where
 
-example = (,) "PlateTypeable" [d|
+import Data.Derive.DSL.DSL
+import Data.Derive.Internal.Derivation
 
-    instance (PlateAll a (DataName a), Typeable a) => Uniplate (DataName a) where
-        uniplate = uniplateAll
-
-    instance (Typeable t, Typeable a, Uniplate t, PlateAll a t) => PlateAll (DataName a) t where
-        plateAll CtorZero         = plate CtorZero
-        plateAll (CtorOne x1)     = plate CtorOne  |+ x1
-        plateAll (CtorTwo x1 x2)  = plate CtorTwo  |+ x1 |+ x2
-        plateAll (CtorTwo' x1 x2) = plate CtorTwo' |+ x1 |+ x2
-
-    |]
-
-#endif
-
+dslPlateTypeable =
+    List [App "InstDecl" (List [List [App "ClassA" (List [App "UnQual"
+    (List [App "Ident" (List [String "Typeable"])]),List [App "TyVar"
+    (List [App "Ident" (List [String "t"])])]]),App "ClassA" (List [
+    App "UnQual" (List [App "Ident" (List [String "Typeable"])]),List
+    [App "TyVar" (List [App "Ident" (List [String "a"])])]]),App
+    "ClassA" (List [App "UnQual" (List [App "Ident" (List [String
+    "Uniplate"])]),List [App "TyVar" (List [App "Ident" (List [String
+    "t"])])]]),App "ClassA" (List [App "UnQual" (List [App "Ident" (
+    List [String "PlateAll"])]),List [App "TyVar" (List [App "Ident" (
+    List [String "a"])]),App "TyVar" (List [App "Ident" (List [String
+    "t"])])]])],App "UnQual" (List [App "Ident" (List [String
+    "PlateAll"])]),List [App "TyApp" (List [App "TyCon" (List [App
+    "UnQual" (List [App "Ident" (List [String "DataName"])])]),App
+    "TyVar" (List [App "Ident" (List [String "a"])])]),App "TyVar" (
+    List [App "Ident" (List [String "t"])])],List [App "InsDecl" (List
+    [App "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (
+    List [String "plateAll"]),List [App "PParen" (List [App "PApp" (
+    List [App "UnQual" (List [App "Ident" (List [CtorName])]),MapField
+    (App "PVar" (List [App "Ident" (List [Concat (List [String "x",
+    ShowInt FieldIndex])])]))])])],App "Nothing" (List []),App
+    "UnGuardedRhs" (List [Fold (App "InfixApp" (List [Tail,App
+    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String
+    "|+"])])]),Head])) (Concat (List [Reverse (MapField (App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [Concat (List [String
+    "x",ShowInt FieldIndex])])])]))),List [App "App" (List [App "Var"
+    (List [App "UnQual" (List [App "Ident" (List [String "plate"])])])
+    ,App "Con" (List [App "UnQual" (List [App "Ident" (List [CtorName]
+    )])])])]]))]),App "BDecls" (List [List []])]))])])]])]
 
 makePlateTypeable :: Derivation
-makePlateTypeable = derivation plateTypeable' "PlateTypeable"
-plateTypeable' dat = [InstanceD (concat ([(map (\tdat -> (AppT (AppT (ConT (
-    mkName "PlateAll")) tdat) (lK (dataName dat) (dataVars dat)))) (dataVars
-    dat)),(map (\tdat -> (AppT (ConT (mkName "Typeable")) tdat)) (dataVars dat)
-    )])) (head [(AppT (ConT (mkName "Uniplate")) (lK (dataName dat) (dataVars
-    dat)))])[(ValD (VarP (mkName "uniplate")) (NormalB (VarE (mkName
-    "uniplateAll"))) [])],InstanceD (concat ([[(AppT (ConT (mkName "Typeable"))
-    (VarT (mkName "t")))],(map (\tdat -> (AppT (ConT (mkName "Typeable")) tdat)
-    ) (dataVars dat)),[(AppT (ConT (mkName "Uniplate")) (VarT (mkName "t")))],(
-    map (\tdat -> (AppT (AppT (ConT (mkName "PlateAll")) tdat) (VarT (mkName
-    "t")))) (dataVars dat))])) (head [(AppT (AppT (ConT (mkName "PlateAll")) (
-    lK (dataName dat) (dataVars dat))) (VarT (mkName "t")))])[(FunD (mkName
-    "plateAll") ((map (\(ctorInd,ctor) -> (Clause [(ConP (mkName ("" ++
-    ctorName ctor)) ((map (\field -> (VarP (mkName ("x" ++ show field)))) (id [
-    1..ctorArity ctor]))++[]))] (NormalB (foldr1With (VarE (mkName "|+")) ((map
-    (\field -> (VarE (mkName ("x" ++ show field)))) (reverse [1..ctorArity ctor
-    ]))++[(AppE (VarE (mkName "plate")) (ConE (mkName ("" ++ ctorName ctor))))]
-    ++[]))) [])) (id (zip [0..] (dataCtors dat))))++[]))]]
+makePlateTypeable = derivationDSL "PlateTypeable" dslPlateTypeable
+
+-- GENERATED STOP

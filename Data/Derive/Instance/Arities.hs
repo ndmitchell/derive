@@ -3,7 +3,7 @@
 
 module Data.Derive.Instance.Arities where
 
-import Data.Derive.Class.Arities 
+import Data.Derive.Class.Arities
 import Data.Derive.Internal.Instance
 
  

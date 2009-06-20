@@ -1,34 +1,113 @@
--- NOTE: Cannot be guessed as is not inductive because of getWordN
+{-
+import {- "binary" -} Data.Binary
 
--- | Derivation for Data.Binary's Binary class for serializing values.
--- The generated instances implement a very simple tagged data format.
--- First, the (0-based) constructor number is stored, in the smallest
--- of 0, 1, 2, or 4 bytes that can represent the entire range.  Then,
--- the constructor's arguments are stored, in order, using the Binary
--- instances in scope.
-module Data.Derive.Binary(makeBinary) where
+{-# EXAMPLE #-}
 
-import Language.Haskell.TH.All
-import Data.List
+instance Binary alpha => Binary (Sample alpha) where
+    put x = case x of
+        First          -> do putTag 0
+        Second  x1 x2  -> do putTag 1 ; put x1 ; put x2
+        Third   x1     -> do putTag 2 ; put x1
+        where
+            useTag = length [First{}, Second{}, Third{}] > 1
+            putTag = when useTag . putWord8
+
+    get = do
+        i <- getTag
+        case i of
+            0 -> do return (First)
+            1 -> do x1 <- get ; x2 <- get ; return (Second x1 x2)
+            2 -> do x1 <- get ; return (Third x1)
+            _ -> error "Corrupted binary data for Sample"
+        where
+            useTag = length [First{}, Second{}, Third{}] > 1
+            getTag = if useTag then getWord8 else return 0
+
+-}
+-- GENERATED START
+
+module Data.Derive.Binary where
+
+import Data.Derive.DSL.DSL
+import Data.Derive.Internal.Derivation
+
+dslBinary =
+    List [Instance ["Binary"] "Binary" (List [App "InsDecl" (List [App
+    "FunBind" (List [List [App "Match" (List [App "Ident" (List [
+    String "put"]),List [App "PVar" (List [App "Ident" (List [String
+    "x"])])],App "Nothing" (List []),App "UnGuardedRhs" (List [App
+    "Case" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
+    List [String "x"])])]),MapCtor (App "Alt" (List [App "PApp" (List
+    [App "UnQual" (List [App "Ident" (List [CtorName])]),MapField (App
+    "PVar" (List [App "Ident" (List [Concat (List [String "x",ShowInt
+    FieldIndex])])]))]),App "UnGuardedAlt" (List [App "Do" (List [
+    Concat (List [List [App "Qualifier" (List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "putTag"])])]),App "Lit" (List [App "Int" (List [CtorIndex])])])])
+    ],MapField (App "Qualifier" (List [App "App" (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "put"])])]),
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (
+    List [String "x",ShowInt FieldIndex])])])])])]))])])]),App
+    "BDecls" (List [List []])]))])]),App "BDecls" (List [List [App
+    "PatBind" (List [App "PVar" (List [App "Ident" (List [String
+    "useTag"])]),App "Nothing" (List []),App "UnGuardedRhs" (List [App
+    "InfixApp" (List [App "App" (List [App "Var" (List [App "UnQual" (
+    List [App "Ident" (List [String "length"])])]),App "List" (List [
+    MapCtor (App "RecConstr" (List [App "UnQual" (List [App "Ident" (
+    List [CtorName])]),List []]))])]),App "QVarOp" (List [App "UnQual"
+    (List [App "Symbol" (List [String ">"])])]),App "Lit" (List [App
+    "Int" (List [Int 1])])])]),App "BDecls" (List [List []])]),App
+    "PatBind" (List [App "PVar" (List [App "Ident" (List [String
+    "putTag"])]),App "Nothing" (List []),App "UnGuardedRhs" (List [App
+    "InfixApp" (List [App "App" (List [App "Var" (List [App "UnQual" (
+    List [App "Ident" (List [String "when"])])]),App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "useTag"])])])]),App
+    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String "."
+    ])])]),App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    Concat (List [String "putWord",ShowInt (Int 8)])])])])])]),App
+    "BDecls" (List [List []])])]])])]])]),App "InsDecl" (List [App
+    "PatBind" (List [App "PVar" (List [App "Ident" (List [String "get"
+    ])]),App "Nothing" (List []),App "UnGuardedRhs" (List [App "Do" (
+    List [List [App "Generator" (List [App "PVar" (List [App "Ident" (
+    List [String "i"])]),App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "getTag"])])])]),App "Qualifier" (List [App
+    "Case" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
+    List [String "i"])])]),Concat (List [MapCtor (App "Alt" (List [App
+    "PLit" (List [App "Int" (List [CtorIndex])]),App "UnGuardedAlt" (
+    List [App "Do" (List [Concat (List [MapField (App "Generator" (
+    List [App "PVar" (List [App "Ident" (List [Concat (List [String
+    "x",ShowInt FieldIndex])])]),App "Var" (List [App "UnQual" (List [
+    App "Ident" (List [String "get"])])])])),List [App "Qualifier" (
+    List [App "App" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "return"])])]),App "Paren" (List [
+    Application (Concat (List [List [App "Con" (List [App "UnQual" (
+    List [App "Ident" (List [CtorName])])])],MapField (App "Var" (List
+    [App "UnQual" (List [App "Ident" (List [Concat (List [String "x",
+    ShowInt FieldIndex])])])]))]))])])])]])])]),App "BDecls" (List [
+    List []])])),List [App "Alt" (List [App "PWildCard" (List []),App
+    "UnGuardedAlt" (List [App "App" (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "error"])])]),App "Lit"
+    (List [App "String" (List [String
+    "Corrupted binary data for Sample"])])])]),App "BDecls" (List [
+    List []])])]])])])]])]),App "BDecls" (List [List [App "PatBind" (
+    List [App "PVar" (List [App "Ident" (List [String "useTag"])]),App
+    "Nothing" (List []),App "UnGuardedRhs" (List [App "InfixApp" (List
+    [App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
+    (List [String "length"])])]),App "List" (List [MapCtor (App
+    "RecConstr" (List [App "UnQual" (List [App "Ident" (List [CtorName
+    ])]),List []]))])]),App "QVarOp" (List [App "UnQual" (List [App
+    "Symbol" (List [String ">"])])]),App "Lit" (List [App "Int" (List
+    [Int 1])])])]),App "BDecls" (List [List []])]),App "PatBind" (List
+    [App "PVar" (List [App "Ident" (List [String "getTag"])]),App
+    "Nothing" (List []),App "UnGuardedRhs" (List [App "If" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "useTag"])])]),App "Var" (List [App "UnQual" (List [App "Ident" (
+    List [Concat (List [String "getWord",ShowInt (Int 8)])])])]),App
+    "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
+    List [String "return"])])]),App "Lit" (List [App "Int" (List [Int
+    0])])])])]),App "BDecls" (List [List []])])]])])])])]
 
 makeBinary :: Derivation
-makeBinary = derivation derive "Binary"
+makeBinary = derivationDSL "Binary" dslBinary
 
-derive dat =
-        simple_instance "Binary" dat [funN "put" pbody, funN "get" gbody]
-    where
-        pbody = [ sclause [ctp ctor 'x'] (put_case nm ctor) | (nm,ctor) <- items ]
-        put_case nm ctor = sequence__ (ptag (lit nm) : map (l1 "put") (ctv ctor 'x'))
-
-        gbody = [sclause [] (gtag >>=: ("tag_" ->: case' (vr "tag_") (map get_case items)))]
-        get_case (nm,ctor) = (lit nm, liftmk (ctc ctor) (replicate (ctorArity ctor) (vr "get")))
-
-        ctors = dataCtors dat
-        nctors = length ctors
-        items :: [(Integer,CtorDef)]
-        items = zip [0..] ctors
-
-        (ptag, gtag) | nctors <= 1     = (\_ -> return' unit, return' (lit (0::Integer)))
-                     | nctors <= 256   = (l1 "putWord8", l0 "getWord8")
-                     | nctors <= 65536 = (l1 "putWord16", l0 "getWord16")
-                     | otherwise       = (l1 "putWord32", l0 "getWord32")
+-- GENERATED STOP

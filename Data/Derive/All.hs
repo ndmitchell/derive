@@ -1,27 +1,31 @@
 {-
 data List a = Nil | Cons a (List a)
 
-data [a] = [] | (:) a [a]
+-- built in, as it can't be written
+-- data [a] = [] | (:) a [a]
 
 data Bool = False | True
 
 data Either a b = Left a | Right b
+
+data Computer = Laptop {weight :: Int, memory :: Int}
+              | Desktop {memory :: Int, processor :: Int}
+
 -}
 
 -- | This module provides convenience re-exports of all the standard
 -- Data.Derive derivations.
-module Data.Derive.All (module D) where
+module Data.Derive.All (derivations, module D) where
 
 -- GENERATED START
 import Data.Derive.Arbitrary        as D
-import Data.Derive.Arbitrary2       as D
---import Data.Derive.Arities          as D
+import Data.Derive.ArbitraryOld     as D
+import Data.Derive.Arities          as D
 import Data.Derive.Binary           as D
 import Data.Derive.BinaryDefer      as D
-import Data.Derive.BinaryOld        as D
 import Data.Derive.Bounded          as D
 import Data.Derive.Data             as D
---import Data.Derive.Default          as D
+import Data.Derive.Default          as D
 import Data.Derive.Enum             as D
 import Data.Derive.EnumCyclic       as D
 import Data.Derive.Eq               as D
@@ -48,3 +52,5 @@ import Data.Derive.Typeable         as D
 import Data.Derive.Uniplate         as D
 import Data.Derive.Update           as D
 -- GENERATED STOP
+
+derivations = [("Arities",makeArities)]

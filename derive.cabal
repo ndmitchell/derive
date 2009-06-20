@@ -1,11 +1,11 @@
 Cabal-Version:  >= 1.2
-Build-Type:     Custom
+Build-Type:     Default
 Name:           derive
-Version:        0.1.4
+Version:        2.0.0
 build-type:     Simple
-Copyright:      2006-7, Neil Mitchell
+Copyright:      2006-2009, Neil Mitchell
 Maintainer:     ndmitchell@gmail.com
-Homepage:       http://www-users.cs.york.ac.uk/~ndm/derive/
+Homepage:       http://community.haskell.org/~ndm/derive/
 License:        BSD3
 License-File:   LICENSE
 Author:         Neil Mitchell & Stefan O'Rear
@@ -23,35 +23,45 @@ Extra-Source-Files:
 Flag small_base
     Description: Choose the new smaller, split-up base package.
 
+Executable derive
+    Main-Is: Main.hs
+
 Library
-    Extensions: CPP
-    Build-Depends: template-haskell, filepath, mtl
+    Build-Depends: haskell-src-meta, haskell-src-exts, filepath, mtl
     if impl(ghc >= 6.10)
         build-depends: base == 4.*, syb
     if flag(small_base)
         Build-Depends: base >= 3, containers, pretty, packedstring, random, process, directory
     else
         Build-Depends: base < 3
-        CPP-Options: "-DTH_SYB"
 
     Exposed-Modules:
         Data.DeriveGuess
         Data.DeriveTH
         Data.DeriveTraversal
         Data.Derive.All
+        Language.Haskell.TH.All
+        Language.Haskell.TH.Data
+        Language.Haskell.TH.ExpandSynonym
+        Language.Haskell.TH.FixedPpr
+        Language.Haskell.TH.Helper
+        Language.Haskell.TH.Peephole
+        Language.Haskell.TH.SYB
+-- GENERATED START
         Data.Derive.Arbitrary
-        Data.Derive.Arbitrary2
+        Data.Derive.ArbitraryOld
+        Data.Derive.Arities
         Data.Derive.Binary
         Data.Derive.BinaryDefer
-        Data.Derive.BinaryOld
         Data.Derive.Bounded
         Data.Derive.Data
+        Data.Derive.Default
         Data.Derive.Enum
         Data.Derive.EnumCyclic
         Data.Derive.Eq
-        Data.Derive.From
         Data.Derive.Fold
         Data.Derive.Foldable
+        Data.Derive.From
         Data.Derive.Functor
         Data.Derive.Has
         Data.Derive.Is
@@ -71,13 +81,4 @@ Library
         Data.Derive.Typeable
         Data.Derive.Uniplate
         Data.Derive.Update
-        Language.Haskell.TH.All
-        Language.Haskell.TH.Data
-        Language.Haskell.TH.ExpandSynonym
-        Language.Haskell.TH.FixedPpr
-        Language.Haskell.TH.Helper
-        Language.Haskell.TH.Peephole
-        Language.Haskell.TH.SYB
-
-Executable derive
-    Main-Is: Derive.hs
+-- GENERATED STOP

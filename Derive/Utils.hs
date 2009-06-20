@@ -7,6 +7,7 @@ import qualified Data.ByteString.Char8 as BS
 import System.Directory
 import System.IO
 import Control.Monad
+import Data.Char
 
 
 data Src = Src
@@ -19,22 +20,28 @@ data Src = Src
 nullSrc = Src Nothing Nothing Nothing []
 
 
+readHSE :: FilePath -> IO Module
+readHSE file = do
+    src <- readFile' file
+    case parseFileContents $ unlines $ ("module Example where":) $ takeWhile (/= "-}") $ drop 1 $ lines src of
+        ParseOk x -> return x
+        ParseFailed pos msg -> do putStrLn $ "Failed to parse " ++ file ++ ": " ++ prettyPrint pos ++ " " ++ msg
+                                  return $ Module sl (ModuleName "") [] Nothing Nothing [] []
+
+
 readSrc :: FilePath -> IO Src
 readSrc file = do
-    src <- readFile' file
-    decls <- case parseFileContents $ unlines $ ("module Example where":) $ takeWhile (/= "-}") $ drop 1 $ lines src of
-        ParseOk x -> return $ moduleDecls x
-        ParseFailed pos msg -> do putStrLn $ "Failed to parse " ++ file ++ ": " ++ prettyPrint pos ++ " " ++ msg; return []
-    return $ foldl f nullSrc
+    modu <- readHSE file
+    return $ foldl f (foldl g nullSrc $ moduleImports modu)
         [ (pragma,extra,xs)
-        | UnknownDeclPragma _ pragma extra:real <- tails decls
+        | UnknownDeclPragma _ pragma extra:real <- tails $ moduleDecls modu
         , let xs = takeWhile (not . isUnknownDeclPragma) real ]
     where
+        g src i = src{srcModule = Just $ prettyPrint $ importModule i}
+
         f src (pragma,extra,bod)
-            | pragma == "MODULE" = src{srcModule = Just extra}
-            | pragma == "PACKAGE" = src{srcPackage = Just extra}
             | pragma == "EXAMPLE" = src{srcExample = Just bod}
-            | pragma == "TEST" = src{srcTest = (extra,bod) : srcTest src}
+            | pragma == "TEST" = src{srcTest = (filter (not . isSpace) extra,bod) : srcTest src}
 
 
 generatedStart = "-- GENERATED START"

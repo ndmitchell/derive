@@ -1,36 +1,45 @@
-{-# OPTIONS_GHC -fth -cpp #-}
+{-
+import Prelude
 
--- | Derive @Bounded@, as specified in the Haskell 98 Language Report.
--- As an extension, we support deriving @Bounded@ for all data types.
--- If the first or last constructor has non-zero arity, we call
--- minBound (respectively, maxBound) recursively to fill in the
--- fields.
-module Data.Derive.Bounded(makeBounded) where
+{-# EXAMPLE #-}
 
-import Language.Haskell.TH.All
+instance Bounded a => Bounded (Sample a) where
+    minBound = head [First, Second (const minBound 1) (const minBound 2), Third (const minBound 1)]
+    maxBound = head [Third (const minBound 1), Second (const minBound 1) (const minBound 2), First]
 
+-}
+-- GENERATED START
 
-#ifdef GUESS
+module Data.Derive.Bounded where
 
-import Data.DeriveGuess
+import Data.Derive.DSL.DSL
+import Data.Derive.Internal.Derivation
 
-example = (,) "Bounded" [d|
-
-    instance Bounded a => Bounded (DataName a) where
-        minBound = head [CtorZero, CtorOne minBound, CtorTwo minBound minBound, CtorTwo' minBound minBound]
-        maxBound = head [CtorTwo' maxBound maxBound, CtorTwo maxBound maxBound, CtorOne maxBound, CtorZero]
-
-    |]
-
-#endif
+dslBounded =
+    List [Instance ["Bounded"] "Bounded" (List [App "InsDecl" (List [
+    App "PatBind" (List [App "PVar" (List [App "Ident" (List [String
+    "minBound"])]),App "Nothing" (List []),App "UnGuardedRhs" (List [
+    App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
+    (List [String "head"])])]),App "List" (List [MapCtor (Application
+    (Concat (List [List [App "Con" (List [App "UnQual" (List [App
+    "Ident" (List [CtorName])])])],MapField (App "Paren" (List [
+    Application (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "const"])])]),App "Var" (List [App "UnQual"
+    (List [App "Ident" (List [String "minBound"])])]),App "Lit" (List
+    [App "Int" (List [FieldIndex])])])]))])))])])]),App "BDecls" (List
+    [List []])])]),App "InsDecl" (List [App "PatBind" (List [App
+    "PVar" (List [App "Ident" (List [String "maxBound"])]),App
+    "Nothing" (List []),App "UnGuardedRhs" (List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "head"]
+    )])]),App "List" (List [Reverse (MapCtor (Application (Concat (
+    List [List [App "Con" (List [App "UnQual" (List [App "Ident" (List
+    [CtorName])])])],MapField (App "Paren" (List [Application (List [
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "const"])])]),App "Var" (List [App "UnQual" (List [App "Ident" (
+    List [String "minBound"])])]),App "Lit" (List [App "Int" (List [
+    FieldIndex])])])]))]))))])])]),App "BDecls" (List [List []])])])])
 
 makeBounded :: Derivation
-makeBounded = derivation bounded' "Bounded"
-bounded' dat = [instance_context ["Bounded"] "Bounded" dat [(ValD (VarP (mkName
-    "minBound")) (NormalB (AppE (VarE (mkName "head")) (ListE ((map (\(ctorInd,
-    ctor) -> (applyWith (ConE (mkName ("" ++ ctorName ctor))) (replicate (
-    ctorArity ctor) (VarE (mkName "minBound"))))) (id (zip [0..] (dataCtors dat
-    ))))++[])))) []),(ValD (VarP (mkName "maxBound")) (NormalB (AppE (VarE (
-    mkName "head")) (ListE ((map (\(ctorInd,ctor) -> (applyWith (ConE (mkName (
-    "" ++ ctorName ctor))) (replicate (ctorArity ctor) (VarE (mkName "maxBound"
-    ))))) (reverse (zip [0..] (dataCtors dat))))++[])))) [])]]
+makeBounded = derivationDSL "Bounded" dslBounded
+
+-- GENERATED STOP

@@ -1,11 +1,12 @@
 {-
-import {- "quickcheck" -} Test.QuickCheck
+
+import {- "quickcheck-1.0" -} Test.QuickCheck
 
 {-# EXAMPLE #-}
 
 instance Arbitrary a => Arbitrary (Sample a) where
     arbitrary = do
-        x <- choose (0,length [First{},Second{},Third{}] - 1)
+        x <- choose (0,length [First{},Second{},Third{}]-1)
         case x of
             0 -> do return (First)
             1 -> do x1 <- arbitrary
@@ -14,15 +15,19 @@ instance Arbitrary a => Arbitrary (Sample a) where
             2 -> do x1 <- arbitrary
                     return (Third x1)
 
+    coarbitrary (First) = variant 0
+    coarbitrary (Second x1 x2) = variant 1 . coarbitrary x1 . coarbitrary x2
+    coarbitrary (Third x1) = variant 2 . coarbitrary x1
+
 -}
 -- GENERATED START
 
-module Data.Derive.Arbitrary where
+module Data.Derive.ArbitraryOld where
 
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
 
-dslArbitrary =
+dslArbitraryOld =
     List [Instance ["Arbitrary"] "Arbitrary" (List [App "InsDecl" (
     List [App "PatBind" (List [App "PVar" (List [App "Ident" (List [
     String "arbitrary"])]),App "Nothing" (List []),App "UnGuardedRhs"
@@ -49,9 +54,24 @@ dslArbitrary =
     List [App "Ident" (List [CtorName])])])],MapField (App "Var" (List
     [App "UnQual" (List [App "Ident" (List [Concat (List [String "x",
     ShowInt FieldIndex])])])]))]))])])])]])])]),App "BDecls" (List [
-    List []])]))])])]])]),App "BDecls" (List [List []])])])])]
+    List []])]))])])]])]),App "BDecls" (List [List []])])]),App
+    "InsDecl" (List [App "FunBind" (List [MapCtor (App "Match" (List [
+    App "Ident" (List [String "coarbitrary"]),List [App "PParen" (List
+    [App "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName
+    ])]),MapField (App "PVar" (List [App "Ident" (List [Concat (List [
+    String "x",ShowInt FieldIndex])])]))])])],App "Nothing" (List []),
+    App "UnGuardedRhs" (List [Fold (App "InfixApp" (List [Tail,App
+    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String "."
+    ])])]),Head])) (Concat (List [Reverse (MapField (App "App" (List [
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "coarbitrary"])])]),App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])])])
+    ]))),List [App "App" (List [App "Var" (List [App "UnQual" (List [
+    App "Ident" (List [String "variant"])])]),App "Lit" (List [App
+    "Int" (List [CtorIndex])])])]]))]),App "BDecls" (List [List []])])
+    )])])])]
 
-makeArbitrary :: Derivation
-makeArbitrary = derivationDSL "Arbitrary" dslArbitrary
+makeArbitraryOld :: Derivation
+makeArbitraryOld = derivationDSL "ArbitraryOld" dslArbitraryOld
 
 -- GENERATED STOP

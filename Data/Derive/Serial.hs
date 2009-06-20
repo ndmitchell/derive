@@ -1,57 +1,68 @@
-{-# OPTIONS_GHC -fth -fno-warn-missing-methods -cpp #-}
+{-
 
--- | Derivation for the @Serial@ class used by SmallCheck.  Following
--- the guidelines in the SmallCheck README
--- <http://www.cs.york.ac.uk/fp/darcs/smallcheck/README>, we implement
--- both @series@ and @coseries@.  The generated instances use the
--- SmallCheck instance combinators in the prescribed way.
+import {- "smallcheck" -} Test.SmallCheck
 
-module Data.Derive.Serial(makeSerial) where
+{-# EXAMPLE #-}
 
-import Language.Haskell.TH.All
+instance Serial a => Serial (Sample a) where
+    series = cons0 First \/
+             cons2 Second \/
+             cons1 Third
 
+    coseries rs d = [ \t -> case t of
+                                First -> t0
+                                Second x1 x2 -> t1 x1 x2
+                                Third x1 -> t2 x1
+                    | t0 <- alts0 rs d `const` First{}
+                    , t1 <- alts2 rs d `const` Second{}
+                    , t2 <- alts1 rs d `const` Third{}
+                    ]
 
-#ifdef GUESS
+-}
+-- GENERATED START
 
-import Test.SmallCheck
-import Data.DeriveGuess
+module Data.Derive.Serial where
 
-example = (,) "Serial" [d|
+import Data.Derive.DSL.DSL
+import Data.Derive.Internal.Derivation
 
-    instance Serial a => Serial (DataName a) where
-        series = cons0 CtorZero \/
-                 cons1 CtorOne  \/
-                 cons2 CtorTwo  \/
-                 cons2 CtorTwo'
-
-        coseries rs d = [ \t -> case t of
-                                    CtorZero -> t0
-                                    CtorOne x1 -> t1 x1
-                                    CtorTwo x1 x2 -> t2 x1 x2
-                                    CtorTwo' x1 x2 -> t3 x1 x2
-                        | t0 <- alts0 rs d
-                        , t1 <- alts1 rs d
-                        , t2 <- alts2 rs d
-                        , t3 <- alts2 rs d
-                        ]
-
-    |]
-
-#endif
+dslSerial =
+    List [Instance ["Serial"] "Serial" (List [App "InsDecl" (List [App
+    "PatBind" (List [App "PVar" (List [App "Ident" (List [String
+    "series"])]),App "Nothing" (List []),App "UnGuardedRhs" (List [
+    Fold (App "InfixApp" (List [Tail,App "QVarOp" (List [App "UnQual"
+    (List [App "Symbol" (List [String "\\/"])])]),Head])) (Reverse (
+    MapCtor (App "App" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [Concat (List [String "cons",ShowInt CtorArity])])])
+    ]),App "Con" (List [App "UnQual" (List [App "Ident" (List [
+    CtorName])])])]))))]),App "BDecls" (List [List []])])]),App
+    "InsDecl" (List [App "FunBind" (List [List [App "Match" (List [App
+    "Ident" (List [String "coseries"]),List [App "PVar" (List [App
+    "Ident" (List [String "rs"])]),App "PVar" (List [App "Ident" (List
+    [String "d"])])],App "Nothing" (List []),App "UnGuardedRhs" (List
+    [App "ListComp" (List [App "Lambda" (List [List [App "PVar" (List
+    [App "Ident" (List [String "t"])])],App "Case" (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "t"])])]),
+    MapCtor (App "Alt" (List [App "PApp" (List [App "UnQual" (List [
+    App "Ident" (List [CtorName])]),MapField (App "PVar" (List [App
+    "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])]))]
+    ),App "UnGuardedAlt" (List [Application (Concat (List [List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (List [
+    String "t",ShowInt CtorIndex])])])])],MapField (App "Var" (List [
+    App "UnQual" (List [App "Ident" (List [Concat (List [String "x",
+    ShowInt FieldIndex])])])]))]))]),App "BDecls" (List [List []])]))]
+    )]),MapCtor (App "Generator" (List [App "PVar" (List [App "Ident"
+    (List [Concat (List [String "t",ShowInt CtorIndex])])]),App
+    "InfixApp" (List [Application (List [App "Var" (List [App "UnQual"
+    (List [App "Ident" (List [Concat (List [String "alts",ShowInt
+    CtorArity])])])]),App "Var" (List [App "UnQual" (List [App "Ident"
+    (List [String "rs"])])]),App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "d"])])])]),App "QVarOp" (List [App "UnQual"
+    (List [App "Ident" (List [String "const"])])]),App "RecConstr" (
+    List [App "UnQual" (List [App "Ident" (List [CtorName])]),List []]
+    )])]))])]),App "BDecls" (List [List []])])]])])])]
 
 makeSerial :: Derivation
-makeSerial = derivation serial' "Serial"
-serial' dat = [instance_context ["Serial"] "Serial" dat [ValD (VarP (mkName
-    "series")) (NormalB (foldl1With (VarE (mkName "\\/")) ((map (\(ctorInd,ctor
-    ) -> (AppE (VarE (mkName ("cons" ++ show (ctorArity ctor)))) (ConE (mkName
-    (ctorName ctor))))) (id (zip [0..] (dataCtors dat))))++[]))) [],FunD (
-    mkName "coseries") [(Clause [(VarP (mkName "rs")),(VarP (mkName "d"))] (NormalB (CompE ((map (\(
-    ctorInd,ctor) -> (BindS (VarP (mkName ("t" ++ show ctorInd))) (AppE (AppE (VarE (
-    mkName ("alts" ++ show (ctorArity ctor)))) (VarE (mkName "rs"))) (VarE (mkName "d"))))) (id (zip
-    [0..] (dataCtors dat))))++[(NoBindS (LamE [(VarP (mkName "t"))] (CaseE (
-    VarE (mkName "t")) ((map (\(ctorInd,ctor) -> (Match (ConP (mkName (ctorName
-    ctor)) ((map (\field -> (VarP (mkName ("x" ++ show field)))) (id [1..
-    ctorArity ctor]))++[])) (NormalB (applyWith (VarE (mkName ("t" ++ show
-    ctorInd))) ((map (\field -> (VarE (mkName ("x" ++ show field)))) (id [1..
-    ctorArity ctor]))++[]))) [])) (id (zip [0..] (dataCtors dat))))++[]))))]++[
-    ]))) [])]]]
+makeSerial = derivationDSL "Serial" dslSerial
+
+-- GENERATED STOP

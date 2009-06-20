@@ -1,33 +1,38 @@
-{-# OPTIONS_GHC -fth -fno-warn-missing-methods -cpp #-}
-
--- | Derive NFData, from Control.Parallel.Strategies.
-module Data.Derive.NFData(makeNFData) where
-
-import Language.Haskell.TH.All
-
-
-#ifdef GUESS
-
+{-
 import Control.Parallel.Strategies
-import Data.DeriveGuess
 
-example = (,) "NFData" [d|
+{-# EXAMPLE #-}
 
-    instance (NFData a) => NFData (DataName a) where
-        rnf CtorZero = ()
-        rnf (CtorOne x1) = rnf x1 `seq` ()
-        rnf (CtorTwo x1 x2) = rnf x1 `seq` rnf x2 `seq` ()
-        rnf (CtorTwo' x1 x2) = rnf x1 `seq` rnf x2 `seq` ()
-    |]
+instance NFData a => NFData (Sample a) where
+    rnf (First) = ()
+    rnf (Second x1 x2) = rnf x1 `seq` rnf x2 `seq` ()
+    rnf (Third x1) = rnf x1 `seq` ()
 
-#endif
+-}
+-- GENERATED START
+
+module Data.Derive.NFData where
+
+import Data.Derive.DSL.DSL
+import Data.Derive.Internal.Derivation
+
+dslNFData =
+    List [Instance ["NFData"] "NFData" (List [App "InsDecl" (List [App
+    "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List [
+    String "rnf"]),List [App "PParen" (List [App "PApp" (List [App
+    "UnQual" (List [App "Ident" (List [CtorName])]),MapField (App
+    "PVar" (List [App "Ident" (List [Concat (List [String "x",ShowInt
+    FieldIndex])])]))])])],App "Nothing" (List []),App "UnGuardedRhs"
+    (List [Fold (App "InfixApp" (List [Tail,App "QVarOp" (List [App
+    "UnQual" (List [App "Ident" (List [String "seq"])])]),Head])) (
+    Concat (List [List [App "Con" (List [App "Special" (List [App
+    "UnitCon" (List [])])])],Reverse (MapField (App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "rnf"])
+    ])]),App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    Concat (List [String "x",ShowInt FieldIndex])])])])])))]))]),App
+    "BDecls" (List [List []])]))])])])]
 
 makeNFData :: Derivation
-makeNFData = derivation nFData' "NFData"
-nFData' dat = [instance_context ["NFData"] "NFData" dat [(FunD (mkName "rnf") (
-    (map (\(ctorInd,ctor) -> (Clause [(ConP (mkName ("" ++ ctorName ctor)) ((
-    map (\field -> (VarP (mkName ("x" ++ show field)))) (id [1..ctorArity ctor]
-    ))++[]))] (NormalB (foldl1With (VarE (mkName "seq")) ((map (\field -> (AppE
-    (VarE (mkName "rnf")) (VarE (mkName ("x" ++ show field))))) (id [1..
-    ctorArity ctor]))++[(TupE [])]++[]))) [])) (id (zip [0..] (dataCtors dat)))
-    )++[]))]]
+makeNFData = derivationDSL "NFData" dslNFData
+
+-- GENERATED STOP

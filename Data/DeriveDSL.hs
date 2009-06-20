@@ -1,5 +1,5 @@
 
-module Data.DeriveDSL(deriveDSL, applyDSL, dynamicDSL) where
+module Data.DeriveDSL(DSL, deriveDSL, applyDSL, dynamicDSL) where
 
 import Data.Derive.DSL.Derive
 import Data.Derive.DSL.Apply
@@ -13,8 +13,10 @@ deriveDSL :: [Decl] -> Maybe DSL
 deriveDSL = listToMaybe . derive
 
 
-applyDSL :: DSL -> Decl -> Maybe [Decl]
-applyDSL dsl = fmap (apply dsl) . toInput
+applyDSL :: DSL -> Decl -> Either String [Decl]
+applyDSL dsl inp = case toInput inp of
+    Nothing -> Left "Couldn't convert input"
+    Just x -> Right $ simplifyOut $ apply dsl x
 
 
 dynamicDSL :: DSL -> Maybe [Decl]

@@ -1,7 +1,5 @@
 {-
-
-{-# PACKAGE derive #-}
-{-# MODULE Data.Derive.Class.Arities #-}
+import {- "derive" -} Data.Derive.Class.Arities
 
 {-# EXAMPLE #-}
 
@@ -29,19 +27,21 @@ instance Arities (Either a b) where
 
 module Data.Derive.Arities where
 
-import Language.Haskell.TH.All
+import Data.Derive.DSL.DSL
+import Data.Derive.Internal.Derivation
 
 dslArities =
     List [Instance [] "Arities" (List [App "InsDecl" (List [App
-    "FunBind" (List [List [App "Match" (List [App "Ident" (List
-    [String "arities"]),List [App "PWildCard" (List [])],App "Nothing"
-    (List []),App "UnGuardedRhs" (List [App "List" (List [MapCtor
-    (Application (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "const"])])]),App "Lit" (List [App "Int"
-    (List [CtorArity])]),App "RecConstr" (List [App "UnQual" (List
-    [App "Ident" (List [CtorName])]),List []])]))])]),App "BDecls"
-    (List [List []])])]])])])]
+    "FunBind" (List [List [App "Match" (List [App "Ident" (List [
+    String "arities"]),List [App "PWildCard" (List [])],App "Nothing"
+    (List []),App "UnGuardedRhs" (List [App "List" (List [MapCtor (
+    Application (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "const"])])]),App "Lit" (List [App "Int" (
+    List [CtorArity])]),App "RecConstr" (List [App "UnQual" (List [App
+    "Ident" (List [CtorName])]),List []])]))])]),App "BDecls" (List [
+    List []])])]])])])]
 
 makeArities :: Derivation
-makeArities = undefined
+makeArities = derivationDSL "Arities" dslArities
+
 -- GENERATED STOP

@@ -43,6 +43,7 @@ fromOut (OString x) = String x
 fromOut x = error $ show ("fromOut",x)
 
 
+{-
 _1 s x1 = App s $ List [x1]
 _2 s x1 x2 = App s $ List [x1,x2]
 _3 s x1 x2 x3 = App s $ List [x1,x2,x3]
@@ -60,6 +61,7 @@ dslEq = box $ Instance ["Eq"] "Eq" $ box $ _1 "InsDecl" $ _1 "FunBind" $ match `
         var x = _1 "Var" $ _1 "UnQual" $ _1 "Ident" $ append (String x) (ShowInt FieldIndex)
 
         dull = o [Match sl (Symbol "==") [PWildCard,PWildCard] Nothing (UnGuardedRhs $ Con $ UnQual $ Ident "False") (BDecls [])]
+-}
 
 
 simplifyDSL :: DSL -> DSL

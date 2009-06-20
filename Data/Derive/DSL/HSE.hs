@@ -36,13 +36,14 @@ isUnknownDeclPragma _ = False
 
 
 moduleDecls (Module _ _ _ _ _ _ decls) = decls
+moduleImports (Module _ _ _ _ _ imps _) = imps
 
 
 outEq :: Out -> Out -> Bool
 outEq = (==) `on` transformBi (const sl)
 
 simplifyOut :: Out -> Out
-simplifyOut = transformBi fExp
+simplifyOut = transformBi fTyp . transformBi fExp
     where
         x ~= y = prettyPrint x == y
     
@@ -58,6 +59,8 @@ simplifyOut = transformBi fExp
         fExp (Paren (Lit x)) = Lit x
         fExp x = x
 
+        fTyp (TyApp x y) | x ~= "[]" = TyApp (TyCon (Special ListCon)) y
+        fTyp x = x
 
 ---------------------------------------------------------------------
 

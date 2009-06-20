@@ -1,66 +1,106 @@
-{-# OPTIONS_GHC -fth -cpp #-}
+{-
+import Prelude
 
--- | @EnumCyclic@ defines the @Enum@ class, using the same
--- modifications as our @Enum@ derivation, but additionally @succ@
--- and @pred@ treat the data type as cyclic, wrapping between the
--- first and last constructors.
+{-# EXAMPLE #-}
 
-module Data.Derive.EnumCyclic(makeEnumCyclic) where
+instance Enum (Sample a) where
+    toEnum 0 = First{}
+    toEnum 1 = Second{}
+    toEnum 2 = Third{}
+    toEnum n = error $ "toEnum " ++ show n ++ ", not defined for Sample"
 
-import Language.Haskell.TH.All
+    fromEnum (First{}) = 0
+    fromEnum (Second{}) = 1
+    fromEnum (Third{}) = 2
 
 
-#ifdef GUESS
+    succ a = if b == length [First{},Second{},Third{}] then toEnum 0 else toEnum (b+1)
+        where b = fromEnum a
 
-import Data.DeriveGuess
+    pred a = if b == 0 then toEnum length [First{},Second{},Third{}] else toEnum (b-1)
+        where b = fromEnum a
 
-example = (,) "EnumCyclic" [d|
+-}
+-- GENERATED START
 
-    instance Enum (DataName a) where
-        toEnum 0 = CtorZero{}
-        toEnum 1 = CtorOne {}
-        toEnum 2 = CtorTwo {}
-        toEnum 3 = CtorTwo'{}
-        toEnum n = error $ "toEnum " ++ show n ++ ", not defined for " ++ "DataName"
-        
-        fromEnum (CtorZero{}) = 0
-        fromEnum (CtorOne {}) = 1
-        fromEnum (CtorTwo {}) = 2
-        fromEnum (CtorTwo'{}) = 3
-        
-        
-        succ a = if b == 3 then toEnum 0 else toEnum (b+1)
-            where b = fromEnum a
+module Data.Derive.EnumCyclic where
 
-        pred a = if b == 0 then toEnum 3 else toEnum (b-1)
-            where b = fromEnum a
+import Data.Derive.DSL.DSL
+import Data.Derive.Internal.Derivation
 
-    |]
-
-#endif
+dslEnumCyclic =
+    List [Instance [] "Enum" (List [App "InsDecl" (List [App "FunBind"
+    (List [Concat (List [MapCtor (App "Match" (List [App "Ident" (List
+    [String "toEnum"]),List [App "PLit" (List [App "Int" (List [
+    CtorIndex])])],App "Nothing" (List []),App "UnGuardedRhs" (List [
+    App "RecConstr" (List [App "UnQual" (List [App "Ident" (List [
+    CtorName])]),List []])]),App "BDecls" (List [List []])])),List [
+    App "Match" (List [App "Ident" (List [String "toEnum"]),List [App
+    "PVar" (List [App "Ident" (List [String "n"])])],App "Nothing" (
+    List []),App "UnGuardedRhs" (List [Fold (App "InfixApp" (List [
+    Tail,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
+    String "++"])])]),Head])) (List [App "Lit" (List [App "String" (
+    List [String ", not defined for Sample"])]),App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "show"]
+    )])]),App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    String "n"])])])]),App "InfixApp" (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "error"])])]),App
+    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String "$"
+    ])])]),App "Lit" (List [App "String" (List [String "toEnum "])])])
+    ])]),App "BDecls" (List [List []])])]])])]),App "InsDecl" (List [
+    App "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List
+    [String "fromEnum"]),List [App "PParen" (List [App "PRec" (List [
+    App "UnQual" (List [App "Ident" (List [CtorName])]),List []])])],
+    App "Nothing" (List []),App "UnGuardedRhs" (List [App "Lit" (List
+    [App "Int" (List [CtorIndex])])]),App "BDecls" (List [List []])]))
+    ])]),App "InsDecl" (List [App "FunBind" (List [List [App "Match" (
+    List [App "Ident" (List [String "succ"]),List [App "PVar" (List [
+    App "Ident" (List [String "a"])])],App "Nothing" (List []),App
+    "UnGuardedRhs" (List [App "If" (List [App "InfixApp" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "b"])])
+    ]),App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
+    String "=="])])]),App "App" (List [App "Var" (List [App "UnQual" (
+    List [App "Ident" (List [String "length"])])]),App "List" (List [
+    MapCtor (App "RecConstr" (List [App "UnQual" (List [App "Ident" (
+    List [CtorName])]),List []]))])])]),App "App" (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "toEnum"])])])
+    ,App "Lit" (List [App "Int" (List [Int 0])])]),App "App" (List [
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "toEnum"])])]),App "Paren" (List [App "InfixApp" (List [App "Var"
+    (List [App "UnQual" (List [App "Ident" (List [String "b"])])]),App
+    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String "+"
+    ])])]),App "Lit" (List [App "Int" (List [Int 1])])])])])])]),App
+    "BDecls" (List [List [App "PatBind" (List [App "PVar" (List [App
+    "Ident" (List [String "b"])]),App "Nothing" (List []),App
+    "UnGuardedRhs" (List [App "App" (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "fromEnum"])])]),App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "a"])])
+    ])])]),App "BDecls" (List [List []])])]])])]])]),App "InsDecl" (
+    List [App "FunBind" (List [List [App "Match" (List [App "Ident" (
+    List [String "pred"]),List [App "PVar" (List [App "Ident" (List [
+    String "a"])])],App "Nothing" (List []),App "UnGuardedRhs" (List [
+    App "If" (List [App "InfixApp" (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "b"])])]),App "QVarOp" (
+    List [App "UnQual" (List [App "Symbol" (List [String "=="])])]),
+    App "Lit" (List [App "Int" (List [Int 0])])]),Application (List [
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "toEnum"])])]),App "Var" (List [App "UnQual" (List [App "Ident" (
+    List [String "length"])])]),App "List" (List [MapCtor (App
+    "RecConstr" (List [App "UnQual" (List [App "Ident" (List [CtorName
+    ])]),List []]))])]),App "App" (List [App "Var" (List [App "UnQual"
+    (List [App "Ident" (List [String "toEnum"])])]),App "Paren" (List
+    [App "InfixApp" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "b"])])]),App "QVarOp" (List [App "UnQual" (
+    List [App "Symbol" (List [String "-"])])]),App "Lit" (List [App
+    "Int" (List [Int 1])])])])])])]),App "BDecls" (List [List [App
+    "PatBind" (List [App "PVar" (List [App "Ident" (List [String "b"])
+    ]),App "Nothing" (List []),App "UnGuardedRhs" (List [App "App" (
+    List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    String "fromEnum"])])]),App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "a"])])])])]),App "BDecls" (List [List []])]
+    )]])])]])])])]
 
 makeEnumCyclic :: Derivation
-makeEnumCyclic = derivation enumCyclic' "EnumCyclic"
-enumCyclic' dat = [instance_context [] "Enum" dat [(FunD (mkName "toEnum") ((
-    map (\(ctorInd,ctor) -> (Clause [(LitP (IntegerL ctorInd))] (NormalB ((flip
-    RecConE []) (mkName ("" ++ ctorName ctor)))) [])) (id (zip [0..] (dataCtors
-    dat))))++[(Clause [(VarP (mkName "n"))] (NormalB (applyWith (VarE (mkName
-    "$")) [(VarE (mkName "error")),(applyWith (VarE (mkName "++")) [(LitE (
-    StringL "toEnum ")),(applyWith (VarE (mkName "++")) [(AppE (VarE (mkName
-    "show")) (VarE (mkName "n"))),(applyWith (VarE (mkName "++")) [(LitE (
-    StringL ", not defined for ")),(LitE (StringL (dataName dat)))])])])])) [])
-    ]++[])),(FunD (mkName "fromEnum") ((map (\(ctorInd,ctor) -> (Clause [((flip
-    RecP []) (mkName ("" ++ ctorName ctor)))] (NormalB (LitE (IntegerL ctorInd)
-    )) [])) (id (zip [0..] (dataCtors dat))))++[])),(FunD (mkName "succ") [(
-    Clause [(VarP (mkName "a"))] (NormalB (CondE (applyWith (VarE (mkName "==")
-    ) [(VarE (mkName "b")),(LitE (IntegerL (toInteger (length (dataCtors dat)))
-    ))]) (AppE (VarE (mkName "toEnum")) (LitE (IntegerL 0))) (AppE (VarE (
-    mkName "toEnum")) (applyWith (VarE (mkName "+")) [(VarE (mkName "b")),(LitE
-    (IntegerL 1))])))) [(ValD (VarP (mkName "b")) (NormalB (AppE (VarE (mkName
-    "fromEnum")) (VarE (mkName "a")))) [])])]),(FunD (mkName "pred") [(Clause [
-    (VarP (mkName "a"))] (NormalB (CondE (applyWith (VarE (mkName "==")) [(VarE
-    (mkName "b")),(LitE (IntegerL 0))]) (AppE (VarE (mkName "toEnum")) (LitE (
-    IntegerL (toInteger (length (dataCtors dat)))))) (AppE (VarE (mkName
-    "toEnum")) (applyWith (VarE (mkName "-")) [(VarE (mkName "b")),(LitE (
-    IntegerL 1))])))) [(ValD (VarP (mkName "b")) (NormalB (AppE (VarE (mkName
-    "fromEnum")) (VarE (mkName "a")))) [])])])]]
+makeEnumCyclic = derivationDSL "EnumCyclic" dslEnumCyclic
+
+-- GENERATED STOP
