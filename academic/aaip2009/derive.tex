@@ -1,4 +1,4 @@
-\documentclass[preprint,draft]{sigplanconf}
+\documentclass[draft]{sigplanconf}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -85,17 +85,17 @@ import Data.Generics.PlateData
 
 \conferenceinfo{3rd workshop on Approaches and Applications of Inductive Programming}{4th September 2009, Edinburgh.} %
 \copyrightyear{2009} %
-\copyrightdata{[to be supplied]}
+\copyrightdata{} % [to be supplied]}
 
-\titlebanner{\today{} - \currenttime{}}        % These are ignored unless
+\titlebanner{} % \today{} - \currenttime{}}        % These are ignored unless
 \preprintfooter{}   % 'preprint' option specified.
 
-\title{Deriving a DSL from One Example}
+\title{Deriving a Relationship from a Single Example}
 % \subtitle{}
 
 \authorinfo{Neil Mitchell}
-           {Standard Chartered, UK}
            {\verb"ndmitchell@gmail.com"}
+           {}
 
 \maketitle
 
@@ -792,7 +792,7 @@ In Haskell each instance is defined by some fragment of source code, and new ins
 
 \begin{code}
 instance Data d_type => Arities d_type where
-    arities _ = 
+    arities _ =
         [  const (d_ctorArity d_ctor) (d_ctorNull d_ctor :: d_type)
         |  d_ctor <- d_dataCtors (undefined :: d_type)]
 \end{code}
@@ -994,11 +994,11 @@ We see several lines of future work:
 \item We have implemented our scheme specifically for instance generators in Haskell, but the same scheme could be applied to other computer languages and other situations. One possible target would be F\#, where there are interfaces instead of type classes. Another target could be an object-orientated language, where design patterns \cite{design_patterns} are popular.
 \end{itemize}
 
-Computers are ideally suited to applying a known pattern to new parameters, but specifying these patterns can be complex and error prone. By specifying a single example, instead of the pattern, a user can focus on what they care about, rather than the mechanism by which it is implemented.
+Computers are ideally suited to applying a relationship using new parameters, but specifying these relationships can be complex and error prone. By specifying a single example, instead of the relationship, a user can focus on what they care about, rather than the mechanism by which it is implemented.
 
 \subsection*{Acknowledgements}
 
-Thanks to Stefan O'Rear for help writing the first version of the \derive{} tool. Thanks to Niklas Broberg for the excellent haskell-src-exts library. Thanks to Hongseok Yang for fruitful discussions on the original instance generation work.
+Thanks to Stefan O'Rear for help writing the first version of the \derive{} tool. Thanks to Niklas Broberg for the excellent haskell-src-exts library. Thanks to Hongseok Yang for fruitful discussions on the original instance generation work. Thanks to Mike Dodds for constructive criticism on earlier drafts.
 
 \appendix
 
