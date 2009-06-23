@@ -10,8 +10,8 @@ import System.IO
 import Data.Maybe
 
 
-data Flag = Version | Help | Output String | Import String | Modu String | Use String
-          | Append | Derive [String] | KeepTemp | NoOpts | Test | Generate
+data Flag = Version | Help | Output String | Import String | Modu String
+          | Append | Derive [String] | NoOpts | Test | Generate
             deriving (Eq, Show)
 
 
@@ -21,11 +21,9 @@ options =
     ,Option "h?" ["help"]     (NoArg Help)             "show help message"
     ,Option "o"  ["output"]   (ReqArg Output "FILE")   "output FILE"
     ,Option "i"  ["import"]   (OptArg (Import . fromMaybe "") "MODULE") "add an import statement"
-    ,Option "u"  ["use"]      (ReqArg Use "MODULE")    "use additional derivations"
     ,Option "m"  ["module"]   (ReqArg Modu "MODULE")   "add a module MODULE where statement"
     ,Option "a"  ["append"]   (NoArg Append)           "append the result to the file"
     ,Option "d"  ["derive"]   (ReqArg splt "DERIVES")  "things to derive for all types"
-    ,Option "k"  ["keep"]     (NoArg KeepTemp)         "keep temporary file"
     ,Option "n"  ["no-opts"]  (NoArg NoOpts)           "ignore the file options"
     ,Option ""   ["test"]     (NoArg Test)             "run the test suite"
     ,Option ""   ["generate"] (NoArg Generate)         "perform code generation"
