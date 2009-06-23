@@ -1,61 +1,154 @@
+module Data.Derive.Data where
 {-
 import Data.Data
 
+{-# EXAMPLE #-}
+
+instance (Data a, Typeable a) => Data (Sample a) where
+    gfoldl k r (First) = r First
+    gfoldl k r (Second x1 x2) = r Second `k` x1 `k` x2
+    gfoldl k r (Third x1) = r Third `k` x1
+
+    gunfold k z c = case constrIndex c - 1 of
+        0 -> z First
+        1 -> const k 1 $ const k 2 $ z Second
+        2 -> const k 1 $ z Third
+
+    toConstr x@First{}  = indexConstr (dataTypeOf x) (0+1)
+    toConstr x@Second{} = indexConstr (dataTypeOf x) (1+1)
+    toConstr x@Third{}  = indexConstr (dataTypeOf x) (2+1)
+
+    dataTypeOf _ = ty
+        where ty = mkDataType $(dataName)
+                   [mkConstr ty "First"  $(ctorFields 0) $(ctorFixity 0)
+                   ,mkConstr ty "Second" $(ctorFields 1) $(ctorFixity 1)
+                   ,mkConstr ty "Third"  $(ctorFields 2) $(ctorFixity 2)]
+
+{-# TEST Computer #-}
+
+instance Data Computer where
+    gfoldl k r (Laptop x1) = r Laptop `k` x1
+    gfoldl k r (Desktop x1 x2) = r Desktop `k` x1 `k` x2
+    gunfold k z c = case constrIndex c - 1 of
+        0 -> k $ z Laptop
+        1 -> k $ k $ z Desktop
+    toConstr x@Laptop{} = indexConstr (dataTypeOf x) 1
+    toConstr x@Desktop{} = indexConstr (dataTypeOf x) 2
+    dataTypeOf _ = ty
+      where ty = mkDataType "Example.Computer"
+                 [mkConstr ty "Laptop" ["weight"] Prefix
+                 ,mkConstr ty "Desktop" ["speed", "memory"] Prefix]
+
 -}
 
-module Data.Derive.Data where
+import Data.Derive.DSL.HSE
+import qualified Language.Haskell as H
 
-import Language.Haskell.TH.All
+-- GENERATED START
+
+import Data.Derive.DSL.DSL
+import Data.Derive.Internal.Derivation
 
 makeData :: Derivation
-makeData = undefined -- derivation genDataInst "Data"
+makeData = derivationCustomDSL "Data" custom $
+    List [Instance ["Data","Typeable"] "Data" (List [App "InsDecl" (
+    List [App "FunBind" (List [MapCtor (App "Match" (List [App "Ident"
+    (List [String "gfoldl"]),List [App "PVar" (List [App "Ident" (List
+    [String "k"])]),App "PVar" (List [App "Ident" (List [String "r"])]
+    ),App "PParen" (List [App "PApp" (List [App "UnQual" (List [App
+    "Ident" (List [CtorName])]),MapField (App "PVar" (List [App
+    "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])]))]
+    )])],App "Nothing" (List []),App "UnGuardedRhs" (List [Fold (App
+    "InfixApp" (List [Tail,App "QVarOp" (List [App "UnQual" (List [App
+    "Ident" (List [String "k"])])]),Head])) (Concat (List [Reverse (
+    MapField (App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    Concat (List [String "x",ShowInt FieldIndex])])])]))),List [App
+    "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
+    List [String "r"])])]),App "Con" (List [App "UnQual" (List [App
+    "Ident" (List [CtorName])])])])]]))]),App "BDecls" (List [List []]
+    )]))])]),App "InsDecl" (List [App "FunBind" (List [List [App
+    "Match" (List [App "Ident" (List [String "gunfold"]),List [App
+    "PVar" (List [App "Ident" (List [String "k"])]),App "PVar" (List [
+    App "Ident" (List [String "z"])]),App "PVar" (List [App "Ident" (
+    List [String "c"])])],App "Nothing" (List []),App "UnGuardedRhs" (
+    List [App "Case" (List [App "InfixApp" (List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "constrIndex"])])]),App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "c"])])])]),App "QVarOp" (List [App "UnQual"
+    (List [App "Symbol" (List [String "-"])])]),App "Lit" (List [App
+    "Int" (List [Int 1])])]),MapCtor (App "Alt" (List [App "PLit" (
+    List [App "Int" (List [CtorIndex])]),App "UnGuardedAlt" (List [
+    Fold (App "InfixApp" (List [Tail,App "QVarOp" (List [App "UnQual"
+    (List [App "Symbol" (List [String "$"])])]),Head])) (Concat (List
+    [List [App "App" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "z"])])]),App "Con" (List [App "UnQual" (
+    List [App "Ident" (List [CtorName])])])])],Reverse (MapField (
+    Application (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "const"])])]),App "Var" (List [App "UnQual"
+    (List [App "Ident" (List [String "k"])])]),App "Lit" (List [App
+    "Int" (List [FieldIndex])])])))]))]),App "BDecls" (List [List []])
+    ]))])]),App "BDecls" (List [List []])])]])]),App "InsDecl" (List [
+    App "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List
+    [String "toConstr"]),List [App "PAsPat" (List [App "Ident" (List [
+    String "x"]),App "PRec" (List [App "UnQual" (List [App "Ident" (
+    List [CtorName])]),List []])])],App "Nothing" (List []),App
+    "UnGuardedRhs" (List [Application (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "indexConstr"])])]),App
+    "Paren" (List [App "App" (List [App "Var" (List [App "UnQual" (
+    List [App "Ident" (List [String "dataTypeOf"])])]),App "Var" (List
+    [App "UnQual" (List [App "Ident" (List [String "x"])])])])]),App
+    "Paren" (List [App "InfixApp" (List [App "Lit" (List [App "Int" (
+    List [CtorIndex])]),App "QVarOp" (List [App "UnQual" (List [App
+    "Symbol" (List [String "+"])])]),App "Lit" (List [App "Int" (List
+    [Int 1])])])])])]),App "BDecls" (List [List []])]))])]),App
+    "InsDecl" (List [App "FunBind" (List [List [App "Match" (List [App
+    "Ident" (List [String "dataTypeOf"]),List [App "PWildCard" (List [
+    ])],App "Nothing" (List []),App "UnGuardedRhs" (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "ty"])])])]),
+    App "BDecls" (List [List [App "PatBind" (List [App "PVar" (List [
+    App "Ident" (List [String "ty"])]),App "Nothing" (List []),App
+    "UnGuardedRhs" (List [Application (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "mkDataType"])])]),App
+    "SpliceExp" (List [App "ParenSplice" (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "dataName"])])])])]),App
+    "List" (List [MapCtor (Application (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "mkConstr"])])]),App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "ty"])]
+    )]),App "Lit" (List [App "String" (List [CtorName])]),App
+    "SpliceExp" (List [App "ParenSplice" (List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "ctorFields"])])]),App "Lit" (List [App "Int" (List [CtorIndex])])
+    ])])]),App "SpliceExp" (List [App "ParenSplice" (List [App "App" (
+    List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    String "ctorFixity"])])]),App "Lit" (List [App "Int" (List [
+    CtorIndex])])])])])]))])])]),App "BDecls" (List [List []])])]])])]
+    ])])])]
+-- GENERATED STOP
 
-genDataInst :: DataDef -> [Dec]
-genDataInst dat = [
-      instance_context ["Data","Typeable"] "Data" dat 
-      [ FunD (mkName "gfoldl") (gfoldlDefs dat),
-        FunD (mkName "gunfold") (gunfoldDefs dat),
-        FunD (mkName "toConstr") (toConstrDefs dat),
-        FunD (mkName "dataTypeOf") (dataTypeOfDefs dat) ]
-    ]
-toConstrDefs :: DataDef -> [Clause]
-toConstrDefs dat = map toConstrImpl (zip [(1::Integer)..] (dataCtors dat)) where
-    toConstrImpl (ctorInd,ctor) = Clause [toConstrParams ctor] (toConstrDef ctorInd ctor) []
-    toConstrParams ctor = AsP (mkName "ctor") (matchConstructor ctor)
-    toConstrDef ind _ctor = NormalB $ 
-        app (varExpr "indexConstr")
-            [ AppE  (varExpr "dataTypeOf") (varExpr "ctor"), lit ind ]
-dataTypeOfDefs :: DataDef -> [Clause]
-dataTypeOfDefs dat = [Clause dtOfParams dtOfDef dtOfClauses] where
-    dtOfParams = [WildP]
-    dtOfDef = NormalB $ varExpr "ty_T"
-    dtOfClauses = (mkDt (dataCtors dat)) : map mkCon (zip [(1::Integer)..] (dataCtors dat))
-    mkCon (ix,ctor) = FunD (mkName $ "con_C"++show ix) [Clause [] (NormalB (mkConImpl ix ctor)) []] 
-    mkConImpl _ix ctor = app (varExpr "mkConstr") 
-        [varExpr "ty_T", lit (ctorName ctor), ListE (fields ctor), ConE (mkName "Prefix") ]
-    fields = map lit . ctorFields
-    mkDt ctors = FunD (mkName "ty_T") [Clause [] (NormalB (mkDtImpl ctors)) []]
-    mkDtImpl ctors = app (varExpr "mkDataType") [lit (show$ qualifiedDataName dat) , mkConVars ctors]
-    mkConVars ctors = ListE $ map (\ix -> varExpr ("con_C"++show ix)) [(1::Int)..(length ctors)]
-gfoldlDefs :: DataDef -> [Clause]
-gfoldlDefs dat = map gfoldlImpl (zip [(1::Integer)..] (dataCtors dat)) where
-    gfoldlImpl (_ctorInd,ctor) = Clause (gfoldlParams ctor) (gfoldlDef ctor) []
-    gfoldlParams ctor = [ VarP (mkName "k"), VarP (mkName "r"), matchConstructor ctor ]
-    gfoldlDef ctor = NormalB $ foldr1With (varExpr "k") foldFields where
-        foldFields =    map (\field -> (varExpr ("x" ++ show field))) (reverse [1..ctorArity ctor])
-                     ++ [ (AppE (varExpr "r") (ConE (mkName (ctorName ctor)))) ]
-gunfoldDefs :: DataDef -> [Clause]
-gunfoldDefs dat = [Clause guParams (NormalB guDef) []] where
-    guParams = map (VarP . mkName) ["k","z","c"]
-    guDef     = CaseE (AppE (varExpr "constrIndex") (varExpr "c")) $
-                  map (guCase) (zip [(1::Integer)..] (dataCtors dat))
-    guCase (ix,ctor) = Match (LitP (IntegerL ix)) (NormalB$ guCaseBody ctor) []
-    guCaseBody ctor = foldr (\_ e -> AppE (varExpr "k") e)
-                           (AppE (varExpr "z") (ConE . mkName . ctorName $ ctor))
-                           [1..ctorArity ctor]
-varExpr :: String -> Exp
-varExpr = VarE . mkName
-matchConstructor :: CtorDef -> Pat
-matchConstructor ctor = ConP (mkName (ctorName ctor)) (fields++[]) where
-    fields = map (\field -> (VarP (mkName ("x" ++ show field))))
-                 (id [1..ctorArity ctor])
+
+custom :: FullDataDecl -> Exp -> Exp
+custom d x | x ~= "dataName" = H.Lit $ H.String $ prettyPrint (fst d) ++ "." ++ dataDeclName (snd d)
+custom d (H.App x (H.Lit (H.Int y)))
+    | x ~= "ctorFields" = H.List $ [H.Lit $ H.String a | (a,_) <- ctorDeclFields ctor, a /= ""]
+    | x ~= "ctorFixity" = Con (UnQual (Ident "Prefix"))
+    where ctor = dataDeclCtors (snd d) !! fromInteger y
+
+
+{-
+
+interp :: ModuleName -> DataDecl -> Exp -> Exp
+interp 
+
+dataName, ctorFields, ctorFixity :: Env -> Exp
+
+-- Module.Name.Sample
+dataName env{moduleName=x,dataDecl=y} = x++ ['.'|x/=""] ++ dataDeclName y
+
+-- [], or a list of the fields
+ctorFields = error "todo, ctorFields"
+
+
+-- Prefix (usually) or Infix
+ctorFixity = error "todo, ctorFixity"
+
+-}

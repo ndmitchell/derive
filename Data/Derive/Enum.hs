@@ -1,3 +1,4 @@
+module Data.Derive.Enum where
 {-
 import Prelude
 
@@ -16,10 +17,11 @@ instance Enum (Sample a) where
 -}
 -- GENERATED START
 
-module Data.Derive.Enum where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeEnum :: Derivation
+makeEnum = derivationDSL "Enum" dslEnum
 
 dslEnum =
     List [Instance [] "Enum" (List [App "InsDecl" (List [App "FunBind"
@@ -47,8 +49,4 @@ dslEnum =
     App "Ident" (List [CtorName])]),List []])])],App "Nothing" (List [
     ]),App "UnGuardedRhs" (List [App "Lit" (List [App "Int" (List [
     CtorIndex])])]),App "BDecls" (List [List []])]))])])])]
-
-makeEnum :: Derivation
-makeEnum = derivationDSL "Enum" dslEnum
-
 -- GENERATED STOP

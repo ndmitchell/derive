@@ -73,20 +73,20 @@ guessList xs = mapMaybe sames $ map diffs $ sequence $ map guess xs
 
         diffs (GuessCtr 0 True x0:GuessCtr 1 True x1:GuessCtr 2 True x2:xs)
             | f 0 x0 == f 0 x1 && f 2 x2 == f 2 x1 = Guess (MapCtor x1) : diffs xs
-            where f i x = applyEnv x Env{envInput=sample, envCtor=dataCtors sample !! i}
+            where f i x = applyEnv x env{envInput=sample, envCtor=dataCtors sample !! i}
         
         diffs (GuessCtr 2 True x2:GuessCtr 1 True x1:GuessCtr 0 True x0:xs)
             | f 0 x0 == f 0 x1 && f 2 x2 == f 2 x1 = Guess (Reverse $ MapCtor x1) : diffs xs
-            where f i x = applyEnv x Env{envInput=sample, envCtor=dataCtors sample !! i}
+            where f i x = applyEnv x env{envInput=sample, envCtor=dataCtors sample !! i}
         
         diffs (GuessFld 1 x1:GuessFld 2 x2:xs)
             | f 1 x1 == f 1 x2 = GuessCtr 1 False (MapField x2) : diffs xs
-            where f i x = applyEnv x Env{envInput=sample, envField=i}
+            where f i x = applyEnv x env{envInput=sample, envField=i}
         
         diffs (GuessFld 2 x2:GuessFld 1 x1:xs)
             | f 1 x1 == f 1 x2 = GuessCtr 1 False (Reverse $ MapField x2) : diffs xs
-            where f i x = applyEnv x Env{envInput=sample, envField=i}
-        
+            where f i x = applyEnv x env{envInput=sample, envField=i}
+
         diffs (x:xs) = lift box x : diffs xs
         diffs [] = []
 

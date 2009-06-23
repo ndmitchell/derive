@@ -1,6 +1,6 @@
 {-# LANGUAGE ViewPatterns #-}
 
-module Data.Derive.DSL.Apply(apply, applyEnv, Env(..)) where
+module Data.Derive.DSL.Apply(apply, applyEnv, env, Env(..)) where
 
 import Data.Derive.DSL.HSE
 import Data.Derive.DSL.DSL
@@ -9,7 +9,14 @@ import Data.List
 
 
 apply :: DSL -> Input -> Out
-apply dsl input = fromOutput $ applyEnv dsl Env{envInput=input}
+apply dsl input = fromOutput $ applyEnv dsl env{envInput=input}
+
+
+env = Env
+    (error "Env.envInput: uninitialised")
+    (error "Env.envCtor: uninitialised")
+    (error "Env.envField: uninitialised")
+    (error "Env.envFold: uninitialised")
 
 
 data Env = Env  {envInput :: Input

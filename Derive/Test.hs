@@ -32,12 +32,12 @@ test = do
     mapM_ (testFile types) derivations
 
 
-testFile :: [(String,Decl)] -> (String, Derivation) -> IO ()
-testFile types (name,d) = do
+testFile :: [(String,Decl)] -> Derivation -> IO ()
+testFile types (Derivation name op) = do
     putStrLn $ "Testing " ++ name
     src <- readSrc $ "Data/Derive/" ++ name ++ ".hs"
     forM_ (srcTest src) $ \(typ,res) -> do
-        let Right r = derivationDeriver d (fromMaybe (error $ "wanting type: " ++ typ) $ lookup typ types)
+        let Right r = op (ModuleName "Example", fromMaybe (error $ "wanting type: " ++ typ) $ lookup typ types)
         when (not $ r `outEq` res) $
             error $ "Results don't match!\nExpected:\n" ++ showOut res ++ "\nGot:\n" ++ showOut r
 

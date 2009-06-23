@@ -1,5 +1,5 @@
+module Data.Derive.Serial where
 {-
-
 import {- "smallcheck" -} Test.SmallCheck
 
 {-# EXAMPLE #-}
@@ -21,10 +21,11 @@ instance Serial a => Serial (Sample a) where
 -}
 -- GENERATED START
 
-module Data.Derive.Serial where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeSerial :: Derivation
+makeSerial = derivationDSL "Serial" dslSerial
 
 dslSerial =
     List [Instance ["Serial"] "Serial" (List [App "InsDecl" (List [App
@@ -61,8 +62,4 @@ dslSerial =
     (List [App "Ident" (List [String "const"])])]),App "RecConstr" (
     List [App "UnQual" (List [App "Ident" (List [CtorName])]),List []]
     )])]))])]),App "BDecls" (List [List []])])]])])])]
-
-makeSerial :: Derivation
-makeSerial = derivationDSL "Serial" dslSerial
-
 -- GENERATED STOP

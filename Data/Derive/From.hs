@@ -7,7 +7,9 @@
 -- works for all constructors - zero-arity constructors always return
 -- @()@, arity-one constructors return the contained value, and all
 -- others return a tuple with all the components.
+
 module Data.Derive.From(makeFrom) where
+
 
 import Language.Haskell.TH.All
 

@@ -1,5 +1,5 @@
+module Data.Derive.Ord where
 {-
-
 import {- "base" -} Prelude
 
 {-# EXAMPLE #-}
@@ -22,10 +22,11 @@ instance Ord a => Ord (DataName a) where
 -}
 -- GENERATED START
 
-module Data.Derive.Ord where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeOrd :: Derivation
+makeOrd = derivationDSL "Ord" dslOrd
 
 dslOrd =
     List [App "InstDecl" (List [List [App "ClassA" (List [App "UnQual"
@@ -88,8 +89,4 @@ dslOrd =
     App "Nothing" (List []),App "UnGuardedRhs" (List [App "Lit" (List
     [App "Int" (List [CtorIndex])])]),App "BDecls" (List [List []])]))
     ])]])])]])])]])]
-
-makeOrd :: Derivation
-makeOrd = derivationDSL "Ord" dslOrd
-
 -- GENERATED STOP

@@ -1,3 +1,4 @@
+module Data.Derive.Binary where
 {-
 import {- "binary" -} Data.Binary
 
@@ -26,10 +27,11 @@ instance Binary alpha => Binary (Sample alpha) where
 -}
 -- GENERATED START
 
-module Data.Derive.Binary where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeBinary :: Derivation
+makeBinary = derivationDSL "Binary" dslBinary
 
 dslBinary =
     List [Instance ["Binary"] "Binary" (List [App "InsDecl" (List [App
@@ -106,8 +108,4 @@ dslBinary =
     "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
     List [String "return"])])]),App "Lit" (List [App "Int" (List [Int
     0])])])])]),App "BDecls" (List [List []])])]])])])])]
-
-makeBinary :: Derivation
-makeBinary = derivationDSL "Binary" dslBinary
-
 -- GENERATED STOP

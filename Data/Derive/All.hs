@@ -8,14 +8,16 @@ data Bool = False | True
 
 data Either a b = Left a | Right b
 
-data Computer = Laptop {weight :: Int, memory :: Int}
-              | Desktop {memory :: Int, processor :: Int}
+data Computer = Laptop { weight :: Int }
+              | Desktop { speed :: Int, memory :: Int }
 
 -}
 
 -- | This module provides convenience re-exports of all the standard
 -- Data.Derive derivations.
-module Data.Derive.All (derivations, module D) where
+module Data.Derive.All (Derivation, derivations, module D) where
+
+import Data.Derive.Internal.Derivation
 
 -- GENERATED START
 import Data.Derive.Arbitrary        as D
@@ -51,6 +53,6 @@ import Data.Derive.TTypeable        as D
 import Data.Derive.Typeable         as D
 import Data.Derive.Uniplate         as D
 import Data.Derive.Update           as D
+derivations :: [Derivation]
+derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeIs,makeNFData,makeOrd,makePlateTypeable,makeSerial]
 -- GENERATED STOP
-
-derivations = [("Arities",makeArities)]

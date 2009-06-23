@@ -1,4 +1,4 @@
-{-# OPTIONS_DERIVE --derive=Data,Typeable,Eq,Ord #-}
+{-# OPTIONS_DERIVE --derive=Data,Eq ,Typeable,Eq,Ord #-}
 
 module Example where
 
@@ -26,10 +26,10 @@ data Drinks = Beer Bool{-ale?-}
 
 -- | A list with late failure
 data FailList e a = Nil | Fail e | Const a (FailList e a)
-                    deriving ( {-! Functor !-} )
+                    deriving ( {- ! Functor !-} )
 
 
 -- | State monad
 data State s a = StateT (s -> (s, a))
-                 deriving ( {-! Functor !-} )
+                 deriving ( {- ! Functor !-} )
 

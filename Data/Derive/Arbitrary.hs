@@ -1,3 +1,4 @@
+module Data.Derive.Arbitrary where
 {-
 import {- "quickcheck" -} Test.QuickCheck
 
@@ -17,10 +18,11 @@ instance Arbitrary a => Arbitrary (Sample a) where
 -}
 -- GENERATED START
 
-module Data.Derive.Arbitrary where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeArbitrary :: Derivation
+makeArbitrary = derivationDSL "Arbitrary" dslArbitrary
 
 dslArbitrary =
     List [Instance ["Arbitrary"] "Arbitrary" (List [App "InsDecl" (
@@ -50,8 +52,4 @@ dslArbitrary =
     [App "UnQual" (List [App "Ident" (List [Concat (List [String "x",
     ShowInt FieldIndex])])])]))]))])])])]])])]),App "BDecls" (List [
     List []])]))])])]])]),App "BDecls" (List [List []])])])])]
-
-makeArbitrary :: Derivation
-makeArbitrary = derivationDSL "Arbitrary" dslArbitrary
-
 -- GENERATED STOP

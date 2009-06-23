@@ -1,3 +1,4 @@
+module Data.Derive.NFData where
 {-
 import Control.Parallel.Strategies
 
@@ -11,10 +12,11 @@ instance NFData a => NFData (Sample a) where
 -}
 -- GENERATED START
 
-module Data.Derive.NFData where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeNFData :: Derivation
+makeNFData = derivationDSL "NFData" dslNFData
 
 dslNFData =
     List [Instance ["NFData"] "NFData" (List [App "InsDecl" (List [App
@@ -31,8 +33,4 @@ dslNFData =
     ])]),App "Var" (List [App "UnQual" (List [App "Ident" (List [
     Concat (List [String "x",ShowInt FieldIndex])])])])])))]))]),App
     "BDecls" (List [List []])]))])])])]
-
-makeNFData :: Derivation
-makeNFData = derivationDSL "NFData" dslNFData
-
 -- GENERATED STOP

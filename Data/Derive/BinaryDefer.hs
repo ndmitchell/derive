@@ -1,3 +1,4 @@
+module Data.Derive.BinaryDefer where
 {-
 import {- "binarydefer" -} Data.Binary.Defer
 
@@ -12,10 +13,11 @@ instance BinaryDefer a => BinaryDefer (Sample a) where
 -}
 -- GENERATED START
 
-module Data.Derive.BinaryDefer where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeBinaryDefer :: Derivation
+makeBinaryDefer = derivationDSL "BinaryDefer" dslBinaryDefer
 
 dslBinaryDefer =
     List [Instance ["BinaryDefer"] "BinaryDefer" (List [App "InsDecl"
@@ -35,8 +37,4 @@ dslBinaryDefer =
     String "unit"])])]),App "Con" (List [App "UnQual" (List [App
     "Ident" (List [CtorName])])])])]]))]))])])]),App "BDecls" (List [
     List []])])])])]
-
-makeBinaryDefer :: Derivation
-makeBinaryDefer = derivationDSL "BinaryDefer" dslBinaryDefer
-
 -- GENERATED STOP

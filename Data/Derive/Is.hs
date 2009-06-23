@@ -1,3 +1,4 @@
+module Data.Derive.Is where
 {-
 
 {-# EXAMPLE #-}
@@ -9,10 +10,11 @@ isThird  (Third {}) = True; isThird  _ = False
 -}
 -- GENERATED START
 
-module Data.Derive.Is where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeIs :: Derivation
+makeIs = derivationDSL "Is" dslIs
 
 dslIs =
     MapCtor (App "FunBind" (List [List [App "Match" (List [App "Ident"
@@ -26,8 +28,4 @@ dslIs =
     []),App "UnGuardedRhs" (List [App "Con" (List [App "UnQual" (List
     [App "Ident" (List [String "False"])])])]),App "BDecls" (List [
     List []])])]]))
-
-makeIs :: Derivation
-makeIs = derivationDSL "Is" dslIs
-
 -- GENERATED STOP

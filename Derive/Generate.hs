@@ -9,7 +9,11 @@ import Data.Maybe
 import System.FilePath
 import System.Directory
 import Data.Char
+import Data.List
 
+
+evil = words $ "From Foldable Fold Monoid PlateDirect Read Ref Show Traversable TTypeable " ++
+               "Typeable Uniplate Update Functor Has LazySet Set"
 
 -- generate extra information for each derivation
 generate :: IO ()
@@ -19,8 +23,10 @@ generate = do
     lis <- mapM generateFile $ map ("Data/Derive" </>) xs
     let names = map dropExtension xs
         n = maximum $ map length names
-    writeGenerated "Data/Derive/All.hs"
-        ["import Data.Derive." ++ x ++ replicate (4 + n - length x) ' ' ++ "as D" | x <- names]
+    writeGenerated "Data/Derive/All.hs" $
+        ["import Data.Derive." ++ x ++ replicate (4 + n - length x) ' ' ++ "as D" | x <- names] ++
+        ["derivations :: [Derivation]"
+        ,"derivations = [make" ++ concat (intersperse ",make" (names \\ evil)) ++ "]"]
     writeGenerated "derive.htm" $ ["-->"] ++ lis ++ ["<!--"]
     writeGenerated "derive.cabal" $ map ("        Data.Derive."++) names
 
@@ -34,11 +40,21 @@ generateFile file = do
     when (isJust $ srcExample src) $ do
         let dsl = fromMaybe (error $ "Couldn't derive example for " ++ name) $
                             deriveDSL $ fromJust $ srcExample src
-        let modu = "module Data.Derive." ++ name ++ " where"
-            imp = ["import Data.Derive.DSL.DSL","import Data.Derive.Internal.Derivation"]
-            dslFoo = ("dsl" ++ name ++ " =") : map (replicate 4 ' ' ++) (wrap 66 $ show dsl)
-            makeFoo = ("make" ++ name ++ " :: Derivation") : ("make" ++ name ++ " = derivationDSL " ++ show name ++ " dsl" ++ name) : []
-        writeGenerated file $ ["",modu,""] ++ imp ++ [""] ++ dslFoo ++ [""] ++ makeFoo ++ [""]
+        writeGenerated file $
+            [""
+            ,"import Data.Derive.DSL.DSL"
+            ,"import Data.Derive.Internal.Derivation"
+            ,""
+            ,"make" ++ name ++ " :: Derivation"
+            ] ++ (if impureDSL dsl then
+                ["make" ++ name ++ " = derivationCustomDSL " ++ show name ++ " custom $"]
+            else
+                ["make" ++ name ++ " = derivationDSL " ++ show name ++ " dsl" ++ name
+                ,""
+                ,"dsl" ++ name ++ " ="
+            ]) ++
+            map (replicate 4 ' ' ++) (wrap 66 $ show dsl)
+
 
         let inst = dynamicDSL dsl
             instFile = takeDirectory file </> "Instance" </> name <.> "hs"
@@ -60,7 +76,7 @@ wrap :: Int -> String -> [String]
 wrap n = f . lexemes
     where
         f [] = []
-        f (x:xs) = [reverse $ dropWhile isSpace $ reverse $ concat $ x:a | a /= []] ++ f (dropWhile (all isSpace) b)
+        f (x:xs) = [reverse $ dropWhile isSpace $ reverse $ concat $ x:a] ++ f (dropWhile (all isSpace) b)
             where (a,b) = thisLine (n - length x) xs
 
         thisLine i [] = ([], [])

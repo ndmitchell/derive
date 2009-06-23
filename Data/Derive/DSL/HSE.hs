@@ -1,8 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
-module Data.Derive.DSL.HSE(module Data.Derive.DSL.HSE, module Language.Haskell.Exts) where
+module Data.Derive.DSL.HSE(module Data.Derive.DSL.HSE, module Language.Haskell) where
 
-import Language.Haskell.Exts hiding (List, App, String, Int)
+import Language.Haskell hiding (List, App, String, Int)
 import qualified Language.Haskell.Exts as H
 import Data.Data
 import Data.Generics.PlateData
@@ -15,8 +15,6 @@ import Control.Monad.State
 
 ---------------------------------------------------------------------
 -- EXAMPLES
-
-sl = SrcLoc "" 0 0
 
 -- data List a = Nil | Cons a (List a)
 list :: Input
@@ -31,27 +29,18 @@ sample = Input "Sample" 1 [Ctor "First" 0 0, Ctor "Second" 1 2, Ctor "Third" 2 1
 ---------------------------------------------------------------------
 -- UTILITIES
 
-isUnknownDeclPragma UnknownDeclPragma{} = True
-isUnknownDeclPragma _ = False
-
-
-moduleDecls (Module _ _ _ _ _ _ decls) = decls
-moduleImports (Module _ _ _ _ _ imps _) = imps
-
-
 outEq :: Out -> Out -> Bool
 outEq = (==) `on` transformBi (const sl)
 
 simplifyOut :: Out -> Out
 simplifyOut = transformBi fTyp . transformBi fExp
     where
-        x ~= y = prettyPrint x == y
-    
         fExp (H.App op (H.List xs))
             | op ~= "length" = Lit $ H.Int $ fromIntegral $ length xs
             | op ~= "head" = head xs
         fExp (InfixApp (Lit (H.Int i)) op (Lit (H.Int j)))
             | op ~= "-" = Lit $ H.Int $ i - j
+            | op ~= "+" = Lit $ H.Int $ i + j
             | op ~= ">" = Con $ UnQual $ Ident $ show $ i > j
         fExp (InfixApp x op y) | op ~= "`const`" = x
         fExp (H.App (H.App con x) y) | con ~= "const" = x
@@ -71,10 +60,9 @@ data Input = Input {dataName :: String, dataVars :: Integer, dataCtors :: [Ctor]
 data Ctor = Ctor {ctorName :: String, ctorIndex :: Integer, ctorArity :: Integer}
 
 
-toInput :: Decl -> Maybe Input
-toInput (DataDecl _ _ _ name vars ctors _) = Just $ Input (prettyPrint name) (genericLength vars) (zipWith f [0..] ctors)
-    where f index (QualConDecl _ _ _ (ConDecl name fields)) = Ctor (prettyPrint name) index (genericLength fields)
-toInput _ = Nothing
+toInput :: DataDecl -> Input
+toInput x = Input (dataDeclName x) (genericLength $ dataDeclVars x) (zipWith f [0..] $ dataDeclCtors x)
+    where f index x = Ctor (ctorDeclName x) index (genericLength $ ctorDeclFields x)
 
 
 type Out = [Decl]
@@ -86,6 +74,7 @@ data Output = OString String
             | OApp String [Output]
             | OList [Output]
             | OIgnore
+            | OCustom String
               deriving (Eq,Show,Data,Typeable)
 
 

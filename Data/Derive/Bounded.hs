@@ -1,3 +1,4 @@
+module Data.Derive.Bounded where
 {-
 import Prelude
 
@@ -5,15 +6,16 @@ import Prelude
 
 instance Bounded a => Bounded (Sample a) where
     minBound = head [First, Second (const minBound 1) (const minBound 2), Third (const minBound 1)]
-    maxBound = head [Third (const minBound 1), Second (const minBound 1) (const minBound 2), First]
+    maxBound = head [Third (const maxBound 1), Second (const maxBound 1) (const maxBound 2), First]
 
 -}
 -- GENERATED START
 
-module Data.Derive.Bounded where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeBounded :: Derivation
+makeBounded = derivationDSL "Bounded" dslBounded
 
 dslBounded =
     List [Instance ["Bounded"] "Bounded" (List [App "InsDecl" (List [
@@ -36,10 +38,7 @@ dslBounded =
     [CtorName])])])],MapField (App "Paren" (List [Application (List [
     App "Var" (List [App "UnQual" (List [App "Ident" (List [String
     "const"])])]),App "Var" (List [App "UnQual" (List [App "Ident" (
-    List [String "minBound"])])]),App "Lit" (List [App "Int" (List [
+    List [String "maxBound"])])]),App "Lit" (List [App "Int" (List [
     FieldIndex])])])]))]))))])])]),App "BDecls" (List [List []])])])])
-
-makeBounded :: Derivation
-makeBounded = derivationDSL "Bounded" dslBounded
-
+    ]
 -- GENERATED STOP

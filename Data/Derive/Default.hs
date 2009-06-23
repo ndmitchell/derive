@@ -1,5 +1,5 @@
+module Data.Derive.Default where
 {-
-
 import {- "derive" -} Data.Derive.Class.Default
 
 {-# EXAMPLE #-}
@@ -11,10 +11,11 @@ instance Default a => Default (Sample a) where
 
 -- GENERATED START
 
-module Data.Derive.Default where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeDefault :: Derivation
+makeDefault = derivationDSL "Default" dslDefault
 
 dslDefault =
     List [Instance ["Default"] "Default" (List [App "InsDecl" (List [
@@ -29,8 +30,4 @@ dslDefault =
     (List [App "Ident" (List [String "def"])])]),App "Lit" (List [App
     "Int" (List [FieldIndex])])])]))])))])])]),App "BDecls" (List [
     List []])])])])]
-
-makeDefault :: Derivation
-makeDefault = derivationDSL "Default" dslDefault
-
 -- GENERATED STOP

@@ -1,3 +1,4 @@
+module Data.Derive.Arities where
 {-
 import {- "derive" -} Data.Derive.Class.Arities
 
@@ -25,10 +26,11 @@ instance Arities (Either a b) where
 
 -- GENERATED START
 
-module Data.Derive.Arities where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeArities :: Derivation
+makeArities = derivationDSL "Arities" dslArities
 
 dslArities =
     List [Instance [] "Arities" (List [App "InsDecl" (List [App
@@ -40,8 +42,4 @@ dslArities =
     List [CtorArity])]),App "RecConstr" (List [App "UnQual" (List [App
     "Ident" (List [CtorName])]),List []])]))])]),App "BDecls" (List [
     List []])])]])])])]
-
-makeArities :: Derivation
-makeArities = derivationDSL "Arities" dslArities
-
 -- GENERATED STOP

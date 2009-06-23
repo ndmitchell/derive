@@ -23,7 +23,7 @@ nullSrc = Src Nothing Nothing Nothing []
 readHSE :: FilePath -> IO Module
 readHSE file = do
     src <- readFile' file
-    case parseFileContents $ unlines $ ("module Example where":) $ takeWhile (/= "-}") $ drop 1 $ lines src of
+    case parseFileContents $ unlines $ ("module Example where":) $ takeWhile (/= "-}") $ drop 2 $ lines src of
         ParseOk x -> return x
         ParseFailed pos msg -> do putStrLn $ "Failed to parse " ++ file ++ ": " ++ prettyPrint pos ++ " " ++ msg
                                   return $ Module sl (ModuleName "") [] Nothing Nothing [] []
@@ -67,3 +67,7 @@ readFile' file = do
 
 writeBinaryFile :: FilePath -> String -> IO ()
 writeBinaryFile file x = withBinaryFile file WriteMode (`hPutStr` x)
+
+
+rep from to x = if x == from then to else x
+reps from to = map (rep from to)

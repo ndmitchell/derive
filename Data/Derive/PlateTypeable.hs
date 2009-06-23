@@ -1,3 +1,4 @@
+module Data.Derive.PlateTypeable where
 {-
 import {- "uniplate" -} Data.Generics.PlateTypeable
 
@@ -14,10 +15,11 @@ instance (Typeable t, Typeable a, Uniplate t, PlateAll a t) => PlateAll (DataNam
 -}
 -- GENERATED START
 
-module Data.Derive.PlateTypeable where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makePlateTypeable :: Derivation
+makePlateTypeable = derivationDSL "PlateTypeable" dslPlateTypeable
 
 dslPlateTypeable =
     List [App "InstDecl" (List [List [App "ClassA" (List [App "UnQual"
@@ -48,8 +50,4 @@ dslPlateTypeable =
     (List [App "UnQual" (List [App "Ident" (List [String "plate"])])])
     ,App "Con" (List [App "UnQual" (List [App "Ident" (List [CtorName]
     )])])])]]))]),App "BDecls" (List [List []])]))])])]])]
-
-makePlateTypeable :: Derivation
-makePlateTypeable = derivationDSL "PlateTypeable" dslPlateTypeable
-
 -- GENERATED STOP

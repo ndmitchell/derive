@@ -1,3 +1,4 @@
+module Data.Derive.EnumCyclic where
 {-
 import Prelude
 
@@ -23,10 +24,11 @@ instance Enum (Sample a) where
 -}
 -- GENERATED START
 
-module Data.Derive.EnumCyclic where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeEnumCyclic :: Derivation
+makeEnumCyclic = derivationDSL "EnumCyclic" dslEnumCyclic
 
 dslEnumCyclic =
     List [Instance [] "Enum" (List [App "InsDecl" (List [App "FunBind"
@@ -99,8 +101,4 @@ dslEnumCyclic =
     String "fromEnum"])])]),App "Var" (List [App "UnQual" (List [App
     "Ident" (List [String "a"])])])])]),App "BDecls" (List [List []])]
     )]])])]])])])]
-
-makeEnumCyclic :: Derivation
-makeEnumCyclic = derivationDSL "EnumCyclic" dslEnumCyclic
-
 -- GENERATED STOP

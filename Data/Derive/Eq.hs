@@ -1,3 +1,4 @@
+module Data.Derive.Eq where
 {-
 import Prelude
 
@@ -12,10 +13,11 @@ instance (Eq a) => Eq (Sample a) where
 -}
 -- GENERATED START
 
-module Data.Derive.Eq where
-
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
+
+makeEq :: Derivation
+makeEq = derivationDSL "Eq" dslEq
 
 dslEq =
     List [Instance ["Eq"] "Eq" (List [App "InsDecl" (List [App
@@ -41,8 +43,4 @@ dslEq =
     "Nothing" (List []),App "UnGuardedRhs" (List [App "Con" (List [App
     "UnQual" (List [App "Ident" (List [String "False"])])])]),App
     "BDecls" (List [List []])])]])])])])]
-
-makeEq :: Derivation
-makeEq = derivationDSL "Eq" dslEq
-
 -- GENERATED STOP
