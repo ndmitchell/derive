@@ -23,7 +23,9 @@ nullSrc = Src Nothing Nothing Nothing []
 readHSE :: FilePath -> IO Module
 readHSE file = do
     src <- readFile' file
-    case parseFileContents $ unlines $ ("module Example where":) $ takeWhile (/= "-}") $ drop 2 $ lines src of
+    src <- return $ takeWhile (/= "-}") $ drop 1 $ dropWhile (/= "{-") $
+                    dropWhile (not . isPrefixOf "module ") $ lines src
+    case parseFileContents $ unlines $ "module Example where":src of
         ParseOk x -> return x
         ParseFailed pos msg -> do putStrLn $ "Failed to parse " ++ file ++ ": " ++ prettyPrint pos ++ " " ++ msg
                                   return $ Module sl (ModuleName "") [] Nothing Nothing [] []

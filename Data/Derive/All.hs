@@ -1,3 +1,7 @@
+-- | This module provides convenience re-exports of all the standard
+-- Data.Derive derivations.
+module Data.Derive.All (Derivation, derivations, module D) where
+
 {-
 data List a = Nil | Cons a (List a)
 
@@ -11,11 +15,9 @@ data Either a b = Left a | Right b
 data Computer = Laptop { weight :: Int }
               | Desktop { speed :: Int, memory :: Int }
 
--}
+data Sample a = First | Second a a | Third a
 
--- | This module provides convenience re-exports of all the standard
--- Data.Derive derivations.
-module Data.Derive.All (Derivation, derivations, module D) where
+-}
 
 import Data.Derive.Internal.Derivation
 
@@ -54,5 +56,5 @@ import Data.Derive.Typeable         as D
 import Data.Derive.Uniplate         as D
 import Data.Derive.Update           as D
 derivations :: [Derivation]
-derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeIs,makeNFData,makeOrd,makePlateTypeable,makeSerial]
+derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFrom,makeIs,makeNFData,makeOrd,makePlateTypeable,makeSerial]
 -- GENERATED STOP

@@ -2,6 +2,7 @@
 module Language.Haskell(module Language.Haskell, module Language.Haskell.Exts) where
 
 import Language.Haskell.Exts
+import Data.List
 
 
 x ~= y = prettyPrint x == y
@@ -29,6 +30,15 @@ showDecls x = unlines $ map prettyPrint x
 
 
 unParseOk (ParseOk x) = x
+
+
+tyApp x [] = x
+tyApp x xs = TyApp (tyApp x $ init xs) (last xs)
+
+
+fromBangType (BangedTy x) = x
+fromBangType (UnBangedTy x) = x
+fromBangType (UnpackedTy x) = x
 
 
 isDataDecl :: Decl -> Bool

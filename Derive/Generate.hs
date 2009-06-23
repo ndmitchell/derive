@@ -12,7 +12,7 @@ import Data.Char
 import Data.List
 
 
-evil = words $ "From Foldable Fold Monoid PlateDirect Read Ref Show Traversable TTypeable " ++
+evil = words $ "Foldable Fold Monoid PlateDirect Read Ref Show Traversable TTypeable " ++
                "Typeable Uniplate Update Functor Has LazySet Set"
 
 -- generate extra information for each derivation

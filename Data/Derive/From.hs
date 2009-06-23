@@ -1,36 +1,55 @@
-{-# OPTIONS_GHC -fth -cpp #-}
-
--- | A pseudo derivation.  For each constructor in the data type,
--- deriving @From@ generates @from@/CtorName/ which extracts the
--- components if given the appropriate constructor, and crashes
--- otherwise.  Unlike the DrIFT @\"From\"@ derivation, our version
--- works for all constructors - zero-arity constructors always return
--- @()@, arity-one constructors return the contained value, and all
--- others return a tuple with all the components.
+{-|
+    A pseudo derivation.  For each constructor in the data type,
+    deriving @From@ generates @from@/CtorName/ which extracts the
+    components if given the appropriate constructor, and crashes
+    otherwise.  Unlike the DrIFT @\"From\"@ derivation, our version
+    works for all constructors - zero-arity constructors always return
+    @()@, arity-one constructors return the contained value, and all
+    others return a tuple with all the components.
+-}
 
 module Data.Derive.From(makeFrom) where
 
+{-
 
-import Language.Haskell.TH.All
+{-# TEST Sample #-}
 
--- don't use this until Guess supports type signatures!
-#ifdef GUESS
+fromFirst :: Sample a -> ()
+fromFirst First = ()
 
-import Data.DeriveGuess
+fromSecond :: Sample a -> (a, a)
+fromSecond (Second x1 x2) = (x1,x2)
 
-example = (,) "From" [d|
+fromThird :: Sample a -> a
+fromThird (Third x1) = x1
 
-    fromCtorZero (CtorZero) = ()
-    fromCtorOne  (CtorOne x1) = tup1 x1
-    fromCtorTwo  (CtorTwo x1 x2) = (x1,x2)
-    fromCtorTwo' (CtorTwo' x1 x2) = (x1,x2)
+-}
 
-    |]
+import Language.Haskell
+import Data.Derive.Internal.Derivation
 
-#endif
 
 makeFrom :: Derivation
-makeFrom = derivation from' "From"
+makeFrom = Derivation "From" $ \(_,d) -> Right $ concatMap (makeFromCtor d) $ dataDeclCtors d
+
+
+makeFromCtor :: DataDecl -> CtorDecl -> [Decl]
+makeFromCtor d c = [TypeSig sl [from] typ]
+    where
+        name = ctorDeclName c
+        from = Ident $ "from" ++ name
+        typ = TyFun
+            (tyApp (TyCon $ UnQual $ Ident $ dataDeclName d) (map (TyVar . Ident) (dataDeclVars d)))
+            (tyTuple $ map (fromBangType . snd) $ ctorDeclFields c)
+
+
+tyTuple [x] = x
+tyTuple xs = TyTuple Boxed xs
+
+
+
+{-
+from' "From"
 from' dat = ((concatMap (\(ctorInd,ctor) ->
                          [SigD (mkName ("from" ++ ctorName ctor))
                                (ForallT (dataArgs dat) []
@@ -46,3 +65,4 @@ from' dat = ((concatMap (\(ctorInd,ctor) ->
                                                  [])]
                          ])
              (id (zip [0..] (dataCtors dat))))++[])
+-}
