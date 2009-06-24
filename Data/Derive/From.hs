@@ -34,35 +34,26 @@ makeFrom = Derivation "From" $ \(_,d) -> Right $ concatMap (makeFromCtor d) $ da
 
 
 makeFromCtor :: DataDecl -> CtorDecl -> [Decl]
-makeFromCtor d c = [TypeSig sl [from] typ]
+makeFromCtor d c = [TypeSig sl [name from] typ, FunBind [match]]
     where
-        name = ctorDeclName c
-        from = Ident $ "from" ++ name
+        n = ctorDeclName c
+        from = "from" ++ n
+
         typ = TyFun
-            (tyApp (TyCon $ UnQual $ Ident $ dataDeclName d) (map (TyVar . Ident) (dataDeclVars d)))
+            (tyApp (tyCon $ dataDeclName d) (map tyVar $ dataDeclVars d))
             (tyTuple $ map (fromBangType . snd) $ ctorDeclFields c)
 
+        match = Match sl (name from) [pat] Nothing (UnGuardedRhs rhs) (BDecls [])
+        pat = (length vars == 0 ? id $ PParen) $ PApp (qname n) (map pVar vars)
+        vars = take (length $ ctorDeclFields c) $ map ((:) 'x' . show) [1..]
+        rhs = valTuple $ map var vars
 
+
+tyTuple [] = TyCon $ Special UnitCon
 tyTuple [x] = x
 tyTuple xs = TyTuple Boxed xs
 
 
-
-{-
-from' "From"
-from' dat = ((concatMap (\(ctorInd,ctor) ->
-                         [SigD (mkName ("from" ++ ctorName ctor))
-                               (ForallT (dataArgs dat) []
-                                        (AppT (AppT ArrowT
-                                                    (lK (dataName dat) (map VarT $ dataArgs dat)))
-                                              (tup (ctorTypes ctor))))
-                         ,FunD (mkName ("from" ++ ctorName ctor))
-                               [(Clause [(ConP (mkName ("" ++ ctorName ctor))
-                                               ((map (\field -> (VarP (mkName ("x" ++ show field))))
-                                                     (id [1..ctorArity ctor]))++[]))]
-                                        (NormalB (TupE ((map (\field -> (VarE (mkName ("x" ++ show field))))
-                                                             (id [1..ctorArity ctor]))++[])))
-                                                 [])]
-                         ])
-             (id (zip [0..] (dataCtors dat))))++[])
--}
+valTuple [] = Con $ Special UnitCon
+valTuple [x] = x
+valTuple xs = Tuple xs

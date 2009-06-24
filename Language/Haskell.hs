@@ -1,13 +1,30 @@
 
 module Language.Haskell(module Language.Haskell, module Language.Haskell.Exts) where
 
-import Language.Haskell.Exts
+import Language.Haskell.Exts hiding (var)
 import Data.List
+import Data.Generics.PlateData
+
+
+
+infix 1 ?
+True ? b = const b
+False ? b = id
 
 
 x ~= y = prettyPrint x == y
     
 sl = SrcLoc "" 0 0
+
+noSl mr = transformBi (const sl) mr
+
+
+qname = UnQual . name
+var = Var . qname
+tyVar = TyVar . name
+tyCon = TyCon . qname
+pVar = PVar . name
+
 
 -- A declaration that is either a DataDecl of GDataDecl
 type DataDecl = Decl
