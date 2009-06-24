@@ -26,8 +26,7 @@ import Data.Char
 
 
 makeHas :: Derivation
-makeHas = Derivation "Has" $ \(_,d) -> Right $ concatMap (makeHasField d) $
-    sort $ nub $ filter (not . null) $ map fst $ concatMap ctorDeclFields $ dataDeclCtors d
+makeHas = Derivation "Has" $ \(_,d) -> Right $ concatMap (makeHasField d) $ dataDeclFields d
 
 
 makeHasField :: DataDecl -> String -> [Decl]

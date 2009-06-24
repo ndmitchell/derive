@@ -30,6 +30,9 @@ pVar = PVar . name
 dataDeclType :: DataDecl -> Type
 dataDeclType d = tyApp (tyCon $ dataDeclName d) (map tyVar $ dataDeclVars d)
 
+dataDeclFields :: DataDecl -> [String]
+dataDeclFields = sort . nub . filter (not . null) . map fst . concatMap ctorDeclFields . dataDeclCtors
+
 
 -- A declaration that is either a DataDecl of GDataDecl
 type DataDecl = Decl
