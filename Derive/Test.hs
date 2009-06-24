@@ -39,7 +39,7 @@ testFile types (Derivation name op) = do
     forM_ (srcTest src) $ \(typ,res) -> do
         let Right r = op (ModuleName "Example", fromMaybe (error $ "wanting type: " ++ typ) $ lookup typ types)
         when (not $ r `outEq` res) $
-            error $ "Results don't match!\nExpected:\n" ++ show res ++ "\nGot:\n" ++ show r ++ "\n\n" ++ detailedNeq r res
+            error $ "Results don't match!\nExpected:\n" ++ showOut res ++ "\nGot:\n" ++ showOut r ++ "\n\n" ++ detailedNeq r res
 
 detailedNeq as bs | na /= nb = "Lengths don't match, " ++ show na ++ " vs " ++ show nb
     where na = length as ; nb = length bs

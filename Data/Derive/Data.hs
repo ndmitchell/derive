@@ -27,17 +27,17 @@ instance (Data a, Typeable a) => Data (Sample a) where
 {-# TEST Computer #-}
 
 instance Data Computer where
-    gfoldl k r (Laptop x1) = r Laptop `k` x1
-    gfoldl k r (Desktop x1 x2) = r Desktop `k` x1 `k` x2
+    gfoldl k r (Laptop x1 x2) = r Laptop `k` x1 `k` x2
+    gfoldl k r (Desktop x1) = r Desktop `k` x1
     gunfold k z c = case constrIndex c - 1 of
-        0 -> k $ z Laptop
-        1 -> k $ k $ z Desktop
+        0 -> k $ k $ z Laptop
+        1 -> k $ z Desktop
     toConstr x@Laptop{} = indexConstr (dataTypeOf x) 1
     toConstr x@Desktop{} = indexConstr (dataTypeOf x) 2
     dataTypeOf _ = ty
       where ty = mkDataType "Example.Computer"
-                 [mkConstr ty "Laptop" ["weight"] Prefix
-                 ,mkConstr ty "Desktop" ["speed", "memory"] Prefix]
+                 [mkConstr ty "Laptop" ["weight", "speed"] Prefix
+                 ,mkConstr ty "Desktop" ["speed"] Prefix]
 
 -}
 
@@ -132,23 +132,3 @@ custom d (H.App x (H.Lit (H.Int y)))
     | x ~= "ctorFields" = H.List $ [H.Lit $ H.String a | (a,_) <- ctorDeclFields ctor, a /= ""]
     | x ~= "ctorFixity" = Con (UnQual (Ident "Prefix"))
     where ctor = dataDeclCtors (snd d) !! fromInteger y
-
-
-{-
-
-interp :: ModuleName -> DataDecl -> Exp -> Exp
-interp 
-
-dataName, ctorFields, ctorFixity :: Env -> Exp
-
--- Module.Name.Sample
-dataName env{moduleName=x,dataDecl=y} = x++ ['.'|x/=""] ++ dataDeclName y
-
--- [], or a list of the fields
-ctorFields = error "todo, ctorFields"
-
-
--- Prefix (usually) or Infix
-ctorFixity = error "todo, ctorFixity"
-
--}

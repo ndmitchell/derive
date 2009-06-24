@@ -39,8 +39,7 @@ makeFromCtor d c = [TypeSig sl [name from] typ, FunBind [match]]
         n = ctorDeclName c
         from = "from" ++ n
 
-        typ = TyFun
-            (tyApp (tyCon $ dataDeclName d) (map tyVar $ dataDeclVars d))
+        typ = TyFun (dataDeclType d)
             (tyTuple $ map (fromBangType . snd) $ ctorDeclFields c)
 
         match = Match sl (name from) [pat] Nothing (UnGuardedRhs rhs) (BDecls [])

@@ -12,8 +12,8 @@ data Bool = False | True
 
 data Either a b = Left a | Right b
 
-data Computer = Laptop { weight :: Int }
-              | Desktop { speed :: Int, memory :: Int }
+data Computer = Laptop { weight :: Int, speed :: Int }
+              | Desktop { speed :: Int }
 
 data Sample a = First | Second a a | Third a
 
@@ -56,5 +56,5 @@ import Data.Derive.Typeable         as D
 import Data.Derive.Uniplate         as D
 import Data.Derive.Update           as D
 derivations :: [Derivation]
-derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFrom,makeIs,makeNFData,makeOrd,makePlateTypeable,makeSerial]
+derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFrom,makeHas,makeIs,makeNFData,makeOrd,makePlateTypeable,makeSerial]
 -- GENERATED STOP

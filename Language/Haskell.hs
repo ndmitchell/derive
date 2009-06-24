@@ -21,9 +21,14 @@ noSl mr = transformBi (const sl) mr
 
 qname = UnQual . name
 var = Var . qname
+con = Con . qname
 tyVar = TyVar . name
 tyCon = TyCon . qname
 pVar = PVar . name
+
+
+dataDeclType :: DataDecl -> Type
+dataDeclType d = tyApp (tyCon $ dataDeclName d) (map tyVar $ dataDeclVars d)
 
 
 -- A declaration that is either a DataDecl of GDataDecl

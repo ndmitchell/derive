@@ -13,7 +13,7 @@ import Data.List
 
 
 evil = words $ "Foldable Fold Monoid PlateDirect Read Ref Show Traversable TTypeable " ++
-               "Typeable Uniplate Update Functor Has LazySet Set"
+               "Typeable Uniplate Update Functor LazySet Set"
 
 -- generate extra information for each derivation
 generate :: IO ()
