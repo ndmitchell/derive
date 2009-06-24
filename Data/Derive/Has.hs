@@ -22,7 +22,6 @@ hasWeight _ = False
 import Language.Haskell
 import Data.Derive.Internal.Derivation
 import Data.List
-import Data.Char
 
 
 makeHas :: Derivation
@@ -32,7 +31,7 @@ makeHas = Derivation "Has" $ \(_,d) -> Right $ concatMap (makeHasField d) $ data
 makeHasField :: DataDecl -> String -> [Decl]
 makeHasField d field = [TypeSig sl [name has] typ, FunBind ms]
     where
-        has = "has" ++ toUpper (head field) : tail field
+        has = "has" ++ title field
         typ = TyFun (dataDeclType d) (tyCon "Bool")
         (yes,no) = partition (elem field . map fst . ctorDeclFields) $ dataDeclCtors d
         match pat val = Match sl (name has) [pat] Nothing (UnGuardedRhs $ con val) (BDecls [])

@@ -4,7 +4,7 @@ module Language.Haskell(module Language.Haskell, module Language.Haskell.Exts) w
 import Language.Haskell.Exts hiding (var)
 import Data.List
 import Data.Generics.PlateData
-
+import Data.Char
 
 
 infix 1 ?
@@ -18,6 +18,8 @@ sl = SrcLoc "" 0 0
 
 noSl mr = transformBi (const sl) mr
 
+
+title (x:xs) = toUpper x : xs
 
 qname = UnQual . name
 var = Var . qname
