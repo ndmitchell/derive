@@ -29,12 +29,12 @@ makeHas = Derivation "Has" $ \(_,d) -> Right $ concatMap (makeHasField d) $ data
 
 
 makeHasField :: DataDecl -> String -> [Decl]
-makeHasField d field = [TypeSig sl [name has] typ, FunBind ms]
+makeHasField d field = [TypeSig sl [name has] typ, binds has ms]
     where
         has = "has" ++ title field
         typ = TyFun (dataDeclType d) (tyCon "Bool")
         (yes,no) = partition (elem field . map fst . ctorDeclFields) $ dataDeclCtors d
-        match pat val = Match sl (name has) [pat] Nothing (UnGuardedRhs $ con val) (BDecls [])
+        match pat val = ([pat], con val)
 
         ms | null no = [match PWildCard "True"]
            | otherwise = [match (PRec (qname $ ctorDeclName c) []) "True" | c <- yes] ++ [match PWildCard "False"]

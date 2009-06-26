@@ -31,11 +31,10 @@ makeSet = Derivation "Set" $ \(_,d) -> Right $ concatMap (makeSetField d) $ data
 
 
 makeSetField :: DataDecl -> String -> [Decl]
-makeSetField d field = [TypeSig sl [name set] typ, FunBind [m]]
+makeSetField d field = [TypeSig sl [name set] typ, bind set [pVar "v",pVar "x"] bod]
     where
         set = "set" ++ title field
         typ = typField `TyFun` (dataDeclType d `TyFun` dataDeclType d)
         typField = fromBangType $ fromJust $ lookup field $ concatMap ctorDeclFields $ dataDeclCtors d
 
-        m = Match sl (name set) [pVar "v",pVar "x"] Nothing (UnGuardedRhs bod) (BDecls [])
         bod = RecUpdate (var "x") [FieldUpdate (qname field) (var "v")]

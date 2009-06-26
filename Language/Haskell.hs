@@ -1,7 +1,7 @@
 
 module Language.Haskell(module Language.Haskell, module Language.Haskell.Exts) where
 
-import Language.Haskell.Exts hiding (var)
+import Language.Haskell.Exts hiding (var,app,binds)
 import Data.List
 import Data.Generics.PlateData
 import Data.Char
@@ -67,8 +67,16 @@ tyFun [x] = x
 tyFun (x:xs) = TyFun x (tyFun xs)
 
 
-apps x [] = x
-apps x xs = apps (App x (head xs)) (tail xs)
+app x [] = x
+app x xs = app (App x (head xs)) (tail xs)
+
+
+bind :: String -> [Pat] -> Exp -> Decl
+bind s p e = binds s [(p,e)]
+
+binds :: String -> [([Pat], Exp)] -> Decl
+binds n [([],e)] = PatBind sl (pVar n) Nothing (UnGuardedRhs e) (BDecls [])
+binds n xs = FunBind [Match sl (name n) p Nothing (UnGuardedRhs e) (BDecls []) | (p,e) <- xs]
 
 
 fromBangType (BangedTy x) = x

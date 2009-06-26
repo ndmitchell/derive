@@ -32,7 +32,7 @@ makeRef = Derivation "Ref" $ \(_,d) -> Right $ concatMap (makeRefField d) $ data
 
 
 makeRefField :: DataDecl -> String -> [Decl]
-makeRefField d field = [TypeSig sl [name ref] typ, PatBind sl (pVar ref) Nothing (UnGuardedRhs bod) (BDecls [])]
+makeRefField d field = [TypeSig sl [name ref] typ, bind ref [] bod]
     where
         ref = "ref" ++ title field
         typ = TyApp (tyCon "Ref") (dataDeclType d)
