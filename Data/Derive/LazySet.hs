@@ -1,4 +1,3 @@
-
 -- | A pseudo derivation.  For each field in the data type, deriving
 -- @LazySet@ generates a function like a record updator, but lazy.
 -- This is very useful in certain situations to improve laziness
@@ -11,8 +10,10 @@
 -- > setX v f = Foo v (y f) (z f)
 -- > setY v f = Foo (x f) v (z f)
 -- > setZ v f = Foo (x f) (y f) v
-
 module Data.Derive.LazySet(makeLazySet) where
+
+{-
+-}
 
 import Language.Haskell.TH.All
 import Data.Char

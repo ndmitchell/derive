@@ -5,48 +5,28 @@
 -- @
 --   data Foo = Foo ; $( derive makeEq ''Foo )
 -- @
-module Data.DeriveTH
-       (derive, deriveFromDec,
-        -- * Convienience re-exports
-        Derivation, -- abstract!
-        module Data.Derive.All,
-        -- * Internal
-        _derive_string_instance
-       ) where
+module Data.DeriveTH(derive, deriveFromDec, module Data.Derive.All) where
 
 import Data.List
-import Control.Monad (liftM)
+import Control.Monad
 
 import Data.Derive.All
-import Language.Haskell.TH.All
+import Language.Haskell.TH.All hiding (Derivation)
 
 
 -- | Derive an instance of some class. @derive@ only derives instances
 -- for the type of the argument.
 derive :: Derivation -> Name -> Q [Dec]
-derive (Derivation f _) nm = f =<< deriveOne nm
+derive d name = do
+    x <- reify name
+    case x of
+        TyConI dec -> deriveFromDec d dec
+        _ -> error $ "Data.DeriveTH.derive: Expected a data type declaration, got:\n" ++ show x
 
 -- | Derive an instance of some class. @deriveFromDec@ only derives instances
 -- for the type of the argument.
 deriveFromDec :: Derivation -> Dec -> Q [Dec]
-deriveFromDec (Derivation f _) dec = f =<< fromTyConDecl dec
+deriveFromDec d x = do
+    x <- liftM normData $ expandData x
+    return []
 
--- | Derive for a type and print the code to standard output.  This is
--- a internal hook for the use of the Derive executable.
-_derive_string_instance :: Derivation -> Name -> Q Exp
-_derive_string_instance (Derivation f s) nm =
-    return . LitE . StringL . blankLine . show . ppr . peephole =<< f =<< deriveOne nm
-    where
-        blankLine "" = "-- Cannot derive " ++ s ++ " for " ++ show nm
-        blankLine xs = xs
-    
-
--- | Extract a 'DataDef' value from a type using the TH 'reify'
--- framework.
-deriveOne :: Name -> Q DataDef
-deriveOne x = extract =<< reify x
-
-fromTyConDecl = liftM normData . expandData
-
-extract (TyConI decl) = fromTyConDecl decl
-extract _ = error $ "Data.Derive.TH.deriveInternal: not a type!"

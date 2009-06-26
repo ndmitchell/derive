@@ -9,8 +9,9 @@ import Data.Generics.PlateData
 
 
 data Derivation = Derivation
-    String -- ^ Name
-    (FullDataDecl -> Either String [Decl]) -- ^ Operation
+    {derivationName :: String
+    ,derivationOp :: FullDataDecl -> Either String [Decl]
+    }
 
 
 derivationDSL :: String -> DSL -> Derivation

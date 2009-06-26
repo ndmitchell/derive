@@ -1,4 +1,5 @@
 {-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_GHC -fno-warn-overlapping-patterns #-}
 
 module Data.Derive.DSL.Apply(apply, applyEnv, env, Env(..)) where
 
