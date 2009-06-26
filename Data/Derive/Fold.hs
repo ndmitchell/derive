@@ -11,35 +11,50 @@
 -}
 module Data.Derive.Fold(makeFold) where
 {-
--}
+{-# TEST Computer #-}
 
-
-import Language.Haskell.TH.All
-import Data.Char
-import Data.List
-
-{-
-data Computer = Laptop {weight :: Int, memory :: Int}
-              | Desktop {memory :: Int, processor :: Int}
-
-==>
-
+foldComputer :: (Double -> Int -> a) -> (Int -> a) -> Computer -> a
 foldComputer f1 f2 (Laptop x1 x2) = f1 x1 x2
-foldComputer f2 f2 (Desktop x1 x2) = f2 x1 x2
+foldComputer f1 f2 (Desktop x1) = f2 x1
+
+{-# TEST Assoc #-}
+
+foldAssoc :: (typ -> String -> a) -> Assoc typ -> a
+foldAssoc f1 (Assoc x1 x2) = f1 x1 x2
+
+{-# TEST Either #-}
+
+foldEither :: (a -> c) -> (b -> c) -> Either a b -> c
+foldEither f1 f2 (Left x1) = f1 x1
+foldEither f1 f2 (Right x1) = f2 x1
 
 -}
+
+import Language.Haskell
+import Data.Derive.Internal.Derivation
+import Data.List
+import Data.Generics.PlateData
+
 
 makeFold :: Derivation
-makeFold = derivation fold' "Fold"
+makeFold = Derivation "Fold" $ \(_,d) -> Right $ mkFold d
 
-fold' dat = [funN (upper dn) body]
+
+mkFold :: DataDecl -> [Decl]
+mkFold d = [TypeSig sl [name n] (foldType d), FunBind $ zipWith f funs $ dataDeclCtors d]
     where
-        upper (x:xs) = "fold" ++ toUpper x : xs
-        dn = dataName dat
-        fpats = map VarP fnames
-        fvars = map VarE fnames
-        ctors = dataCtors dat
-        fnames = map (mkName . ('f':) . show) [1..length ctors]
-        body = [sclause (fpats ++ [ctp ctor 'x']) (deconstr fv ctor) 
-                    | (ctor,fv) <- zip ctors fvars]
-        deconstr f ctor = foldl AppE f (ctv ctor 'x')
+        n = "fold" ++ title (dataDeclName d)
+        funs = ['f' : show i | i <- [1..length (dataDeclCtors d)]]
+        f fun c = Match sl (name n) pat Nothing (UnGuardedRhs bod) (BDecls [])
+            where pat = map pVar funs ++ [(null vars ? id $ PParen) $ PApp (qname $ ctorDeclName c) (map pVar vars)]
+                  bod = apps (var fun) (map var vars)
+                  vars = ['x' : show i | i <- [1..length (ctorDeclFields c)]]
+
+
+foldType :: DataDecl -> Type
+foldType d = tyFun $ map f (dataDeclCtors d) ++ [dt, v]
+    where
+        dt = dataDeclType d
+        v = head $ map (tyVar . return) ['a'..] \\ universe dt
+        f c = tyFun $ map (fromBangType . snd) (ctorDeclFields c) ++ [v]
+

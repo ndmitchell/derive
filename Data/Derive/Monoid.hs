@@ -4,9 +4,6 @@
     is undefined.
 -}
 module Data.Derive.Monoid(makeMonoid) where
-
-import Language.Haskell.TH.All
-
 {-
 {-# EXAMPLE #-}
 

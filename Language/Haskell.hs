@@ -63,6 +63,14 @@ tyApp x [] = x
 tyApp x xs = TyApp (tyApp x $ init xs) (last xs)
 
 
+tyFun [x] = x
+tyFun (x:xs) = TyFun x (tyFun xs)
+
+
+apps x [] = x
+apps x xs = apps (App x (head xs)) (tail xs)
+
+
 fromBangType (BangedTy x) = x
 fromBangType (UnBangedTy x) = x
 fromBangType (UnpackedTy x) = x
