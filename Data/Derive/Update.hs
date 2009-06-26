@@ -2,6 +2,8 @@
 -- foo_u and foo_s which updates and sets the label respectively,
 -- e.g. 'foo_u (+1) bar' or 'foo_s 10 baz'
 module Data.Derive.Update(makeUpdate) where
+{-
+-}
 
 import Language.Haskell.TH.All
 import Control.Monad (liftM2)

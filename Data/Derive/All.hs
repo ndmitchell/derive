@@ -17,6 +17,8 @@ data Computer = Laptop { weight :: Double, speed :: Int }
 
 data Sample a = First | Second a a | Third a
 
+data Assoc a = Assoc a String
+
 -}
 
 import Data.Derive.Internal.Derivation

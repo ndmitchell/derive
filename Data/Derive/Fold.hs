@@ -1,13 +1,18 @@
 -- Contributed by Tim Newsham <newsham -AT- lava -DOT- net>
 
--- | A pseudo derivation.  Derive a (non-recursive) fold function for 
--- the type which takes one function per alternative constructor.  Each
--- function takes the same arguments as the constructor and returns
--- a value.  When applied to a value the fold function applies the
--- function for the matching constructor to the constructor fields.
--- This provides a first-class alternative to pattern matching to
--- deconstruct the data type.
+{-|
+    A pseudo derivation.  Derive a (non-recursive) fold function for 
+    the type which takes one function per alternative constructor.  Each
+    function takes the same arguments as the constructor and returns
+    a value.  When applied to a value the fold function applies the
+    function for the matching constructor to the constructor fields.
+    This provides a first-class alternative to pattern matching to
+    deconstruct the data type.
+-}
 module Data.Derive.Fold(makeFold) where
+{-
+-}
+
 
 import Language.Haskell.TH.All
 import Data.Char

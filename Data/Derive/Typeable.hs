@@ -14,6 +14,9 @@
 -- 'TypeRep'.
 
 module Data.Derive.Typeable(makeTypeable) where
+{-
+-}
+
 
 import Language.Haskell.TH.All
 import Data.Char

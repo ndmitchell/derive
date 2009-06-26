@@ -27,8 +27,7 @@ readHSE file = do
                     dropWhile (not . isPrefixOf "module ") $ lines src
     case parseFileContents $ unlines $ "module Example where":src of
         ParseOk x -> return x
-        ParseFailed pos msg -> do putStrLn $ "Failed to parse " ++ file ++ ": " ++ prettyPrint pos ++ " " ++ msg
-                                  return $ Module sl (ModuleName "") [] Nothing Nothing [] []
+        ParseFailed pos msg -> error $ "Failed to parse " ++ file ++ ": " ++ prettyPrint pos ++ " " ++ msg
 
 
 readSrc :: FilePath -> IO Src
