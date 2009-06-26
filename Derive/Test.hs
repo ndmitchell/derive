@@ -19,7 +19,7 @@ import Data.Derive.Internal.Derivation
 
 
 listType :: Decl
-listType = DataDecl sl DataType [] (Ident "[]") [Ident "a"]
+listType = DataDecl sl DataType [] (Ident "[]") [UnkindedVar $ Ident "a"]
     [QualConDecl sl [] [] (ConDecl (Ident "[]") [])
     ,QualConDecl sl [] [] (ConDecl (Ident "Cons")
         [UnBangedTy (TyVar (Ident "a"))
@@ -32,7 +32,7 @@ test :: IO ()
 test = do
     types <- fmap moduleDecls $ readHSE "Data/Derive/All.hs"
 
-    -- check the {-# TEST #-} bits
+    -- check the test bits
     let ts = ("[]",listType) : map (dataDeclName &&& id) types
     mapM_ (testFile ts) derivations
 
@@ -49,9 +49,10 @@ testFile types (Derivation name op) = do
     putStrLn $ "Testing " ++ name
     src <- readSrc $ "Data/Derive/" ++ name ++ ".hs"
     forM_ (srcTest src) $ \(typ,res) -> do
-        let Right r = op (ModuleName "Example", fromMaybe (error $ "wanting type: " ++ typ) $ lookup typ types)
+        let t = fromMaybe (error $ "wanting type: " ++ typ) $ lookup typ types
+        let Right r = op (ModuleName "Example", t)
         when (not $ r `outEq` res) $
-            error $ "Results don't match!\nExpected:\n" ++ showOut res ++ "\nGot:\n" ++ showOut r ++ "\n\n" ++ detailedNeq r res
+            error $ "Results don't match!\nExpected:\n" ++ showOut res ++ "\nGot:\n" ++ showOut r ++ "\n\n" ++ detailedNeq res r
 
 detailedNeq as bs | na /= nb = "Lengths don't match, " ++ show na ++ " vs " ++ show nb
     where na = length as ; nb = length bs

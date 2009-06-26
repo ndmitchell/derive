@@ -2,7 +2,7 @@ module Data.Derive.Bounded where
 {-
 import Prelude
 
-{-# EXAMPLE #-}
+example :: Sample
 
 instance Bounded a => Bounded (Sample a) where
     minBound = head [First, Second (const minBound 1) (const minBound 2), Third (const minBound 1)]

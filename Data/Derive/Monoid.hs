@@ -5,7 +5,7 @@
 -}
 module Data.Derive.Monoid(makeMonoid) where
 {-
-{-# EXAMPLE #-}
+example :: Sample
 
 instance Monoid a => Monoid (Sample a) where
     mempty = head [First, Second (const mempty 1) (const mempty 2), Third (const mempty 1)]

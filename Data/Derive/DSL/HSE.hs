@@ -32,25 +32,6 @@ sample = Input "Sample" 1 [Ctor "First" 0 0, Ctor "Second" 1 2, Ctor "Third" 2 1
 outEq :: Out -> Out -> Bool
 outEq = (==) `on` transformBi (const sl)
 
-simplifyOut :: Out -> Out
-simplifyOut = transformBi fTyp . transformBi fExp
-    where
-        fExp (H.App op (H.List xs))
-            | op ~= "length" = Lit $ H.Int $ fromIntegral $ length xs
-            | op ~= "head" = head xs
-        fExp (InfixApp (Lit (H.Int i)) op (Lit (H.Int j)))
-            | op ~= "-" = Lit $ H.Int $ i - j
-            | op ~= "+" = Lit $ H.Int $ i + j
-            | op ~= ">" = Con $ UnQual $ Ident $ show $ i > j
-        fExp (InfixApp x op y) | op ~= "`const`" = x
-        fExp (H.App (H.App con x) y) | con ~= "const" = x
-        fExp (Paren (Var x)) = Var x
-        fExp (Paren (Lit x)) = Lit x
-        fExp x = x
-
-        fTyp (TyApp x y) | x ~= "[]" = TyApp (TyCon (Special ListCon)) y
-        fTyp x = x
-
 ---------------------------------------------------------------------
 
 showOut x = unlines $ map prettyPrint x

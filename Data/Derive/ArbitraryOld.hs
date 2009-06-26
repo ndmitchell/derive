@@ -2,7 +2,7 @@ module Data.Derive.ArbitraryOld where
 {-
 import {- "quickcheck-1.0" -} Test.QuickCheck
 
-{-# EXAMPLE #-}
+example :: Sample
 
 instance Arbitrary a => Arbitrary (Sample a) where
     arbitrary = do
@@ -61,14 +61,13 @@ dslArbitraryOld =
     [App "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName
     ])]),MapField (App "PVar" (List [App "Ident" (List [Concat (List [
     String "x",ShowInt FieldIndex])])]))])])],App "Nothing" (List []),
-    App "UnGuardedRhs" (List [Fold (App "InfixApp" (List [Tail,App
+    App "UnGuardedRhs" (List [Fold (App "InfixApp" (List [Head,App
     "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String "."
-    ])])]),Head])) (Concat (List [Reverse (MapField (App "App" (List [
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "coarbitrary"])])]),App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])])])
-    ]))),List [App "App" (List [App "Var" (List [App "UnQual" (List [
-    App "Ident" (List [String "variant"])])]),App "Lit" (List [App
-    "Int" (List [CtorIndex])])])]]))]),App "BDecls" (List [List []])])
-    )])])])]
+    ])])]),Tail])) (Concat (List [List [App "App" (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "variant"])])]
+    ),App "Lit" (List [App "Int" (List [CtorIndex])])])],MapField (App
+    "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
+    List [String "coarbitrary"])])]),App "Var" (List [App "UnQual" (
+    List [App "Ident" (List [Concat (List [String "x",ShowInt
+    FieldIndex])])])])]))]))]),App "BDecls" (List [List []])]))])])])]
 -- GENERATED STOP

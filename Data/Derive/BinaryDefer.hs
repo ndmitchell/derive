@@ -2,7 +2,7 @@ module Data.Derive.BinaryDefer where
 {-
 import {- "binarydefer" -} Data.Binary.Defer
 
-{-# EXAMPLE #-}
+example :: Sample
 
 instance BinaryDefer a => BinaryDefer (Sample a) where
     bothDefer = defer [\ ~(First) -> unit First

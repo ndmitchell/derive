@@ -1,7 +1,7 @@
 module Data.Derive.Is where
 {-
 
-{-# EXAMPLE #-}
+example :: Sample
 
 isFirst  (First {}) = True; isFirst  _ = False
 isSecond (Second{}) = True; isSecond _ = False

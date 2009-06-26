@@ -27,12 +27,13 @@ guess :: Output -> [Guess]
 
 guess (OApp "InstDecl" [OList ctxt,name,typ,bod])
     | OApp "UnQual" [OApp "Ident" [OString name]] <- name
-    , OList [OApp "TyApp"
+    , OList [OApp "TyParen" [OApp "TyApp"
         [OApp "TyCon" [OApp "UnQual" [OApp "Ident" [OString nam]]]
-        ,OApp "TyVar" [OApp "Ident" [OString var]]]] <- typ
+        ,OApp "TyVar" [OApp "Ident" [OString var]]]]] <- typ
     , nam == dataName sample
     , ctxt <- [x | OApp "ClassA" [OApp "UnQual" [OApp "Ident" [OString x]],_] <- ctxt]
     = [Guess $ Instance ctxt name y | Guess y <- guess bod]
+
 
 guess (OList xs) = guessList xs
 guess o@(OApp op xs) = gssFold o ++ gssApp o ++ map (lift (App op)) (guessList xs)

@@ -12,7 +12,7 @@ module Data.Derive.From(makeFrom) where
 
 {-
 
-{-# TEST Sample #-}
+test :: Sample
 
 fromFirst :: Sample a -> ()
 fromFirst First = ()

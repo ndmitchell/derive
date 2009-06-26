@@ -13,7 +13,34 @@ False ? b = id
 
 
 x ~= y = prettyPrint x == y
-    
+
+
+simplify :: [Decl] -> [Decl]
+simplify = transformBi fPat . transformBi fTyp . transformBi fExp
+    where
+        fExp (App op (List xs))
+            | op ~= "length" = Lit $ Int $ fromIntegral $ length xs
+            | op ~= "head" = head xs
+        fExp (InfixApp (Lit (Int i)) op (Lit (Int j)))
+            | op ~= "-" = Lit $ Int $ i - j
+            | op ~= "+" = Lit $ Int $ i + j
+            | op ~= ">" = Con $ UnQual $ Ident $ show $ i > j
+        fExp (InfixApp x op y) | op ~= "`const`" = x
+        fExp (App (App con x) y) | con ~= "const" = x
+        fExp (Paren (Var x)) = Var x
+        fExp (Paren (Lit x)) = Lit x
+        fExp x = x
+
+        fTyp (TyApp x y) | x ~= "[]" = TyApp (TyCon (Special ListCon)) y
+        fTyp (TyParen x@(TyApp (TyCon (Special ListCon)) _)) = x
+        fTyp (TyParen x@TyCon{}) = x
+        fTyp (TyParen x@TyVar{}) = x
+        fTyp x = x
+
+        fPat (PParen x@(PApp _ [])) = x
+        fPat x = x
+
+
 sl = SrcLoc "" 0 0
 
 noSl mr = transformBi (const sl) mr
@@ -42,9 +69,6 @@ type CtorDecl = Either QualConDecl GadtDecl
 type FieldDecl = [(String, BangType)]
 
 type FullDataDecl = (ModuleName, Decl)
-
-isUnknownDeclPragma UnknownDeclPragma{} = True
-isUnknownDeclPragma _ = False
 
 
 moduleName (Module _ name _ _ _ _ _) = name

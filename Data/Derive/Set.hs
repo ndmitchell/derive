@@ -9,7 +9,7 @@ module Data.Derive.Set(makeSet) where
 
 {-
 
-{-# TEST Computer #-}
+test :: Computer
 
 setSpeed :: Int -> Computer -> Computer
 setSpeed v x = x{speed=v}
@@ -17,7 +17,7 @@ setSpeed v x = x{speed=v}
 setWeight :: Double -> Computer -> Computer
 setWeight v x = x{weight=v}
 
-{-# TEST Sample #-}
+test :: Sample
 
 -}
 

@@ -2,6 +2,8 @@
 
 -- | Derive Play, implemented for tuples and lists.
 module Data.Derive.Uniplate(makeUniplate) where
+{-
+-}
 
 import Language.Haskell.TH.All
 import Data.List

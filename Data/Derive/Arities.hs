@@ -2,26 +2,25 @@ module Data.Derive.Arities where
 {-
 import {- "derive" -} Data.Derive.Class.Arities
 
-{-# EXAMPLE #-}
+example :: Sample
 
 instance Arities (Sample a) where
     arities _ = [const 0 First{}, const 2 Second{}, const 1 Third{}]
 
-{-# TEST [] #-}
+test :: []
 
 instance Arities [a] where
     arities _ = [0,2]
 
-{-# TEST Bool #-}
+test :: Bool
 
 instance Arities Bool where
     arities _ = [0,0]
 
-{-# TEST Either #-}
+test :: Either
 
 instance Arities (Either a b) where
     arities _ = [1,1]
-
 -}
 
 -- GENERATED START

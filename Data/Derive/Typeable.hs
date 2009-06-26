@@ -11,13 +11,14 @@
 module Data.Derive.Typeable(makeTypeable) where
 {-
 
-{-# TEST Bool #-}
+test :: Bool
+
 typename_Bool :: TyCon
 typename_Bool = mkTyCon "Example.Bool"
 instance Typeable Bool where
     typeOf _ = mkTyConApp typename_Bool []
 
-{-# TEST Sample #-}
+test :: Sample
 
 typename_Sample :: TyCon
 typename_Sample = mkTyCon "Example.Sample"
@@ -26,7 +27,7 @@ instance Typeable1 Sample where
 instance Typeable a => Typeable (Sample a) where
     typeOf = typeOfDefault
 
-{-# TEST Either #-}
+test :: Either
 
 typename_Either :: TyCon
 typename_Either = mkTyCon "Example.Either"
@@ -80,7 +81,7 @@ mkTypeable modu d =
     [PatBind sl (pVar fun) Nothing (UnGuardedRhs bod) (BDecls []) |
         let bod = App (var "mkTyCon") (Lit $ String $ modu ++ "." ++ nam)] ++
     [inst [] (showN n) [tyCon nam] [PWildCard] $ app (var "mkTyConApp") [var fun, List []]] ++
-    [inst [ClassA (qname "Typeable") [v] | v <- tvs] i [tyApp (tyCon nam) tvs] [] $ var $ "typeOf" ++ i ++ "Default"
+    [inst [ClassA (qname "Typeable") [v] | v <- tvs] i [TyParen $ tyApp (tyCon nam) tvs] [] $ var $ "typeOf" ++ i ++ "Default"
         | (vs,i) <- zip (tail $ inits $ dataDeclVars d) $ map showN [n-1,n-2..]
         , let tvs = map tyVar vs]
     where

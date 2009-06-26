@@ -8,6 +8,7 @@ import System.Directory
 import System.IO
 import Control.Monad
 import Data.Char
+import Data.Maybe
 
 
 data Src = Src
@@ -25,24 +26,32 @@ readHSE file = do
     src <- readFile' file
     src <- return $ takeWhile (/= "-}") $ drop 1 $ dropWhile (/= "{-") $
                     dropWhile (not . isPrefixOf "module ") $ lines src
-    case parseFileContents $ unlines $ "module Example where":src of
-        ParseOk x -> return x
-        ParseFailed pos msg -> error $ "Failed to parse " ++ file ++ ": " ++ prettyPrint pos ++ " " ++ msg
+
+    let mode = defaultParseMode{extensions=[MultiParamTypeClasses,TemplateHaskell]}
+    return $ fromParseResult $ parseFileContentsWithMode mode $ unlines $ "module Example where":src
+
+
+data Pragma = Example | Test String
+
+asPragma :: Decl -> Maybe Pragma
+asPragma (TypeSig _ [x] t)
+    | x ~= "example" = Just Example
+    | x ~= "test" = Just $ Test $ prettyPrint t
+asPragma _ = Nothing
 
 
 readSrc :: FilePath -> IO Src
 readSrc file = do
     modu <- readHSE file
     return $ foldl f (foldl g nullSrc $ moduleImports modu)
-        [ (pragma,extra,xs)
-        | UnknownDeclPragma _ pragma extra:real <- tails $ moduleDecls modu
-        , let xs = takeWhile (not . isUnknownDeclPragma) real ]
+        [ (p,xs)
+        | p:real <- tails $ moduleDecls modu, Just p <- [asPragma p]
+        , let xs = takeWhile (isNothing . asPragma) real ]
     where
         g src i = src{srcModule = Just $ prettyPrint $ importModule i}
 
-        f src (pragma,extra,bod)
-            | pragma == "EXAMPLE" = src{srcExample = Just bod}
-            | pragma == "TEST" = src{srcTest = (filter (not . isSpace) extra,bod) : srcTest src}
+        f src (Example,bod) = src{srcExample = Just bod}
+        f src (Test x ,bod) = src{srcTest = srcTest src ++ [(x,bod)]}
 
 
 generatedStart = "-- GENERATED START"

@@ -2,7 +2,7 @@ module Data.Derive.EnumCyclic where
 {-
 import Prelude
 
-{-# EXAMPLE #-}
+example :: Sample
 
 instance Enum (Sample a) where
     toEnum 0 = First{}
@@ -39,17 +39,17 @@ dslEnumCyclic =
     CtorName])]),List []])]),App "BDecls" (List [List []])])),List [
     App "Match" (List [App "Ident" (List [String "toEnum"]),List [App
     "PVar" (List [App "Ident" (List [String "n"])])],App "Nothing" (
-    List []),App "UnGuardedRhs" (List [Fold (App "InfixApp" (List [
-    Tail,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
-    String "++"])])]),Head])) (List [App "Lit" (List [App "String" (
-    List [String ", not defined for Sample"])]),App "App" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String "show"]
-    )])]),App "Var" (List [App "UnQual" (List [App "Ident" (List [
-    String "n"])])])]),App "InfixApp" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "error"])])]),App
-    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String "$"
-    ])])]),App "Lit" (List [App "String" (List [String "toEnum "])])])
-    ])]),App "BDecls" (List [List []])])]])])]),App "InsDecl" (List [
+    List []),App "UnGuardedRhs" (List [App "InfixApp" (List [App "Var"
+    (List [App "UnQual" (List [App "Ident" (List [String "error"])])])
+    ,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
+    String "$"])])]),Fold (App "InfixApp" (List [Head,App "QVarOp" (
+    List [App "UnQual" (List [App "Symbol" (List [String "++"])])]),
+    Tail])) (List [App "Lit" (List [App "String" (List [String
+    "toEnum "])]),App "App" (List [App "Var" (List [App "UnQual" (List
+    [App "Ident" (List [String "show"])])]),App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "n"])])])]),App "Lit" (
+    List [App "String" (List [String ", not defined for Sample"])])])]
+    )]),App "BDecls" (List [List []])])]])])]),App "InsDecl" (List [
     App "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List
     [String "fromEnum"]),List [App "PParen" (List [App "PRec" (List [
     App "UnQual" (List [App "Ident" (List [CtorName])]),List []])])],

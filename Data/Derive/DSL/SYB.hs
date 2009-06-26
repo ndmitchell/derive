@@ -90,7 +90,7 @@ dmapctor :: DSL -> Maybe Exp
 dmapctor x = do
     App "List" (List [MapCtor x]) <- return x
     x <- syb x
-    return $ ListComp x [Generator sl (PVar $ Ident "d_ctor")
+    return $ ListComp x [QualStmt $ Generator sl (PVar $ Ident "d_ctor")
         (H.App (v "d_dataCtors") (Paren $ ExpTypeSig sl (v "undefined") (TyVar $ Ident "d_type")))]
 
 

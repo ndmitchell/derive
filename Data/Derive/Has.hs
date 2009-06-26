@@ -7,7 +7,7 @@
 module Data.Derive.Has(makeHas) where
 
 {-
-{-# TEST Computer #-}
+test :: Computer
 
 hasSpeed :: Computer -> Bool
 hasSpeed _ = True
@@ -16,7 +16,7 @@ hasWeight :: Computer -> Bool
 hasWeight Laptop{} = True
 hasWeight _ = False
 
-{-# TEST Sample #-}
+test :: Sample
 -}
 
 import Language.Haskell

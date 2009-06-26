@@ -2,7 +2,7 @@ module Data.Derive.PlateTypeable where
 {-
 import {- "uniplate" -} Data.Generics.PlateTypeable
 
-{-# EXAMPLE #-}
+example :: Sample
 
 -- instance (PlateAll a (Sample a), Typeable a) => Uniplate (Sample a) where
 --    uniplate = uniplateAll
@@ -33,21 +33,21 @@ dslPlateTypeable =
     List [String "PlateAll"])]),List [App "TyVar" (List [App "Ident" (
     List [String "a"])]),App "TyVar" (List [App "Ident" (List [String
     "t"])])]])],App "UnQual" (List [App "Ident" (List [String
-    "PlateAll"])]),List [App "TyApp" (List [App "TyCon" (List [App
-    "UnQual" (List [App "Ident" (List [String "DataName"])])]),App
-    "TyVar" (List [App "Ident" (List [String "a"])])]),App "TyVar" (
-    List [App "Ident" (List [String "t"])])],List [App "InsDecl" (List
-    [App "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (
-    List [String "plateAll"]),List [App "PParen" (List [App "PApp" (
-    List [App "UnQual" (List [App "Ident" (List [CtorName])]),MapField
-    (App "PVar" (List [App "Ident" (List [Concat (List [String "x",
-    ShowInt FieldIndex])])]))])])],App "Nothing" (List []),App
-    "UnGuardedRhs" (List [Fold (App "InfixApp" (List [Tail,App
-    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String
-    "|+"])])]),Head])) (Concat (List [Reverse (MapField (App "Var" (
-    List [App "UnQual" (List [App "Ident" (List [Concat (List [String
-    "x",ShowInt FieldIndex])])])]))),List [App "App" (List [App "Var"
-    (List [App "UnQual" (List [App "Ident" (List [String "plate"])])])
-    ,App "Con" (List [App "UnQual" (List [App "Ident" (List [CtorName]
-    )])])])]]))]),App "BDecls" (List [List []])]))])])]])]
+    "PlateAll"])]),List [App "TyParen" (List [App "TyApp" (List [App
+    "TyCon" (List [App "UnQual" (List [App "Ident" (List [String
+    "DataName"])])]),App "TyVar" (List [App "Ident" (List [String "a"]
+    )])])]),App "TyVar" (List [App "Ident" (List [String "t"])])],List
+    [App "InsDecl" (List [App "FunBind" (List [MapCtor (App "Match" (
+    List [App "Ident" (List [String "plateAll"]),List [App "PParen" (
+    List [App "PApp" (List [App "UnQual" (List [App "Ident" (List [
+    CtorName])]),MapField (App "PVar" (List [App "Ident" (List [Concat
+    (List [String "x",ShowInt FieldIndex])])]))])])],App "Nothing" (
+    List []),App "UnGuardedRhs" (List [Fold (App "InfixApp" (List [
+    Tail,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
+    String "|+"])])]),Head])) (Concat (List [Reverse (MapField (App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (List [
+    String "x",ShowInt FieldIndex])])])]))),List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "plate"
+    ])])]),App "Con" (List [App "UnQual" (List [App "Ident" (List [
+    CtorName])])])])]]))]),App "BDecls" (List [List []])]))])])]])]
 -- GENERATED STOP

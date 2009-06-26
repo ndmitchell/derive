@@ -2,7 +2,7 @@ module Data.Derive.Binary where
 {-
 import {- "binary" -} Data.Binary
 
-{-# EXAMPLE #-}
+example :: Sample
 
 instance Binary alpha => Binary (Sample alpha) where
     put x = case x of

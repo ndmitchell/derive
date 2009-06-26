@@ -10,9 +10,9 @@
 module Data.Derive.Ref(makeRef) where
 
 {-
-{-# TEST Sample #-}
+test :: Sample
 
-{-# TEST Computer #-}
+test :: Computer
 
 refSpeed :: Ref Computer
 refSpeed = Ref {select = speed, update = \f v -> v{speed = f (speed v)}}

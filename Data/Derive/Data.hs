@@ -2,7 +2,7 @@ module Data.Derive.Data where
 {-
 import Data.Data
 
-{-# EXAMPLE #-}
+example :: Sample
 
 instance (Data a, Typeable a) => Data (Sample a) where
     gfoldl k r (First) = r First
@@ -24,7 +24,7 @@ instance (Data a, Typeable a) => Data (Sample a) where
                    ,mkConstr ty "Second" $(ctorFields 1) $(ctorFixity 1)
                    ,mkConstr ty "Third"  $(ctorFields 2) $(ctorFixity 2)]
 
-{-# TEST Computer #-}
+test :: Computer
 
 instance Data Computer where
     gfoldl k r (Laptop x1 x2) = r Laptop `k` x1 `k` x2
@@ -78,18 +78,18 @@ makeData = derivationCustomDSL "Data" custom $
     (List [App "Symbol" (List [String "-"])])]),App "Lit" (List [App
     "Int" (List [Int 1])])]),MapCtor (App "Alt" (List [App "PLit" (
     List [App "Int" (List [CtorIndex])]),App "UnGuardedAlt" (List [
-    Fold (App "InfixApp" (List [Tail,App "QVarOp" (List [App "UnQual"
-    (List [App "Symbol" (List [String "$"])])]),Head])) (Concat (List
-    [List [App "App" (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "z"])])]),App "Con" (List [App "UnQual" (
-    List [App "Ident" (List [CtorName])])])])],Reverse (MapField (
-    Application (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "const"])])]),App "Var" (List [App "UnQual"
-    (List [App "Ident" (List [String "k"])])]),App "Lit" (List [App
-    "Int" (List [FieldIndex])])])))]))]),App "BDecls" (List [List []])
-    ]))])]),App "BDecls" (List [List []])])]])]),App "InsDecl" (List [
-    App "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List
-    [String "toConstr"]),List [App "PAsPat" (List [App "Ident" (List [
+    Fold (App "InfixApp" (List [Head,App "QVarOp" (List [App "UnQual"
+    (List [App "Symbol" (List [String "$"])])]),Tail])) (Concat (List
+    [MapField (Application (List [App "Var" (List [App "UnQual" (List
+    [App "Ident" (List [String "const"])])]),App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "k"])])]),App "Lit" (
+    List [App "Int" (List [FieldIndex])])])),List [App "App" (List [
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [String "z"
+    ])])]),App "Con" (List [App "UnQual" (List [App "Ident" (List [
+    CtorName])])])])]]))]),App "BDecls" (List [List []])]))])]),App
+    "BDecls" (List [List []])])]])]),App "InsDecl" (List [App
+    "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List [
+    String "toConstr"]),List [App "PAsPat" (List [App "Ident" (List [
     String "x"]),App "PRec" (List [App "UnQual" (List [App "Ident" (
     List [CtorName])]),List []])])],App "Nothing" (List []),App
     "UnGuardedRhs" (List [Application (List [App "Var" (List [App

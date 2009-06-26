@@ -2,7 +2,7 @@ module Data.Derive.Default where
 {-
 import {- "derive" -} Data.Derive.Class.Default
 
-{-# EXAMPLE #-}
+example :: Sample
 
 instance Default a => Default (Sample a) where
     def = head [First, Second (const def 1) (const def 2), Third (const def 1)]

@@ -2,7 +2,7 @@ module Data.Derive.Arbitrary where
 {-
 import {- "quickcheck" -} Test.QuickCheck
 
-{-# EXAMPLE #-}
+example :: Sample
 
 instance Arbitrary a => Arbitrary (Sample a) where
     arbitrary = do

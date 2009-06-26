@@ -36,7 +36,7 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
                 [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
                 | v <- vars, c <- ctx]
             , out $ UnQual $ Ident hd
-            , out [foldl TyApp
+            , out [TyParen $ foldl TyApp
                 (TyCon $ UnQual $ Ident $ dataName input)
                 [TyVar $ Ident v | v <- vars]]
             , f body]
