@@ -1,6 +1,6 @@
 module Data.Derive.Serial where
 {-
-import {- "smallcheck" -} Test.SmallCheck
+import "smallcheck" Test.SmallCheck
 
 example :: Sample
 

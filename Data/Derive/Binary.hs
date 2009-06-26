@@ -1,6 +1,6 @@
 module Data.Derive.Binary where
 {-
-import {- "binary" -} Data.Binary
+import "binary" Data.Binary
 
 example :: Sample
 

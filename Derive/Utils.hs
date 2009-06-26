@@ -27,7 +27,7 @@ readHSE file = do
     src <- return $ takeWhile (/= "-}") $ drop 1 $ dropWhile (/= "{-") $
                     dropWhile (not . isPrefixOf "module ") $ lines src
 
-    let mode = defaultParseMode{extensions=[MultiParamTypeClasses,TemplateHaskell]}
+    let mode = defaultParseMode{extensions=[MultiParamTypeClasses,TemplateHaskell,PackageImports]}
     return $ fromParseResult $ parseFileContentsWithMode mode $ unlines $ "module Example where":src
 
 
@@ -48,7 +48,7 @@ readSrc file = do
         | p:real <- tails $ moduleDecls modu, Just p <- [asPragma p]
         , let xs = takeWhile (isNothing . asPragma) real ]
     where
-        g src i = src{srcModule = Just $ prettyPrint $ importModule i}
+        g src i = src{srcModule = Just $ prettyPrint $ importModule i, srcPackage = importPkg i}
 
         f src (Example,bod) = src{srcExample = Just bod}
         f src (Test x ,bod) = src{srcTest = srcTest src ++ [(x,bod)]}

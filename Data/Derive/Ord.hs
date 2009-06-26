@@ -1,7 +1,5 @@
 module Data.Derive.Ord where
 {-
-import {- "base" -} Prelude
-
 example :: Sample
 
 instance Ord a => Ord (DataName a) where

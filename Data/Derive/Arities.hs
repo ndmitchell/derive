@@ -1,6 +1,6 @@
 module Data.Derive.Arities where
 {-
-import {- "derive" -} Data.Derive.Class.Arities
+import "derive" Data.Derive.Class.Arities
 
 example :: Sample
 

@@ -1,6 +1,6 @@
 module Data.Derive.Default where
 {-
-import {- "derive" -} Data.Derive.Class.Default
+import "derive" Data.Derive.Class.Default
 
 example :: Sample
 

@@ -1,6 +1,6 @@
 module Data.Derive.BinaryDefer where
 {-
-import {- "binarydefer" -} Data.Binary.Defer
+import "binarydefer" Data.Binary.Defer
 
 example :: Sample
 
