@@ -58,5 +58,5 @@ import Data.Derive.Typeable         as D
 import Data.Derive.Uniplate         as D
 import Data.Derive.Update           as D
 derivations :: [Derivation]
-derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFold,makeFrom,makeHas,makeIs,makeLazySet,makeMonoid,makeNFData,makeOrd,makePlateTypeable,makeRef,makeSerial,makeSet,makeTypeable]
+derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFold,makeFrom,makeHas,makeIs,makeLazySet,makeMonoid,makeNFData,makeOrd,makePlateTypeable,makeRef,makeSerial,makeSet,makeShow,makeTypeable]
 -- GENERATED STOP

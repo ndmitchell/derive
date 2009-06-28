@@ -54,7 +54,7 @@ con = Con . qname
 tyVar = TyVar . name
 tyCon = TyCon . qname
 pVar = PVar . name
-
+qvop = QVarOp . UnQual . Symbol
 
 dataDeclType :: DataDecl -> Type
 dataDeclType d = tyApp (tyCon $ dataDeclName d) (map tyVar $ dataDeclVars d)

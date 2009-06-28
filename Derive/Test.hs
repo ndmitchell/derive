@@ -43,6 +43,9 @@ test = do
     res <- system $ "runhaskell " ++ name
     when (res /= ExitSuccess) $ error "Failed to typecheck results"
 
+    -- finally check the extra derivations against quickcheck
+    error "quickcheck, todo"
+
 
 testFile :: [(String,Decl)] -> Derivation -> IO ()
 testFile types (Derivation name op) = do
