@@ -1,43 +1,39 @@
--- | A pseudo derivation.  For each field in the data type, deriving
--- @LazySet@ generates a function like a record updator, but lazy.
--- This is very useful in certain situations to improve laziness
--- properties.  Example:
---
--- > data Foo = Foo { x :: Int, y :: Int, z :: Int }
---
--- becomes:
---
--- > setX v f = Foo v (y f) (z f)
--- > setY v f = Foo (x f) v (z f)
--- > setZ v f = Foo (x f) (y f) v
+{-|
+    A pseudo derivation.  For each field in the data type, deriving
+    @LazySet@ generates a function like a record updator, but lazy where possible.
+    This is very useful in certain situations to improve laziness
+    properties.  A setter is only lazy if that field is present in one constructor.
+-}
 module Data.Derive.LazySet(makeLazySet) where
-
 {-
+
+test :: Computer
+
+setSpeed :: Int -> Computer -> Computer
+setSpeed v x = x{speed=v}
+
+setWeight :: Double -> Computer -> Computer
+setWeight v x = Laptop v (speed x)
+
+test :: Sample
+
 -}
 
-import Language.Haskell.TH.All
-import Data.Char
-import Data.List
+import Language.Haskell
+import Data.Derive.Internal.Derivation
+import Data.Maybe
 
-{-
-data State = State {x :: Int, y :: Int}
-
-==>
-
-setX a0 b0 = State a0 (y b0)
-setY a0 b0 = State (x b0) a0
-
--}
 
 makeLazySet :: Derivation
-makeLazySet = derivation lazyset' "LazySet"
+makeLazySet = Derivation "LazySet" $ \(_,d) -> Right $ concatMap (makeLazySetField d) $ dataDeclFields d
 
-lazyset' dat = map f fields
+
+makeLazySetField :: DataDecl -> String -> [Decl]
+makeLazySetField d field = [TypeSig sl [name fun] typ, bind fun [pVar "v",pVar "x"] bod]
     where
-        fields = nub $ concatMap (\f -> map ((,) f) (ctorFields f)) (dataCtors dat)
+        fun = "set" ++ title field
+        typ = t `TyFun` (dataDeclType d `TyFun` dataDeclType d)
+        (t,c):tc = [(fromBangType t,c) | c <- dataDeclCtors d, (n,t) <- ctorDeclFields c, n == field]
 
-        f (ctor,field) = funN name [sclause [vr "a0", vr "b0"] (lK (ctorName ctor) body)]
-            where
-                name = "set" ++ toUpper (head field) : tail field
-                body = [ if fld == field then vr "a0" else l1 fld (vr "b0")
-                             | fld <- ctorFields ctor ]
+        bod | null tc = app (con $ ctorDeclName c) [n == field ? var "v" $ Paren $ App (var n) (var "x") | (n,t) <- ctorDeclFields c]
+            | otherwise = RecUpdate (var "x") [FieldUpdate (qname field) (var "v")]
