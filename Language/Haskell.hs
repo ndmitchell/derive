@@ -32,12 +32,19 @@ simplify = transformBi fMatch . transformBi fDecl . transformBi fPat . transform
             | when ~= "when" && true ~= "True" = res
         fExp (Paren x) | isAtom x = x
         fExp (Do [Qualifier x]) = x
+        fExp (Do (Qualifier (App ret unit):xs)) | ret ~= "return" && unit ~= "()" = fExp $ Do xs
+        fExp (Do (Generator _ (PVar x) (App ret y):xs)) | ret ~= "return" && once x2 xs = simplify $ Do $ subst x2 y xs
+            where x2 = Var $ UnQual x
+        fExp (Case (Lit x) alts) | good /= [] = head good
+            where good = [z | Alt _ (PLit y) (UnGuardedAlt z) (BDecls []) <- alts, y == x]
         fExp (If x t f)
             | x ~= "True" = t
             | x ~= "False" = f
         fExp (App (App when b) x)
             | b ~= "True" = x
-            -- | b ~= "False" = 
+            | b ~= "False" = App (Var $ UnQual $ Ident "return") (Con $ Special $ TupleCon Boxed 0)
+        fExp (App (Paren (Lambda _ [PVar x] y)) z) | once x2 y = fExp $ subst x2 z y
+            where x2 = Var $ UnQual x
         fExp x = x
 
         fTyp (TyApp x y) | x ~= "[]" = TyApp (TyCon (Special ListCon)) y
@@ -49,27 +56,29 @@ simplify = transformBi fMatch . transformBi fDecl . transformBi fPat . transform
         fPat (PParen x@(PApp _ [])) = x
         fPat x = x
 
+        fMatch (Match sl nam [PVar x] sig (UnGuardedRhs (Case (Var (UnQual x2)) [Alt _ pat (UnGuardedAlt y) (BDecls [])])) decls)
+            | x == x2 = fMatch $ Match sl nam [PParen pat] sig (UnGuardedRhs y) decls
         fMatch (Match a b c d e bind) = fBinds (Match a b c d e) bind
         fDecl (PatBind a b c d bind) = fBinds (PatBind a b c d) bind
         fDecl x = x
 
         fBinds context (BDecls bind) | inline /= [] =
-                simplify $ transformBi f $ context $ BDecls $ take i bind ++ drop (i+1) bind
+                simplify $ subst (Var $ UnQual from) to $ context $ BDecls $ take i bind ++ drop (i+1) bind
             where
-                f (Var x) | x == UnQual from = to
-                f x = x
-                g (PatBind _ (PVar x) Nothing (UnGuardedRhs bod) (BDecls [])) = [(x,bod)]
-                g (FunBind [Match _ x [PVar v] Nothing (UnGuardedRhs (Paren (App bod (Var v2)))) (BDecls [])])
+                f (PatBind _ (PVar x) Nothing (UnGuardedRhs bod) (BDecls [])) = [(x,bod)]
+                f (FunBind [Match _ x [PVar v] Nothing (UnGuardedRhs (Paren (App bod (Var v2)))) (BDecls [])])
                     | UnQual v == v2 = [(x,bod)]
-                g (FunBind [Match sl x pat Nothing (UnGuardedRhs bod) (BDecls [])]) = [(x,Paren $ Lambda sl pat bod)]
-                g _ = []
+                f (FunBind [Match sl x pat Nothing (UnGuardedRhs bod) (BDecls [])]) = [(x,Paren $ Lambda sl pat bod)]
+                f _ = []
 
                 (i,from,to) = head inline
                 inline = [(i, x, bod)
-                         | (i,b) <- zip [0..] bind, (x,bod) <- g b
-                         , isAtom bod || length (filter (==Var (UnQual x)) $ universeBi $ context (BDecls bind)) == 1]
-
+                         | (i,b) <- zip [0..] bind, (x,bod) <- f b
+                         , isAtom bod || once (Var $ UnQual x) (context $ BDecls bind)]
         fBinds a y = a y
+
+        subst from to = transformBi $ \x -> if x == from then to else x
+        once x y = length (filter (== x) (universeBi y)) <= 1  
 
 
 isAtom Con{} = True
