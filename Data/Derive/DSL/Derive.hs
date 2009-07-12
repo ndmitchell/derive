@@ -40,7 +40,7 @@ guess o@(OApp op xs) = gssFold o ++ gssApp o ++ map (lift (App op)) (guessList x
     
 guess (OString x) 
     | Just i <- findIndex (`isSuffixOf` x) ctrNames = [GuessCtr i True $ String (take (length x - length (ctrNames !! i)) x) `append` CtorName]
-    | "Ctors" `isSuffixOf` x = [Guess $ String (take (length x - 5) x) `append` DataName]
+    | "Sample" `isSuffixOf` x = [Guess $ String (take (length x - 6) x) `append` DataName]
     | otherwise =
          [lift (\d -> append (String $ init x) (ShowInt d)) g | x /= "", isDigit (last x), g <- guess $ OInt $ read [last x]] ++
          [Guess $ String x]

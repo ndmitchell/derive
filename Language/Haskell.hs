@@ -4,6 +4,7 @@ module Language.Haskell(module Language.Haskell, module Language.Haskell.Exts) w
 import Language.Haskell.Exts hiding (var,app,binds)
 import Data.List
 import Data.Generics.PlateData
+import Data.Data
 import Data.Char
 
 
@@ -15,8 +16,8 @@ False ? b = id
 x ~= y = prettyPrint x == y
 
 
-simplify :: [Decl] -> [Decl]
-simplify = transformBi fPat . transformBi fTyp . transformBi fExp
+simplify :: Data a => a -> a
+simplify = transformBi fMatch . transformBi fDecl . transformBi fPat . transformBi fTyp . transformBi fExp
     where
         fExp (App op (List xs))
             | op ~= "length" = Lit $ Int $ fromIntegral $ length xs
@@ -27,8 +28,16 @@ simplify = transformBi fPat . transformBi fTyp . transformBi fExp
             | op ~= ">" = Con $ UnQual $ Ident $ show $ i > j
         fExp (InfixApp x op y) | op ~= "`const`" = x
         fExp (App (App con x) y) | con ~= "const" = x
-        fExp (Paren (Var x)) = Var x
-        fExp (Paren (Lit x)) = Lit x
+        fExp (InfixApp (App when true) dot res)
+            | when ~= "when" && true ~= "True" = res
+        fExp (Paren x) | isAtom x = x
+        fExp (Do [Qualifier x]) = x
+        fExp (If x t f)
+            | x ~= "True" = t
+            | x ~= "False" = f
+        fExp (App (App when b) x)
+            | b ~= "True" = x
+            -- | b ~= "False" = 
         fExp x = x
 
         fTyp (TyApp x y) | x ~= "[]" = TyApp (TyCon (Special ListCon)) y
@@ -39,6 +48,34 @@ simplify = transformBi fPat . transformBi fTyp . transformBi fExp
 
         fPat (PParen x@(PApp _ [])) = x
         fPat x = x
+
+        fMatch (Match a b c d e bind) = fBinds (Match a b c d e) bind
+        fDecl (PatBind a b c d bind) = fBinds (PatBind a b c d) bind
+        fDecl x = x
+
+        fBinds context (BDecls bind) | inline /= [] =
+                simplify $ transformBi f $ context $ BDecls $ take i bind ++ drop (i+1) bind
+            where
+                f (Var x) | x == UnQual from = to
+                f x = x
+                g (PatBind _ (PVar x) Nothing (UnGuardedRhs bod) (BDecls [])) = [(x,bod)]
+                g (FunBind [Match _ x [PVar v] Nothing (UnGuardedRhs (Paren (App bod (Var v2)))) (BDecls [])])
+                    | UnQual v == v2 = [(x,bod)]
+                g (FunBind [Match sl x pat Nothing (UnGuardedRhs bod) (BDecls [])]) = [(x,Paren $ Lambda sl pat bod)]
+                g _ = []
+
+                (i,from,to) = head inline
+                inline = [(i, x, bod)
+                         | (i,b) <- zip [0..] bind, (x,bod) <- g b
+                         , isAtom bod || length (filter (==Var (UnQual x)) $ universeBi $ context (BDecls bind)) == 1]
+
+        fBinds a y = a y
+
+
+isAtom Con{} = True
+isAtom Var{} = True
+isAtom Lit{} = True
+isAtom _ = False
 
 
 sl = SrcLoc "" 0 0

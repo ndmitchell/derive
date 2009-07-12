@@ -42,12 +42,11 @@ dslEnum =
     [App "Ident" (List [String "show"])])]),App "Var" (List [App
     "UnQual" (List [App "Ident" (List [String "n"])])])]),App "Lit" (
     List [App "String" (List [String ", not defined for "])]),App
-    "Lit" (List [App "String" (List [String "Sample"])])])])]),App
-    "BDecls" (List [List []])])]])])]),App "InsDecl" (List [App
-    "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List [
-    String "fromEnum"]),List [App "PParen" (List [App "PRec" (List [
-    App "UnQual" (List [App "Ident" (List [CtorName])]),List []])])],
-    App "Nothing" (List []),App "UnGuardedRhs" (List [App "Lit" (List
-    [App "Int" (List [CtorIndex])])]),App "BDecls" (List [List []])]))
-    ])])])]
+    "Lit" (List [App "String" (List [DataName])])])])]),App "BDecls" (
+    List [List []])])]])])]),App "InsDecl" (List [App "FunBind" (List
+    [MapCtor (App "Match" (List [App "Ident" (List [String "fromEnum"]
+    ),List [App "PParen" (List [App "PRec" (List [App "UnQual" (List [
+    App "Ident" (List [CtorName])]),List []])])],App "Nothing" (List [
+    ]),App "UnGuardedRhs" (List [App "Lit" (List [App "Int" (List [
+    CtorIndex])])]),App "BDecls" (List [List []])]))])])])]
 -- GENERATED STOP

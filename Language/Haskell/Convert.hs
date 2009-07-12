@@ -23,6 +23,9 @@ convert a = unsafePerformIO $
                 "\n" ++ show e
 
 
+
+appT = foldl AppT
+
 c mr = convert mr
 
 instance Convert a b => Convert [a] [b] where
@@ -77,17 +80,20 @@ instance Convert TH.Type HS.Asst where
 instance Convert HS.Decl TH.Dec where
     conv (InstDecl _ cxt nam typ ds) = InstanceD (c cxt) (c $ tyApp (TyCon nam) typ) [c d | InsDecl d <- ds]
     conv (FunBind ms@(HS.Match _ nam _ _ _ _:_)) = FunD (c nam) (c ms)
+    conv (PatBind _ p _ bod ds) = ValD (c p) (c bod) (c ds)
 
 instance Convert HS.Asst TH.Type where
-    conv = undefined
+    conv (InfixA x y z) = c $ ClassA y [x,z]
+    conv (ClassA x y) = appT (ConT $ c x) (c y)
 
 instance Convert HS.Type TH.Type where
+    conv (TyParen x) = c x
     conv (TyForall x y z) = ForallT (c $ fromMaybe [] x) (c y) (c z)
     conv (TyVar x) = VarT $ c x
     conv (TyCon x) = ConT $ c x
     conv (TyFun x y) = AppT (AppT ArrowT (c x)) (c y)
     conv (TyList x) = AppT ListT (c x)
-    conv (TyTuple _ x) = foldl AppT (TupleT (length x)) (c x)
+    conv (TyTuple _ x) = appT (TupleT (length x)) (c x)
     conv (TyApp x y) = AppT (c x) (c y)
 
 instance Convert HS.Name TH.Name where
@@ -105,6 +111,7 @@ instance Convert HS.Exp TH.Exp where
     conv (Con x) = ConE (c x)
     conv (Lit x) = LitE (c x)
     conv (App x y) = AppE (c x) (c y)
+    conv (Paren x) = c x
     conv (InfixApp x y z) = InfixE (Just $ c x) (c y) (Just $ c z)
     conv (LeftSection x y) = InfixE (Just $ c x) (c y) Nothing
     conv (RightSection y z) = InfixE Nothing (c y) (Just $ c z)
@@ -131,9 +138,11 @@ instance Convert HS.Binds [TH.Dec] where
     conv (BDecls x) = c x
 
 instance Convert HS.Pat TH.Pat where
+    conv (PParen x) = c x
     conv (PLit x) = LitP (c x)
     conv (PTuple x) = TupP (c x)
     conv (PApp x y) = ConP (c x) (c y)
+    conv (PVar x) = VarP (c x)
     conv (PInfixApp x y z) = InfixP (c x) (c y) (c z)
     conv (PIrrPat x) = TildeP (c x)
     conv (PAsPat x y) = AsP (c x) (c y)
@@ -143,7 +152,14 @@ instance Convert HS.Pat TH.Pat where
     conv (PatTypeSig _ x y) = SigP (c x) (c y)
 
 instance Convert HS.Literal TH.Lit where
-    conv = undefined
+    conv (Char x) = CharL x
+    conv (String x) = StringL x
+    conv (Int x) = IntegerL x
+    conv (Frac x) = RationalL x
+    conv (PrimInt x) = IntPrimL x
+    conv (PrimWord x) = WordPrimL x
+    conv (PrimFloat x) = FloatPrimL x
+    conv (PrimDouble x) = DoublePrimL x
 
 instance Convert HS.QName TH.Name where
     conv (UnQual x) = c x
@@ -152,13 +168,16 @@ instance Convert HS.PatField TH.FieldPat where
     conv = undefined
 
 instance Convert HS.QOp TH.Exp where
-    conv = undefined
+    conv (QVarOp x) = c $ Var x
+    conv (QConOp x) = c $ Con x
 
 instance Convert HS.Alt TH.Match where
-    conv = undefined
+    conv (Alt _ x y z) = TH.Match (c x) (c y) (c z)
 
 instance Convert HS.Stmt TH.Stmt where
-    conv = undefined
+    conv (Generator _ x y) = BindS (c x) (c y)
+    conv (LetStmt x) = LetS (c x)
+    conv (Qualifier x) = NoBindS (c x)
 
 instance Convert HS.QualStmt TH.Stmt where
     conv = undefined
@@ -168,3 +187,10 @@ instance Convert HS.FieldUpdate TH.FieldExp where
 
 instance Convert HS.TyVarBind TH.Name where
     conv = undefined
+
+instance Convert HS.GuardedAlts TH.Body where
+    conv (UnGuardedAlt x) = NormalB (c x)
+    conv (GuardedAlts x) = GuardedB (c x)
+
+instance Convert HS.GuardedAlt (TH.Guard, TH.Exp) where
+    conv (GuardedAlt _ x y) = (PatG (c x), c y)
