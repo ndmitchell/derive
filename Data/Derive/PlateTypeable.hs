@@ -4,10 +4,10 @@ import "uniplate" Data.Generics.PlateTypeable
 
 example :: Sample
 
--- instance (PlateAll a (Sample a), Typeable a) => Uniplate (Sample a) where
---    uniplate = uniplateAll
+instance (PlateAll a (Sample a), Typeable a) => Uniplate (Sample a) where
+    uniplate = uniplateAll
 
-instance (Typeable t, Typeable a, Uniplate t, PlateAll a t) => PlateAll (DataName a) t where
+instance (Typeable t, Typeable a, Uniplate t, PlateAll a t) => PlateAll (Sample a) t where
     plateAll (First) = plate First
     plateAll (Second x1 x2)  = plate Second |+ x1 |+ x2
     plateAll (Third x1) = plate Third |+ x1
@@ -22,22 +22,27 @@ makePlateTypeable :: Derivation
 makePlateTypeable = derivationDSL "PlateTypeable" dslPlateTypeable
 
 dslPlateTypeable =
-    List [App "InstDecl" (List [List [App "ClassA" (List [App "UnQual"
-    (List [App "Ident" (List [String "Typeable"])]),List [App "TyVar"
-    (List [App "Ident" (List [String "t"])])]]),App "ClassA" (List [
+    List [Instance ["PlateAll","Typeable"] "Uniplate" (List [App
+    "InsDecl" (List [App "PatBind" (List [App "PVar" (List [App
+    "Ident" (List [String "uniplate"])]),App "Nothing" (List []),App
+    "UnGuardedRhs" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "uniplateAll"])])])]),App "BDecls" (List [
+    List []])])])]),App "InstDecl" (List [List [App "ClassA" (List [
     App "UnQual" (List [App "Ident" (List [String "Typeable"])]),List
-    [App "TyVar" (List [App "Ident" (List [String "a"])])]]),App
+    [App "TyVar" (List [App "Ident" (List [String "t"])])]]),App
     "ClassA" (List [App "UnQual" (List [App "Ident" (List [String
-    "Uniplate"])]),List [App "TyVar" (List [App "Ident" (List [String
-    "t"])])]]),App "ClassA" (List [App "UnQual" (List [App "Ident" (
-    List [String "PlateAll"])]),List [App "TyVar" (List [App "Ident" (
-    List [String "a"])]),App "TyVar" (List [App "Ident" (List [String
-    "t"])])]])],App "UnQual" (List [App "Ident" (List [String
-    "PlateAll"])]),List [App "TyParen" (List [App "TyApp" (List [App
-    "TyCon" (List [App "UnQual" (List [App "Ident" (List [String
-    "DataName"])])]),App "TyVar" (List [App "Ident" (List [String "a"]
-    )])])]),App "TyVar" (List [App "Ident" (List [String "t"])])],List
-    [App "InsDecl" (List [App "FunBind" (List [MapCtor (App "Match" (
+    "Typeable"])]),List [App "TyVar" (List [App "Ident" (List [String
+    "a"])])]]),App "ClassA" (List [App "UnQual" (List [App "Ident" (
+    List [String "Uniplate"])]),List [App "TyVar" (List [App "Ident" (
+    List [String "t"])])]]),App "ClassA" (List [App "UnQual" (List [
+    App "Ident" (List [String "PlateAll"])]),List [App "TyVar" (List [
+    App "Ident" (List [String "a"])]),App "TyVar" (List [App "Ident" (
+    List [String "t"])])]])],App "UnQual" (List [App "Ident" (List [
+    String "PlateAll"])]),List [App "TyParen" (List [App "TyApp" (List
+    [App "TyCon" (List [App "UnQual" (List [App "Ident" (List [
+    DataName])])]),App "TyVar" (List [App "Ident" (List [String "a"])]
+    )])]),App "TyVar" (List [App "Ident" (List [String "t"])])],List [
+    App "InsDecl" (List [App "FunBind" (List [MapCtor (App "Match" (
     List [App "Ident" (List [String "plateAll"]),List [App "PParen" (
     List [App "PApp" (List [App "UnQual" (List [App "Ident" (List [
     CtorName])]),MapField (App "PVar" (List [App "Ident" (List [Concat

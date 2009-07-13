@@ -39,11 +39,11 @@ instance Binary a => Binary (List a) where
             1 -> do x1 <- get; x2 <- get; return (Cons x1 x2)
             _ -> error "Corrupted binary data for List"
 
-test :: Assoc
+test :: Assoced
 
-instance Binary a => Binary (Assoc a) where
-    put (Assoc x1 x2) = do put x1; put x2
-    get = do x1 <- get; x2 <- get; return (Assoc x1 x2)
+instance Binary a => Binary (Assoced a) where
+    put (Assoced x1 x2) = do put x1; put x2
+    get = do x1 <- get; x2 <- get; return (Assoced x1 x2)
 
 
 -}

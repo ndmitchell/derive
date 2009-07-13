@@ -13,11 +13,17 @@ True ? b = const b
 False ? b = id
 
 
+
+-- insert explicit foralls
+foralls :: Type -> Type
+foralls x = TyForall (Just $ map UnkindedVar $ nub [y | TyVar y <- universe x]) [] x
+
+
 x ~= y = prettyPrint x == y
 
 
 simplify :: Data a => a -> a
-simplify = transformBi fMatch . transformBi fDecl . transformBi fPat . transformBi fTyp . transformBi fExp
+simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transformBi fTyp . transformBi fExp
     where
         fExp (App op (List xs))
             | op ~= "length" = Lit $ Int $ fromIntegral $ length xs
@@ -26,7 +32,9 @@ simplify = transformBi fMatch . transformBi fDecl . transformBi fPat . transform
             | op ~= "-" = Lit $ Int $ i - j
             | op ~= "+" = Lit $ Int $ i + j
             | op ~= ">" = Con $ UnQual $ Ident $ show $ i > j
-        fExp (InfixApp x op y) | op ~= "`const`" = x
+        fExp (InfixApp x op y)
+            | op ~= "`const`" = x
+            | op ~= "&&" && y ~= "True" = x
         fExp (App (App con x) y) | con ~= "const" = x
         fExp (InfixApp (App when true) dot res)
             | when ~= "when" && true ~= "True" = res
@@ -56,10 +64,14 @@ simplify = transformBi fMatch . transformBi fDecl . transformBi fPat . transform
         fPat (PParen x@(PApp _ [])) = x
         fPat x = x
 
+        fMatch (Match sl nam pat sig (GuardedRhss [GuardedRhs _ [Qualifier x] bod]) decls)
+            | x ~= "True" = fMatch $ Match sl nam pat sig (UnGuardedRhs bod) decls
         fMatch (Match sl nam [PVar x] sig (UnGuardedRhs (Case (Var (UnQual x2)) [Alt _ pat (UnGuardedAlt y) (BDecls [])])) decls)
             | x == x2 = fMatch $ Match sl nam [PParen pat] sig (UnGuardedRhs y) decls
         fMatch (Match a b c d e bind) = fBinds (Match a b c d e) bind
+
         fDecl (PatBind a b c d bind) = fBinds (PatBind a b c d) bind
+        fDecl (FunBind xs) = FunBind $ filter (not . isGuardFalse) xs
         fDecl x = x
 
         fBinds context (BDecls bind) | inline /= [] =
@@ -79,6 +91,9 @@ simplify = transformBi fMatch . transformBi fDecl . transformBi fPat . transform
 
         subst from to = transformBi $ \x -> if x == from then to else x
         once x y = length (filter (== x) (universeBi y)) <= 1  
+
+isGuardFalse (Match sl nam pat sig (GuardedRhss [GuardedRhs _ [Qualifier x] bod]) decls) = x ~= "False"
+isGuardFalse _ = False
 
 
 isAtom Con{} = True

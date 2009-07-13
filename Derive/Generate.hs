@@ -63,13 +63,14 @@ generateFile file = do
             writeGenerated instFile $
                 ["{-# LANGUAGE FlexibleInstances, UndecidableInstances, ScopedTypeVariables #-}"] ++
                 ["","module Data.Derive.Instance." ++ name ++ " where",""] ++
-                ["import " ++ x | Just x <- [srcModule src]] ++
+                (map prettyPrint $ srcImport src) ++
                 ["import Data.Derive.Internal.Instance",""] ++
                 (map prettyPrint $ fromJust inst) ++ [""]
          else when b $
             error $ "Previously generated dynamic instance can not be regenerated, " ++ name
 
-    return $ "<li><b><a href='http://hackage.haskell.org/'>" ++ name ++ "</a></b> - from the library " ++ fromMaybe "base" (srcPackage src) ++ "</li>"
+    let pkg = head $ mapMaybe importPkg (srcImport src) ++ ["base"]
+    return $ "<li><b><a href='http://hackage.haskell.org/'>" ++ name ++ "</a></b> - from the library " ++ pkg ++ "</li>"
 
 
 wrap :: Int -> String -> [String]

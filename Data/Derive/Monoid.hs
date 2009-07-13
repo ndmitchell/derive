@@ -5,6 +5,8 @@
 -}
 module Data.Derive.Monoid(makeMonoid) where
 {-
+import Data.Monoid hiding (First)
+
 example :: Sample
 
 instance Monoid a => Monoid (Sample a) where

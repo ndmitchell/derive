@@ -44,7 +44,12 @@ instance Convert TH.Name HS.TyVarBind where
     conv = UnkindedVar . c
 
 instance Convert TH.Name HS.Name where
-    conv = name . show
+    conv x = name $ if '.' `elem` x2 then reverse $ takeWhile (/= '.') $ reverse x2 else x2
+        where x2 = show x
+
+instance Convert TH.Name HS.QName where
+    conv x = if x2 == Ident "[]" then Special ListCon else UnQual x2
+        where x2 = c x
 
 instance Convert TH.Con HS.QualConDecl where
     conv (ForallC vs cxt x) = QualConDecl sl (c vs) (c cxt) (c x)
@@ -62,7 +67,7 @@ instance Convert TH.StrictType HS.BangType where
 instance Convert TH.Type HS.Type where
     conv (ForallT xs cxt t) = TyForall (Just $ c xs) (c cxt) (c t)
     conv (VarT x) = TyVar $ c x
-    conv (ConT x) = TyCon $ UnQual $ c x
+    conv (ConT x) = TyCon $ c x
     conv (AppT (AppT ArrowT x) y) = TyFun (c x) (c y)
     conv (AppT ListT x) = TyList $ c x
     conv (TupleT _) = TyTuple Boxed []
@@ -81,16 +86,19 @@ instance Convert HS.Decl TH.Dec where
     conv (InstDecl _ cxt nam typ ds) = InstanceD (c cxt) (c $ tyApp (TyCon nam) typ) [c d | InsDecl d <- ds]
     conv (FunBind ms@(HS.Match _ nam _ _ _ _:_)) = FunD (c nam) (c ms)
     conv (PatBind _ p _ bod ds) = ValD (c p) (c bod) (c ds)
+    conv (TypeSig _ [nam] typ) = SigD (c nam) (c $ foralls typ)
 
 instance Convert HS.Asst TH.Type where
     conv (InfixA x y z) = c $ ClassA y [x,z]
     conv (ClassA x y) = appT (ConT $ c x) (c y)
 
 instance Convert HS.Type TH.Type where
+    conv (TyCon (Special ListCon)) = ListT
+    conv (TyCon (Special UnitCon)) = TupleT 0
     conv (TyParen x) = c x
     conv (TyForall x y z) = ForallT (c $ fromMaybe [] x) (c y) (c z)
     conv (TyVar x) = VarT $ c x
-    conv (TyCon x) = ConT $ c x
+    conv (TyCon x) = if x ~= "[]" then error "here" else ConT $ c x
     conv (TyFun x y) = AppT (AppT ArrowT (c x)) (c y)
     conv (TyList x) = AppT ListT (c x)
     conv (TyTuple _ x) = appT (TupleT (length x)) (c x)
@@ -107,6 +115,7 @@ instance Convert HS.Rhs TH.Body where
     conv (GuardedRhss x) = GuardedB (c x)
 
 instance Convert HS.Exp TH.Exp where
+    conv (Con (Special UnitCon)) = TupE []
     conv (Var x) = VarE (c x)
     conv (Con x) = ConE (c x)
     conv (Lit x) = LitE (c x)
@@ -183,10 +192,10 @@ instance Convert HS.QualStmt TH.Stmt where
     conv = undefined
 
 instance Convert HS.FieldUpdate TH.FieldExp where
-    conv = undefined
+    conv (FieldUpdate x y) = (c x, c y)
 
 instance Convert HS.TyVarBind TH.Name where
-    conv = undefined
+    conv (UnkindedVar x) = c x
 
 instance Convert HS.GuardedAlts TH.Body where
     conv (UnGuardedAlt x) = NormalB (c x)

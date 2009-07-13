@@ -17,10 +17,10 @@ foldComputer :: (Double -> Int -> a) -> (Int -> a) -> Computer -> a
 foldComputer f1 f2 (Laptop x1 x2) = f1 x1 x2
 foldComputer f1 f2 (Desktop x1) = f2 x1
 
-test :: Assoc
+test :: Assoced
 
-foldAssoc :: (typ -> String -> a) -> Assoc typ -> a
-foldAssoc f1 (Assoc x1 x2) = f1 x1 x2
+foldAssoced :: (typ -> String -> a) -> Assoced typ -> a
+foldAssoced f1 (Assoced x1 x2) = f1 x1 x2
 
 test :: Either
 

@@ -17,7 +17,7 @@ data Computer = Laptop { weight :: Double, speed :: Int }
 
 data Sample a = First | Second a a | Third a
 
-data Assoc typ = Assoc typ String
+data Assoced typ = Assoced typ String
 
 -}
 

@@ -6,19 +6,24 @@ import Data.List
 import qualified Data.ByteString.Char8 as BS
 import System.Directory
 import System.IO
+import System.FilePath
 import Control.Monad
 import Data.Char
 import Data.Maybe
 
 
 data Src = Src
-    {srcModule :: Maybe String
-    ,srcPackage :: Maybe String
+    {srcName :: String
+    ,srcImport :: [ImportDecl]
     ,srcExample :: Maybe [Decl]
     ,srcTest :: [(String,[Decl])]
     }
 
-nullSrc = Src Nothing Nothing Nothing []
+-- skip the importPkg bits
+srcImportStd :: Src -> [ImportDecl]
+srcImportStd y= [x{importPkg=Nothing} | x <- srcImport y]
+
+nullSrc = Src "" [] Nothing []
 
 
 readHSE :: FilePath -> IO Module
@@ -27,7 +32,7 @@ readHSE file = do
     src <- return $ takeWhile (/= "-}") $ drop 1 $ dropWhile (/= "{-") $
                     dropWhile (not . isPrefixOf "module ") $ lines src
 
-    let mode = defaultParseMode{extensions=[MultiParamTypeClasses,TemplateHaskell,PackageImports]}
+    let mode = defaultParseMode{extensions=[MultiParamTypeClasses,FlexibleContexts,TemplateHaskell,PackageImports]}
     return $ fromParseResult $ parseFileContentsWithMode mode $ unlines $ "module Example where":src
 
 
@@ -43,13 +48,11 @@ asPragma _ = Nothing
 readSrc :: FilePath -> IO Src
 readSrc file = do
     modu <- readHSE file
-    return $ foldl f (foldl g nullSrc $ moduleImports modu)
+    return $ foldl f nullSrc{srcName=takeBaseName file, srcImport=moduleImports modu}
         [ (p,xs)
         | p:real <- tails $ moduleDecls modu, Just p <- [asPragma p]
         , let xs = takeWhile (isNothing . asPragma) real ]
     where
-        g src i = src{srcModule = Just $ prettyPrint $ importModule i, srcPackage = importPkg i}
-
         f src (Example,bod) = src{srcExample = Just bod}
         f src (Test x ,bod) = src{srcTest = srcTest src ++ [(x,bod)]}
 

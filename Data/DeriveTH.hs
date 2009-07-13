@@ -5,7 +5,7 @@
 -- @
 --   data Foo = Foo ; $( derive makeEq ''Foo )
 -- @
-module Data.DeriveTH(derive, deriveFromDec, module Data.Derive.All) where
+module Data.DeriveTH(derive, derives, deriveFromDec, module Data.Derive.All) where
 
 import Data.List
 import Control.Monad
@@ -24,6 +24,11 @@ derive d name = do
     case x of
         TyConI dec -> deriveFromDec d dec
         _ -> error $ "Data.DeriveTH.derive: Expected a data type declaration, got:\n" ++ show x
+
+
+derives :: [Derivation] -> [TH.Name] -> Q [Dec]
+derives xs ys = liftM concat $ sequence [derive x y | y <- ys, x <- xs]
+
 
 -- | Derive an instance of some class. @deriveFromDec@ only derives instances
 -- for the type of the argument.
