@@ -63,7 +63,7 @@ generateFile file = do
             writeGenerated instFile $
                 ["{-# LANGUAGE FlexibleInstances, UndecidableInstances, ScopedTypeVariables #-}"] ++
                 ["","module Data.Derive.Instance." ++ name ++ " where",""] ++
-                (map prettyPrint $ srcImport src) ++
+                (map prettyPrint $ srcImportStd src) ++
                 ["import Data.Derive.Internal.Instance",""] ++
                 (map prettyPrint $ fromJust inst) ++ [""]
          else when b $
