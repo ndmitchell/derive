@@ -12,8 +12,7 @@ import Data.Char
 import Data.List
 
 
-evil = words $ "Foldable PlateDirect Read Traversable TTypeable " ++
-               "Uniplate Update"
+evil = words $ "Foldable PlateDirect Read Traversable TTypeable Uniplate"
 
 -- generate extra information for each derivation
 generate :: IO ()

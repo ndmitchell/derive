@@ -1,51 +1,47 @@
--- | A Pseudo derivation. For every label, creates a function
--- foo_u and foo_s which updates and sets the label respectively,
--- e.g. 'foo_u (+1) bar' or 'foo_s 10 baz'
+{-|
+    A Pseudo derivation. For every label, creates a function
+    foo_u and foo_s which updates and sets the label respectively,
+    e.g. 'foo_u (+1) bar' or 'foo_s 10 baz'
+-}
 module Data.Derive.Update(makeUpdate) where
+
 {-
+
+test :: Computer
+
+speed_u :: (Int -> Int) -> Computer -> Computer
+speed_u f x = x{speed = f (speed x)}
+
+speed_s :: Int -> Computer -> Computer
+speed_s v x = x{speed = v}
+
+weight_u :: (Double -> Double) -> Computer -> Computer
+weight_u f x = x{weight = f (weight x)}
+
+weight_s :: Double -> Computer -> Computer
+weight_s v x = x{weight = v}
+
+test :: Sample
+
 -}
 
-import Language.Haskell.TH.All
-import Control.Monad (liftM2)
-import Data.Char
-import Data.List
-{-
-data Computer = Laptop {weight :: Int, memory :: Int}
-              | Desktop {memory :: Int, processor :: Int}
+import Language.Haskell
+import Data.Derive.Internal.Derivation
+import Data.Maybe
 
-==>
-
-weight_u f r = r{weight = f (weight r)}
-weight_s v = weight_u (const v)
-memory_u f r = r{memory = f (memory r)}
-memory_s v = memory_u (const v)
-processor_u f r = r{processor = f (processor r)}
-processor_s v = processor_u (const v)
-
--}
 
 makeUpdate :: Derivation
-makeUpdate = derivation update' "Update"
+makeUpdate = Derivation "Update" $ \(_,d) -> Right $ concatMap (makeUpdateField d) $ dataDeclFields d
 
-update' dat = concatMap f fields
+
+makeUpdateField :: DataDecl -> String -> [Decl]
+makeUpdateField d field =
+        [TypeSig sl [name upd] (TyParen (TyFun typF typF) `TyFun` typR)
+        ,bind upd [pVar "f",pVar "x"] $ RecUpdate (var "x") [FieldUpdate (qname field) (App (var "f") (Paren $ App (var field) (var "x")))]
+        ,TypeSig sl [name set] (typF `TyFun` typR)
+        ,bind set [pVar "v",pVar "x"] $ RecUpdate (var "x") [FieldUpdate (qname field) (var "v")]]
     where
-        ctors = dataCtors dat -- constructors of the data type
-
-        -- get all of the fields of every data constructor
-        fields = nub $ concatMap (liftM2 zip ctorFields ctorTypes) ctors
-
-        tyargs = dataArgs dat
-        rty = lK (dataName dat) (map VarT tyargs)
-        funT a b = AppT (AppT ArrowT a) b
-
-        f (fname, fty) =
-            [ sigN (fname ++ "_u") $ ForallT tyargs [] (funT (funT fty fty) (funT rty rty))
-            , funN (fname ++ "_u") $
-               [sclause [vr "f",vr "r"]
-                            $ RecUpdE (vr "r") [( mkName fname
-                                                , AppE (vr "f") $ AppE (vr fname) (vr "r"))]]
-            , sigN (fname ++ "_s") $ ForallT tyargs [] (funT fty (funT rty rty))
-            , funN (fname ++ "_s") $
-                 [sclause [vr "v"] $ AppE (VarE (mkName $ fname++"_u"))
-                                          (AppE (vr "const") $ vr "v")]
-            ]
+        set = field ++ "_s"
+        upd = field ++ "_u"
+        typR = dataDeclType d `TyFun` dataDeclType d
+        typF = fromBangType $ fromJust $ lookup field $ concatMap ctorDeclFields $ dataDeclCtors d
