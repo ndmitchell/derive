@@ -1,10 +1,10 @@
-module Data.Derive.Arbitrary where
+module Data.Derive.Arbitrary(makeArbitrary) where
 {-
 import "QuickCheck" Test.QuickCheck
 
-example :: Sample
+example :: Custom
 
-instance Arbitrary a => Arbitrary (Sample a) where
+instance Arbitrary (Sample a) where
     arbitrary = do
         x <- choose (0::Int,length [First{},Second{},Third{}] - 1)
         case x of
@@ -15,25 +15,33 @@ instance Arbitrary a => Arbitrary (Sample a) where
             2 -> do x1 <- arbitrary
                     return (Third x1)
 
+test :: State
+instance (CoArbitrary s, Arbitrary s, Arbitrary a) => Arbitrary (State s a) where
+    arbitrary = do x1 <- arbitrary
+                   return (StateT x1)
 -}
+
+import Data.Derive.DSL.HSE
+import qualified Language.Haskell as H
+import Data.List
+import Data.Generics.PlateData
+
 -- GENERATED START
 
 import Data.Derive.DSL.DSL
 import Data.Derive.Internal.Derivation
 
 makeArbitrary :: Derivation
-makeArbitrary = derivationDSL "Arbitrary" dslArbitrary
-
-dslArbitrary =
-    List [Instance ["Arbitrary"] "Arbitrary" (List [App "InsDecl" (
-    List [App "PatBind" (List [App "PVar" (List [App "Ident" (List [
-    String "arbitrary"])]),App "Nothing" (List []),App "UnGuardedRhs"
-    (List [App "Do" (List [List [App "Generator" (List [App "PVar" (
-    List [App "Ident" (List [String "x"])]),App "App" (List [App "Var"
-    (List [App "UnQual" (List [App "Ident" (List [String "choose"])])]
-    ),App "Tuple" (List [List [App "ExpTypeSig" (List [App "Lit" (List
-    [App "Int" (List [Int 0])]),App "TyCon" (List [App "UnQual" (List
-    [App "Ident" (List [String "Int"])])])]),App "InfixApp" (List [App
+makeArbitrary = derivationCustomDSL "Arbitrary" custom $
+    List [Instance [] "Arbitrary" (List [App "InsDecl" (List [App
+    "PatBind" (List [App "PVar" (List [App "Ident" (List [String
+    "arbitrary"])]),App "Nothing" (List []),App "UnGuardedRhs" (List [
+    App "Do" (List [List [App "Generator" (List [App "PVar" (List [App
+    "Ident" (List [String "x"])]),App "App" (List [App "Var" (List [
+    App "UnQual" (List [App "Ident" (List [String "choose"])])]),App
+    "Tuple" (List [List [App "ExpTypeSig" (List [App "Lit" (List [App
+    "Int" (List [Int 0])]),App "TyCon" (List [App "UnQual" (List [App
+    "Ident" (List [String "Int"])])])]),App "InfixApp" (List [App
     "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
     List [String "length"])])]),App "List" (List [MapCtor (App
     "RecConstr" (List [App "UnQual" (List [App "Ident" (List [CtorName
@@ -55,3 +63,16 @@ dslArbitrary =
     ])]])])]),App "BDecls" (List [List []])]))])])]])]),App "BDecls" (
     List [List []])])])])]
 -- GENERATED STOP
+
+custom = customContext context
+
+-- Fix the context
+-- C a b => Arbitrary a, Arbitrary b
+-- a -> b => CoArbitrary a, Arbitrary b
+context :: FullDataDecl -> Context
+context (_,d) = nub $ concatMap (f True . fromBangType . snd) $ concatMap ctorDeclFields $ dataDeclCtors d
+    where
+        f b (TyVar x) = [ClassA (qname $ b ? "Arbitrary" $ "CoArbitrary") [TyVar x]]
+        f b (TyFun x y) = f (not b) x ++ f b y
+        f b x = concatMap (f b) (children x)
+

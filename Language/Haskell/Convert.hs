@@ -67,7 +67,8 @@ instance Convert TH.StrictType HS.BangType where
 instance Convert TH.Type HS.Type where
     conv (ForallT xs cxt t) = TyForall (Just $ c xs) (c cxt) (c t)
     conv (VarT x) = TyVar $ c x
-    conv (ConT x) = TyCon $ c x
+    conv (ConT x) | ',' `elem` show x = TyTuple Boxed []
+                  | otherwise = TyCon $ c x
     conv (AppT (AppT ArrowT x) y) = TyFun (c x) (c y)
     conv (AppT ListT x) = TyList $ c x
     conv (TupleT _) = TyTuple Boxed []

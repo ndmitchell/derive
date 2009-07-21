@@ -1,7 +1,7 @@
 
 module Language.Haskell(module Language.Haskell, module Language.Haskell.Exts) where
 
-import Language.Haskell.Exts hiding (var,app,binds)
+import Language.Haskell.Exts hiding (var,app,binds,paren)
 import Data.List
 import Data.Generics.PlateData
 import Data.Data
@@ -17,6 +17,10 @@ False ? b = id
 -- insert explicit foralls
 foralls :: Type -> Type
 foralls x = TyForall (Just $ map UnkindedVar $ nub [y | TyVar y <- universe x]) [] x
+
+
+tyApps x [] = x
+tyApps x (y:ys) = tyApps (TyApp x y) ys
 
 
 x ~= y = prettyPrint x == y
@@ -36,13 +40,17 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
             | op ~= "`const`" = x
             | op ~= "&&" && y ~= "True" = x
         fExp (App (App con x) y) | con ~= "const" = x
+        fExp (App choose (Tuple [x@(ExpTypeSig _ y _),z])) | choose ~= "choose" && y == z = App (var "return") x
+        fExp (App op x) | op ~= "id" = x
         fExp (InfixApp (App when true) dot res)
             | when ~= "when" && true ~= "True" = res
+        fExp (App (LeftSection x op) y) = InfixApp x op (paren y)
         fExp (Paren x) | isAtom x = x
         fExp (Do [Qualifier x]) = x
         fExp (Do (Qualifier (App ret unit):xs)) | ret ~= "return" && unit ~= "()" = fExp $ Do xs
         fExp (Do (Generator _ (PVar x) (App ret y):xs)) | ret ~= "return" && once x2 xs = simplify $ Do $ subst x2 y xs
             where x2 = Var $ UnQual x
+        fExp (Case (ExpTypeSig _ x@Lit{} _) alts) = fExp $ Case x alts
         fExp (Case (Lit x) alts) | good /= [] = head good
             where good = [z | Alt _ (PLit y) (UnGuardedAlt z) (BDecls []) <- alts, y == x]
         fExp (If x t f)
@@ -102,6 +110,8 @@ isAtom Lit{} = True
 isAtom _ = False
 
 
+paren x = if isAtom x then x else Paren x
+
 sl = SrcLoc "" 0 0
 
 noSl mr = transformBi (const sl) mr
@@ -113,6 +123,7 @@ qname = UnQual . name
 var = Var . qname
 con = Con . qname
 tyVar = TyVar . name
+tyVarBind = UnkindedVar . name
 tyCon = TyCon . qname
 pVar = PVar . name
 qvop = QVarOp . UnQual . Symbol
@@ -129,7 +140,7 @@ type DataDecl = Decl
 type CtorDecl = Either QualConDecl GadtDecl
 type FieldDecl = [(String, BangType)]
 
-type FullDataDecl = (ModuleName, Decl)
+type FullDataDecl = (ModuleName, DataDecl)
 
 
 moduleName (Module _ name _ _ _ _ _) = name
@@ -152,8 +163,8 @@ tyFun [x] = x
 tyFun (x:xs) = TyFun x (tyFun xs)
 
 
-app x [] = x
-app x xs = app (App x (head xs)) (tail xs)
+apps x [] = x
+apps x (y:ys) = apps (App x y) ys
 
 
 bind :: String -> [Pat] -> Exp -> Decl
@@ -186,6 +197,9 @@ dataDeclName (GDataDecl _ _ _ name _ _ _ _) = prettyPrint name
 dataDeclVars :: DataDecl -> [String]
 dataDeclVars (DataDecl _ _ _ _ vars _ _) = map prettyPrint vars
 
+dataDeclArity :: DataDecl -> Int
+dataDeclArity = length . dataDeclVars
+
 dataDeclCtors :: DataDecl -> [CtorDecl]
 dataDeclCtors (DataDecl _ _ _ _ _ ctors _) = map Left ctors
 
@@ -197,3 +211,6 @@ ctorDeclName (Left (QualConDecl _ _ _ (RecDecl name _))) = prettyPrint name
 ctorDeclFields :: CtorDecl -> FieldDecl
 ctorDeclFields (Left (QualConDecl _ _ _ (ConDecl name fields))) = map ((,) "") fields
 ctorDeclFields (Left (QualConDecl _ _ _ (RecDecl name fields))) = [(prettyPrint a, b) | (as,b) <- fields, a <- as]
+
+ctorDeclArity :: CtorDecl -> Int
+ctorDeclArity = length . ctorDeclFields

@@ -41,7 +41,7 @@ instance Binary a => Binary (List a) where
 
 test :: Assoced
 
-instance Binary a => Binary (Assoced a) where
+instance Binary typ => Binary (Assoced typ) where
     put (Assoced x1 x2) = do put x1; put x2
     get = do x1 <- get; x2 <- get; return (Assoced x1 x2)
 

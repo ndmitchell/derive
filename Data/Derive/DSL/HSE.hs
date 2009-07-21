@@ -16,14 +16,19 @@ import Control.Monad.State
 ---------------------------------------------------------------------
 -- EXAMPLES
 
+{-
 -- data List a = Nil | Cons a (List a)
 list :: Input
 list = Input "List" 1 [Ctor "Nil" 0 0, Ctor "Cons" 1 2]
+-}
 
 
 -- data Sample a = First | Second a a | Third a
 sample :: Input
-sample = Input "Sample" 1 [Ctor "First" 0 0, Ctor "Second" 1 2, Ctor "Third" 2 1]
+sample = DataDecl sl DataType [] (name "Sample") [tyVarBind "a"] ctrs []
+    where
+        ctrs = [ctr "First" 0, ctr "Second" 2, ctr "Third" 1]
+        ctr s i = QualConDecl sl [] [] $ ConDecl (name s) $ replicate i $ UnBangedTy $ tyVar "a"
 
 
 ---------------------------------------------------------------------
@@ -37,13 +42,21 @@ outEq = (==) `on` transformBi (const sl)
 showOut x = unlines $ map prettyPrint x
 
 
-data Input = Input {dataName :: String, dataVars :: Integer, dataCtors :: [Ctor]}
-data Ctor = Ctor {ctorName :: String, ctorIndex :: Integer, ctorArity :: Integer}
+type Input = DataDecl
+type Ctor = CtorDecl
+
+dataName = dataDeclName
+dataVars = length . dataDeclVars
+dataCtors = dataDeclCtors
+ctorName = ctorDeclName
+ctorArity = fromIntegral . ctorDeclArity
+
+ctorIndex :: Input -> Ctor -> Integer
+ctorIndex dat ctor = fromIntegral $ fromMaybe (error "fromJust: ctorIndex") $ findIndex (== ctor) $ dataCtors dat
 
 
 toInput :: DataDecl -> Input
-toInput x = Input (dataDeclName x) (genericLength $ dataDeclVars x) (zipWith f [0..] $ dataDeclCtors x)
-    where f index x = Ctor (ctorDeclName x) index (genericLength $ ctorDeclFields x)
+toInput x = x
 
 
 type Out = [Decl]

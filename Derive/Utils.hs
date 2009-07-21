@@ -17,13 +17,14 @@ data Src = Src
     ,srcImport :: [ImportDecl]
     ,srcExample :: Maybe [Decl]
     ,srcTest :: [(String,[Decl])]
+    ,srcCustom :: Bool
     }
 
 -- skip the importPkg bits
 srcImportStd :: Src -> [ImportDecl]
 srcImportStd y= [x{importPkg=Nothing} | x <- srcImport y]
 
-nullSrc = Src "" [] Nothing []
+nullSrc = Src "" [] Nothing [] False
 
 
 readHSE :: FilePath -> IO Module
@@ -36,11 +37,11 @@ readHSE file = do
     return $ fromParseResult $ parseFileContentsWithMode mode $ unlines $ "module Example where":src
 
 
-data Pragma = Example | Test String
+data Pragma = Example Bool | Test String
 
 asPragma :: Decl -> Maybe Pragma
 asPragma (TypeSig _ [x] t)
-    | x ~= "example" = Just Example
+    | x ~= "example" = Just $ Example $ prettyPrint t == "Custom"
     | x ~= "test" = Just $ Test $ prettyPrint t
 asPragma _ = Nothing
 
@@ -53,8 +54,8 @@ readSrc file = do
         | p:real <- tails $ moduleDecls modu, Just p <- [asPragma p]
         , let xs = takeWhile (isNothing . asPragma) real ]
     where
-        f src (Example,bod) = src{srcExample = Just bod}
-        f src (Test x ,bod) = src{srcTest = srcTest src ++ [(x,bod)]}
+        f src (Example x,bod) = src{srcExample = Just bod, srcCustom = x}
+        f src (Test    x,bod) = src{srcTest = srcTest src ++ [(x,bod)]}
 
 
 generatedStart = "-- GENERATED START"

@@ -80,7 +80,7 @@ mkTypeable modu d =
     [TypeSig sl [name fun] (tyCon "TyCon")] ++
     [PatBind sl (pVar fun) Nothing (UnGuardedRhs bod) (BDecls []) |
         let bod = App (var "mkTyCon") (Lit $ String $ modu ++ "." ++ nam)] ++
-    [inst [] (showN n) [tyCon nam] [PWildCard] $ app (var "mkTyConApp") [var fun, List []]] ++
+    [inst [] (showN n) [tyCon nam] [PWildCard] $ apps (var "mkTyConApp") [var fun, List []]] ++
     [inst [ClassA (qname "Typeable") [v] | v <- tvs] i [TyParen $ tyApp (tyCon nam) tvs] [] $ var $ "typeOf" ++ i ++ "Default"
         | (vs,i) <- zip (tail $ inits $ dataDeclVars d) $ map showN [n-1,n-2..]
         , let tvs = map tyVar vs]

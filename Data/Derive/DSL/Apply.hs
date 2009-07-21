@@ -7,6 +7,7 @@ import Data.Derive.DSL.HSE
 import Data.Derive.DSL.DSL
 import Data.Maybe
 import Data.List
+import Data.Generics.PlateData
 
 
 apply :: DSL -> Input -> Out
@@ -28,17 +29,19 @@ data Env = Env  {envInput :: Input
 applyEnv :: DSL -> Env -> Output
 applyEnv dsl env@(Env input ctor field fold) = f dsl
     where
-    vars = genericTake (dataVars input) $ map (:[]) ['a'..]
+    vars = dataDeclVars input
 
     f (Instance ctx hd body) =
         OApp "InstDecl"
             [out
                 [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
-                | v <- vars, c <- ctx]
+                | let seen = [x | TyVar (Ident x) <- universeBi $ concatMap ctorDeclFields $ dataCtors input]
+                , v <- dataDeclVars input `intersect` seen
+                , c <- ctx]
             , out $ UnQual $ Ident hd
             , out [TyParen $ foldl TyApp
                 (TyCon $ UnQual $ Ident $ dataName input)
-                [TyVar $ Ident v | v <- vars]]
+                (map tyVar $ dataDeclVars input)]
             , f body]
 
     f (Application (f -> OList xs)) =
@@ -52,7 +55,7 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
     f DataName = OString $ dataName input
     f CtorName = OString $ ctorName ctor
     f CtorArity = OInt $ ctorArity ctor
-    f CtorIndex = OInt $ ctorIndex ctor
+    f CtorIndex = OInt $ ctorIndex input ctor
     f FieldIndex = OInt $ field
 
     f Head = fst fold

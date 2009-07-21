@@ -11,9 +11,12 @@ instance (Eq a) => Eq (Sample a) where
     _ == _ | length [First{},Second{},Third{}] > 1 = False
 
 test :: Assoced
-
-instance Eq a => Eq (Assoced a) where
+instance Eq typ => Eq (Assoced typ) where
     Assoced x1 x2 == Assoced y1 y2 = x1 == y1 && x2 == y2
+
+test :: TwoParam
+instance Eq b => Eq (TwoParam a b) where
+    TwoParam x1 == TwoParam y1 = x1 == y1
 
 -}
 -- GENERATED START

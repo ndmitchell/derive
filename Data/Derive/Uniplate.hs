@@ -1,8 +1,9 @@
--- NOTE: Cannot be guessed as it relies on type information
-
--- | Derive Play, implemented for tuples and lists.
 module Data.Derive.Uniplate(makeUniplate) where
 {-
+
+test :: Sample
+
+
 -}
 
 import Language.Haskell.TH.All

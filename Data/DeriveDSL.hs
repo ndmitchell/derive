@@ -1,5 +1,5 @@
 
-module Data.DeriveDSL(DSL, deriveDSL, applyDSL, dynamicDSL, impureDSL) where
+module Data.DeriveDSL(DSL, deriveDSL, applyDSL, dynamicDSL) where
 
 import Data.Derive.DSL.Derive
 import Data.Derive.DSL.Apply
@@ -20,7 +20,3 @@ applyDSL dsl inp = Right $ simplify $ apply dsl $ toInput inp
 
 dynamicDSL :: DSL -> Maybe [Decl]
 dynamicDSL = dslSYB
-
-
-impureDSL :: DSL -> Bool
-impureDSL dsl = or [True | App "SpliceExp" _ <- universe dsl]

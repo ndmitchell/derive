@@ -14,8 +14,28 @@
 -- <http://www.mail-archive.com/haskell-prime@haskell.org/msg02116.html>.
 module Data.Derive.Functor(makeFunctor,makeFunctorN) where
 
-import Language.Haskell.TH.All
-import Data.DeriveTraversal
+{-
+test :: FailList
+instance Functor (FailList t1) where
+    fmap _f Zero = Zero
+    fmap _f (Fail a1) = Fail a1
+    fmap _f (Const a1 a2) = Const (_f a1) (fmap _f a2)
+
+test :: State
+instance Functor (State t1) where
+    fmap _f (StateT a1) = StateT (fmap _f . a1)
+
+test :: Sample
+instance Functor Sample where
+    fmap _f First = First
+    fmap _f (Second a1 a2) = Second (_f a1) (_f a2)
+    fmap _f (Third a1) = Third (_f a1)
+-}
+
+
+import Data.Derive.Internal.Traversal
+import Data.Derive.Internal.Derivation
+import Language.Haskell
 
 
 makeFunctor :: Derivation
@@ -27,13 +47,14 @@ makeFunctorN n = traversalDerivation1 functorTraversal{traversalArg = n} "Functo
 functorTraversal = defaultTraversalType
         { traversalName   = "fmap"
         , traverseArrow   = functorForArrowType
-        , traverseFunc    = \pat rhs -> sclause [vr "_f", pat] rhs
+        , traverseFunc    = \pat rhs -> Match sl (name "") [pVar "_f", pat] Nothing (UnGuardedRhs rhs) (BDecls [])
         }
 
 functorForArrowType :: Exp -> Exp -> Exp
 functorForArrowType a b
-  | isId a && isId b  =  id'
-  | isId a            =  InfixE (Just b) (l0 ".") Nothing
-  | isId b            =  InfixE Nothing  (l0 ".") (Just a)
-  | otherwise         =  LamE [l0 "arg"] $ b .: l0 "arg" .: a
- where isId = (id'==)
+  | isId a && isId b  =  var "id"
+  | isId a            =  LeftSection b (qvop ".")
+  | isId b            =  RightSection (qvop ".") a
+  | otherwise         =  Lambda sl [pVar "arg"] $ b .: var "arg" .: a
+ where isId = (var "id" ==)
+       a .: b = apps (Con $ Special Cons) [a,b]

@@ -8,7 +8,7 @@ module Data.Derive.Show(makeShow) where
 
 {-
 
-example :: Example
+example :: Custom
 
 instance Show a => Show (Sample a) where
     showsPrec p (First) = $(show 0)
@@ -59,8 +59,10 @@ makeShow = derivationCustomDSL "Show" custom $
 
 -- Left is a literal string, Right is a variable
 
-custom :: FullDataDecl -> Exp -> Exp
-custom d (H.App x (H.Lit (H.Int y))) | x ~= "show" = combine $ compress $
+custom = customSplice splice
+
+splice :: FullDataDecl -> Exp -> Exp
+splice d (H.App x (H.Lit (H.Int y))) | x ~= "show" = combine $ compress $
         if fields then customFields c else customPlain c
     where
         fields = any (not . null . fst) (ctorDeclFields c)
@@ -68,7 +70,7 @@ custom d (H.App x (H.Lit (H.Int y))) | x ~= "show" = combine $ compress $
 
         out (Left [x]) = H.App (var "showChar") (H.Lit $ H.Char x)
         out (Left xs ) = H.App (var "showString") (H.Lit $ H.String xs)
-        out (Right x) = app (var "showsPrec") [H.Lit $ H.Int (fields ? 0 $ 11), var $ 'x' : show x]
+        out (Right x) = apps (var "showsPrec") [H.Lit $ H.Int (fields ? 0 $ 11), var $ 'x' : show x]
 
         compress (Left x:Left y:z) = compress $ Left (x++y) : z
         compress (x:y) = x : compress y

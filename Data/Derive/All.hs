@@ -2,25 +2,6 @@
 -- Data.Derive derivations.
 module Data.Derive.All (Derivation, derivations, module D) where
 
-{-
-data List a = Nil | Cons a (List a)
-
--- built in, as it can't be written
--- data [a] = [] | (:) a [a]
-
-data Bool = False | True
-
-data Either a b = Left a | Right b
-
-data Computer = Laptop { weight :: Double, speed :: Int }
-              | Desktop { speed :: Int }
-
-data Sample a = First | Second a a | Third a
-
-data Assoced typ = Assoced typ String
-
--}
-
 import Data.Derive.Internal.Derivation
 
 -- GENERATED START
@@ -58,5 +39,5 @@ import Data.Derive.Typeable         as D
 import Data.Derive.Uniplate         as D
 import Data.Derive.Update           as D
 derivations :: [Derivation]
-derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFold,makeFrom,makeHas,makeIs,makeLazySet,makeMonoid,makeNFData,makeOrd,makePlateTypeable,makeRef,makeSerial,makeSet,makeShow,makeTypeable]
+derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFold,makeFrom,makeFunctor,makeHas,makeIs,makeLazySet,makeMonoid,makeNFData,makeOrd,makePlateTypeable,makeRef,makeSerial,makeSet,makeShow,makeTypeable]
 -- GENERATED STOP

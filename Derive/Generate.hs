@@ -13,7 +13,7 @@ import Data.List
 
 
 evil = words $ "Foldable PlateDirect Read Traversable TTypeable " ++
-               "Uniplate Update Functor"
+               "Uniplate Update"
 
 -- generate extra information for each derivation
 generate :: IO ()
@@ -46,7 +46,7 @@ generateFile file = do
             ,"import Data.Derive.Internal.Derivation"
             ,""
             ,"make" ++ name ++ " :: Derivation"
-            ] ++ (if impureDSL dsl then
+            ] ++ (if srcCustom src then
                 ["make" ++ name ++ " = derivationCustomDSL " ++ show name ++ " custom $"]
             else
                 ["make" ++ name ++ " = derivationDSL " ++ show name ++ " dsl" ++ name
@@ -59,7 +59,7 @@ generateFile file = do
         let inst = dynamicDSL dsl
             instFile = takeDirectory file </> "Instance" </> name <.> "hs"
         b <- doesFileExist instFile
-        if isJust inst then do
+        if not (srcCustom src) && isJust inst then do
             writeGenerated instFile $
                 ["{-# LANGUAGE FlexibleInstances, UndecidableInstances, ScopedTypeVariables #-}"] ++
                 ["","module Data.Derive.Instance." ++ name ++ " where",""] ++

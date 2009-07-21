@@ -53,7 +53,7 @@ mkFold d = [TypeSig sl [name n] (foldType d), FunBind $ zipWith f funs $ dataDec
         funs = ['f' : show i | i <- [1..length (dataDeclCtors d)]]
         f fun c = Match sl (name n) pat Nothing (UnGuardedRhs bod) (BDecls [])
             where pat = map pVar funs ++ [PParen $ PApp (qname $ ctorDeclName c) (map pVar vars)]
-                  bod = app (var fun) (map var vars)
+                  bod = apps (var fun) (map var vars)
                   vars = ['x' : show i | i <- [1..length (ctorDeclFields c)]]
 
 

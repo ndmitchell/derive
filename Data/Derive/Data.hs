@@ -2,7 +2,7 @@ module Data.Derive.Data where
 {-
 import Data.Data
 
-example :: Sample
+example :: Custom
 
 instance (Data a, Typeable a) => Data (Sample a) where
     gfoldl k r (First) = r First
@@ -126,9 +126,14 @@ makeData = derivationCustomDSL "Data" custom $
 -- GENERATED STOP
 
 
-custom :: FullDataDecl -> Exp -> Exp
-custom d x | x ~= "dataName" = H.Lit $ H.String $ prettyPrint (fst d) ++ "." ++ dataDeclName (snd d)
-custom d (H.App x (H.Lit (H.Int y)))
+custom d = customContext context d . customSplice splice d
+
+splice :: FullDataDecl -> Exp -> Exp
+splice d x | x ~= "dataName" = H.Lit $ H.String $ prettyPrint (fst d) ++ "." ++ dataDeclName (snd d)
+splice d (H.App x (H.Lit (H.Int y)))
     | x ~= "ctorFields" = H.List $ [H.Lit $ H.String a | (a,_) <- ctorDeclFields ctor, a /= ""]
     | x ~= "ctorFixity" = Con (UnQual (Ident "Prefix"))
     where ctor = dataDeclCtors (snd d) !! fromInteger y
+
+context :: FullDataDecl -> Context
+context d = [ClassA (qname t) [tyVar x] | x <- dataDeclVars $ snd d, t <- ["Typeable","Data"]]

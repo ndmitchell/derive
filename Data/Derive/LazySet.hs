@@ -35,5 +35,5 @@ makeLazySetField d field = [TypeSig sl [name fun] typ, bind fun [pVar "v",pVar "
         typ = t `TyFun` (dataDeclType d `TyFun` dataDeclType d)
         (t,c):tc = [(fromBangType t,c) | c <- dataDeclCtors d, (n,t) <- ctorDeclFields c, n == field]
 
-        bod | null tc = app (con $ ctorDeclName c) [n == field ? var "v" $ Paren $ App (var n) (var "x") | (n,t) <- ctorDeclFields c]
+        bod | null tc = apps (con $ ctorDeclName c) [n == field ? var "v" $ Paren $ App (var n) (var "x") | (n,t) <- ctorDeclFields c]
             | otherwise = RecUpdate (var "x") [FieldUpdate (qname field) (var "v")]
