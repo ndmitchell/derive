@@ -12,6 +12,22 @@
 
 module Data.Derive.Traversable(makeTraversable, makeTraversableN) where
 
+{-
+instance Traversable (FailList t1)
+    where traverse _f (Nil) = pure Nil
+          traverse _f (Fail a1) = pure (Fail a1)
+          traverse _f (Const a1 a2) = (Const <$> _f a1) <*> traverse _f a2
+
+instance Traversable Sample
+    where traverse _f (First) = pure First
+          traverse _f (Second a1 a2) = (Second <$> _f a1) <*> _f a2
+          traverse _f (Third a1) = Third <$> _f a1
+
+instance Traversable (Eitherd t1)
+    where traverse _f (Leftd a1) = pure (Leftd a1)
+          traverse _f (Rightd a1) = Rightd <$> _f a1
+-}
+
 import Language.Haskell.TH.All
 import Data.DeriveTraversal
 

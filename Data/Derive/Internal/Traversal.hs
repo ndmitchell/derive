@@ -25,6 +25,8 @@ import Data.List
 import qualified Data.Set as S
 import Control.Monad.Writer
 import Control.Applicative
+import Data.Generics.PlateData
+import Data.Maybe
 
 ---------------------------------------------------------------------------------
 -- Stuff that should be in a library
@@ -48,7 +50,7 @@ data TraveralType = TraveralType
         , traversalDirect :: Trav                    -- ^ Traversal of 'a'
         , traversalFunc   :: String -> Trav -> Trav  -- ^ Apply the sub-traversal function
         , traversalPlus   :: Trav -> Trav -> Trav    -- ^ Apply two non-identity traversals in sequence
-        , traverseArrow   :: Trav -> Trav -> Trav    -- ^ Traverse a function type
+        , traverseArrow   :: Maybe (Trav -> Trav -> Trav)    -- ^ Traverse a function type
         , traverseTuple   :: [Exp] -> Exp            -- ^ Construct a tuple from applied traversals
         , traverseCtor    :: String -> [Exp] -> Exp  -- ^ Construct a data type from applied traversals
         , traverseFunc    :: Pat -> Exp -> Match     -- ^ Construct a clause of the traversal function
@@ -62,7 +64,7 @@ defaultTraversalType = TraveralType
         , traversalDirect = var "_f"
         , traversalFunc   = App . var
         , traversalPlus   = \x y -> apps (Con $ Special Cons) [paren x, paren y]
-        , traverseArrow   = fail "Cannot derive traversal over function types"
+        , traverseArrow   = Nothing
         , traverseTuple   = Tuple
         , traverseCtor    = \x y -> apps (con x) (map paren y)
         , traverseFunc    = undefined
@@ -93,13 +95,15 @@ traversalDerivation1 tt nm = Derivation (className $ traversalArg tt) (traversal
 
 -- | Instance for a Traversable like class with just 1 method
 traversalInstance1 :: TraveralType -> String -> FullDataDecl -> Either String [Decl]
-traversalInstance1 tt nm dat = traversalInstance tt nm dat [deriveTraversal tt $ snd dat]
+traversalInstance1 tt nm (_,dat)
+    | isNothing (traverseArrow tt) && any isTyFun (universeBi dat) = Left $ "Can't derive " ++ traversalName tt ++ " for types with arrow"
+    | dataDeclArity dat == 0 = Left "Cannot derive class for data type arity == 0"
+    | otherwise = Right $ traversalInstance tt nm dat [deriveTraversal tt dat]
+
 
 -- | Instance for a Traversable like class
-traversalInstance :: TraveralType -> String -> FullDataDecl -> [WithInstances Decl] -> Either String [Decl]
-traversalInstance tt nameBase (_,dat) bodyM
- | dataDeclArity dat == 0 = Left "Cannot derive class for data type arity == 0"
- | otherwise              = Right [simplify $ InstDecl sl ctx nam args (map InsDecl body)]
+traversalInstance :: TraveralType -> String -> DataDecl -> [WithInstances Decl] -> [Decl]
+traversalInstance tt nameBase dat bodyM = [simplify $ InstDecl sl ctx nam args (map InsDecl body)]
     where
         (body, required) = runWriter (sequence bodyM)
         ctx  = [ ClassA (qname $ className p) (tyVar n : vars tyVar 's' (p - 1))
@@ -138,8 +142,9 @@ deriveTraversalType :: TraveralType -> ArgPositions -> Type -> WithInstances Tra
 deriveTraversalType tt ap (TyParen x) = deriveTraversalType tt ap x
 deriveTraversalType tt ap TyForall{}  = fail "forall not supported in traversal deriving"
 deriveTraversalType tt ap (TyFun a b)
-                                           = traverseArrow tt <$> deriveTraversalType tt{traversalCo = not $ traversalCo tt} ap a
-                                                              <*> deriveTraversalType tt                                     ap b
+                                           = fromJust (traverseArrow tt)
+                                                 <$> deriveTraversalType tt{traversalCo = not $ traversalCo tt} ap a
+                                                 <*> deriveTraversalType tt                                     ap b
 deriveTraversalType tt ap (TyApp a b)      = deriveTraversalApp tt ap a [b] -- T a b c ...
 deriveTraversalType tt ap (TyList a)       = deriveTraversalType tt ap $ TyApp (TyCon $ Special ListCon) a
 deriveTraversalType tt ap (TyTuple b a)    = deriveTraversalType tt ap $ tyApps (TyCon $ Special $ TupleCon b $ length a) a

@@ -15,6 +15,22 @@
 
 module Data.Derive.Foldable(makeFoldable, makeFoldableN) where
 
+{-
+instance Foldable (FailList t1)
+    where foldr _f b (Nil) = b
+          foldr _f b (Fail a1) = b
+          foldr _f b (Const a1 a2) = _f a1 (Data.Foldable.foldr _f b a2)
+
+instance Foldable Sample
+    where foldr _f b (First) = b
+          foldr _f b (Second a1 a2) = _f a1 (_f a2 b)
+          foldr _f b (Third a1) = _f a1 b
+
+instance Foldable (Eitherd t1)
+    where foldr _f b (Leftd a1) = b
+          foldr _f b (Rightd a1) = _f a1 b
+-}
+
 import qualified Data.Foldable ( foldr )
 
 import Language.Haskell.TH.All

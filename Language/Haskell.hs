@@ -22,6 +22,8 @@ foralls x = TyForall (Just $ map UnkindedVar $ nub [y | TyVar y <- universe x]) 
 tyApps x [] = x
 tyApps x (y:ys) = tyApps (TyApp x y) ys
 
+isTyFun TyFun{} = True
+isTyFun _ = False
 
 x ~= y = prettyPrint x == y
 

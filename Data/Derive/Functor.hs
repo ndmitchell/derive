@@ -46,7 +46,7 @@ makeFunctorN n = traversalDerivation1 functorTraversal{traversalArg = n} "Functo
 
 functorTraversal = defaultTraversalType
         { traversalName   = "fmap"
-        , traverseArrow   = functorForArrowType
+        , traverseArrow   = Just functorForArrowType
         , traverseFunc    = \pat rhs -> Match sl (name "") [pVar "_f", pat] Nothing (UnGuardedRhs rhs) (BDecls [])
         }
 
