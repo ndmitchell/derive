@@ -45,10 +45,10 @@ type Trav = Exp
 data TraveralType = TraveralType
         { traversalArg    :: Int                     -- ^ On what position are we traversing?
         , traversalCo     :: Bool                    -- ^ covariant?
-        , traversalName   :: String                  -- ^ name of the traversal function
+        , traversalName   :: QName                   -- ^ name of the traversal function
         , traversalId     :: Trav                    -- ^ Identity traversal
         , traversalDirect :: Trav                    -- ^ Traversal of 'a'
-        , traversalFunc   :: String -> Trav -> Trav  -- ^ Apply the sub-traversal function
+        , traversalFunc   :: QName -> Trav -> Trav  -- ^ Apply the sub-traversal function
         , traversalPlus   :: Trav -> Trav -> Trav    -- ^ Apply two non-identity traversals in sequence
         , traverseArrow   :: Maybe (Trav -> Trav -> Trav)    -- ^ Traverse a function type
         , traverseTuple   :: [Exp] -> Exp            -- ^ Construct a tuple from applied traversals
@@ -62,7 +62,7 @@ defaultTraversalType = TraveralType
         , traversalName   = undefined -- prevent warnings
         , traversalId     = var "id"
         , traversalDirect = var "_f"
-        , traversalFunc   = App . var
+        , traversalFunc   = \x y -> appP (Var x) y
         , traversalPlus   = \x y -> apps (Con $ Special Cons) [paren x, paren y]
         , traverseArrow   = Nothing
         , traverseTuple   = Tuple
@@ -96,7 +96,7 @@ traversalDerivation1 tt nm = Derivation (className $ traversalArg tt) (traversal
 -- | Instance for a Traversable like class with just 1 method
 traversalInstance1 :: TraveralType -> String -> FullDataDecl -> Either String [Decl]
 traversalInstance1 tt nm (_,dat)
-    | isNothing (traverseArrow tt) && any isTyFun (universeBi dat) = Left $ "Can't derive " ++ traversalName tt ++ " for types with arrow"
+    | isNothing (traverseArrow tt) && any isTyFun (universeBi dat) = Left $ "Can't derive " ++ prettyPrint (traversalName tt) ++ " for types with arrow"
     | dataDeclArity dat == 0 = Left "Cannot derive class for data type arity == 0"
     | otherwise = Right $ traversalInstance tt nm dat [deriveTraversal tt dat]
 
@@ -122,8 +122,11 @@ deriveTraversal tt dat = fun
     where
         fun  = (\xs -> FunBind [Match sl nam a b c d | Match _ _ a b c d <- xs]) <$> body
         args = argPositions dat
-        nam = name $ traversalNameN tt $ traversalArg tt
+        nam = unqual $ traversalNameN tt $ traversalArg tt
         body = mapM (deriveTraversalCtor tt args) (dataDeclCtors dat)
+
+        unqual (Qual _ x) = x
+        unqual (UnQual x) = x
 
 
 -- | Derive a clause of a 'traverse' like function for a constructor
@@ -192,10 +195,13 @@ deriveTraversalApp tt ap tycon args = do -- T a b c
 traverseArg :: TraveralType -> Int -> Trav -> Trav
 traverseArg tt n e   =  traversalFunc tt (traversalNameN tt n) e
 
-traversalNameN :: TraveralType -> Int -> String
+traversalNameN :: TraveralType -> Int -> QName
 traversalNameN tt n | n <= 1    = nm
-                    | otherwise = nm ++ (if n > 1 then show n else "")
+                    | otherwise = nm `f` (if n > 1 then show n else "")
   where nm = traversalName tt
+        f (Qual m x) y = Qual m $ x `g` y
+        f (UnQual x) y = UnQual $ x `g` y
+        g (Ident x) y = Ident $ x ++ y
 
 -- | Information on argument positions
 type ArgPositions = String -> Int

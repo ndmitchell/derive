@@ -28,6 +28,10 @@ isTyFun _ = False
 x ~= y = prettyPrint x == y
 
 
+appP x@App{} y = App x y
+appP x y = App (paren x) (paren y)
+
+
 simplify :: Data a => a -> a
 simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transformBi fTyp . transformBi fExp
     where
@@ -41,12 +45,19 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fExp (InfixApp x op y)
             | op ~= "`const`" = x
             | op ~= "&&" && y ~= "True" = x
+            | x ~= "id" && op ~= "." = y
+            | y ~= "id" && op ~= "." = x
+        fExp (App (App (App flp f) x) y) | flp ~= "flip" = fExp $ appP (fExp $ appP f y) x        
+        fExp (App (Paren x@App{}) y) = fExp $ App x y
+        fExp (App (Paren (InfixApp x op y)) z) | op ~= "." = fExp $ appP x $ fExp $ appP y z
+        fExp (App op x) | op ~= "id" = x
+        fExp (App (App flp con) x) | flp ~= "flip" && con ~= "const" = var "id"
         fExp (App (App con x) y) | con ~= "const" = x
-        fExp (App choose (Tuple [x@(ExpTypeSig _ y _),z])) | choose ~= "choose" && y == z = App (var "return") x
+        fExp (App choose (Tuple [x@(ExpTypeSig _ y _),z])) | choose ~= "choose" && y == z = fExp $ App (var "return") x
         fExp (App op x) | op ~= "id" = x
         fExp (InfixApp (App when true) dot res)
             | when ~= "when" && true ~= "True" = res
-        fExp (App (LeftSection x op) y) = InfixApp x op (paren y)
+        fExp (App (LeftSection x op) y) = fExp $ InfixApp x op (paren y)
         fExp (Paren x) | isAtom x = x
         fExp (Do [Qualifier x]) = x
         fExp (Do (Qualifier (App ret unit):xs)) | ret ~= "return" && unit ~= "()" = fExp $ Do xs
@@ -109,6 +120,7 @@ isGuardFalse _ = False
 isAtom Con{} = True
 isAtom Var{} = True
 isAtom Lit{} = True
+isAtom Paren{} = True
 isAtom _ = False
 
 

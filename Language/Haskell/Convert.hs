@@ -173,6 +173,7 @@ instance Convert HS.Literal TH.Lit where
 
 instance Convert HS.QName TH.Name where
     conv (UnQual x) = c x
+    conv (Qual m x) = c (Ident $ prettyPrint m ++ "." ++ prettyPrint x)
 
 instance Convert HS.PatField TH.FieldPat where
     conv = undefined

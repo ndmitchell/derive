@@ -45,7 +45,7 @@ makeFunctorN :: Int -> Derivation
 makeFunctorN n = traversalDerivation1 functorTraversal{traversalArg = n} "Functor"
 
 functorTraversal = defaultTraversalType
-        { traversalName   = "fmap"
+        { traversalName   = qname "fmap"
         , traverseArrow   = Just functorForArrowType
         , traverseFunc    = \pat rhs -> Match sl (name "") [pVar "_f", pat] Nothing (UnGuardedRhs rhs) (BDecls [])
         }
@@ -57,4 +57,4 @@ functorForArrowType a b
   | isId b            =  RightSection (qvop ".") a
   | otherwise         =  Lambda sl [pVar "arg"] $ b .: var "arg" .: a
  where isId = (var "id" ==)
-       a .: b = apps (Con $ Special Cons) [a,b]
+       a .: b = InfixApp (paren a) (qvop ".") (paren b)

@@ -1,6 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
-
 {-
     This module is not written/maintained by the usual Data.Derive author.
 
@@ -11,30 +8,33 @@
     and CC Twan.
 -}
 
--- NOTE: Cannot be guessed as it relies on type information
-
 module Data.Derive.Foldable(makeFoldable, makeFoldableN) where
 
 {-
-instance Foldable (FailList t1)
-    where foldr _f b (Nil) = b
-          foldr _f b (Fail a1) = b
-          foldr _f b (Const a1 a2) = _f a1 (Data.Foldable.foldr _f b a2)
+import Data.Foldable(Foldable)
+import qualified Data.Foldable(foldr)
 
-instance Foldable Sample
-    where foldr _f b (First) = b
-          foldr _f b (Second a1 a2) = _f a1 (_f a2 b)
-          foldr _f b (Third a1) = _f a1 b
+test :: FailList
+instance Foldable (FailList t1) where
+    foldr _f b Zero = b
+    foldr _f b (Fail a1) = b
+    foldr _f b (Const a1 a2) = _f a1 (Data.Foldable.foldr _f b a2)
 
-instance Foldable (Eitherd t1)
-    where foldr _f b (Leftd a1) = b
-          foldr _f b (Rightd a1) = _f a1 b
+test :: Sample
+instance Foldable Sample where
+    foldr _f b First = b
+    foldr _f b (Second a1 a2) = _f a1 (_f a2 b)
+    foldr _f b (Third a1) = _f a1 b
+
+test :: Either
+instance Foldable (Either t1) where
+    foldr _f b (Left a1) = b
+    foldr _f b (Right a1) = _f a1 b
 -}
 
-import qualified Data.Foldable ( foldr )
-
-import Language.Haskell.TH.All
-import Data.DeriveTraversal
+import Data.Derive.Internal.Traversal
+import Data.Derive.Internal.Derivation
+import Language.Haskell
 
 
 makeFoldable :: Derivation
@@ -44,11 +44,12 @@ makeFoldableN :: Int -> Derivation
 makeFoldableN n = traversalDerivation1 foldrTraversal{traversalArg = n} "Foldable"
 
 foldrTraversal = defaultTraversalType
-        { traversalName   = 'Data.Foldable.foldr
-        , traversalFunc   = \n a -> l1 "flip" (l1 n a)
+        { traversalName   = Qual (ModuleName "Data.Foldable") (Ident "foldr")
+        , traversalFunc   = \n a -> appP (var "flip") $ appP (Var n) a
         , traversalPlus   = fail "variable used in multiple positions in a data type"
-        , traversalId     = l1 "flip" (l0 "const")
-        , traverseTuple   =         foldr (.:) id'
-        , traverseCtor    = const $ foldr (.:) id'
-        , traverseFunc    = \pat rhs -> sclause [vr "_f", vr "b", pat] (AppE rhs (vr "b"))
+        , traversalId     = App (var "flip") (var "const")
+        , traverseTuple   =         foldr (.:) $ var "id"
+        , traverseCtor    = const $ foldr (.:) $ var "id"
+        , traverseFunc    = \pat rhs -> Match sl (name "") [pVar "_f", pVar "b", pat] Nothing (UnGuardedRhs $ appP rhs (var "b")) (BDecls [])
         }
+    where a .: b = InfixApp (paren a) (qvop ".") (paren b)
