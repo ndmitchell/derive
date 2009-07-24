@@ -33,7 +33,7 @@ readHSE file = do
     src <- return $ takeWhile (/= "-}") $ drop 1 $ dropWhile (/= "{-") $
                     dropWhile (not . isPrefixOf "module ") $ lines src
 
-    let mode = defaultParseMode{extensions=[MultiParamTypeClasses,FlexibleContexts,TemplateHaskell,PackageImports]}
+    let mode = defaultParseMode{extensions=[MultiParamTypeClasses,FlexibleContexts,TemplateHaskell,PackageImports,TypeOperators]}
     return $ fromParseResult $ parseFileContentsWithMode mode $ unlines $ "module Example where":src
 
 

@@ -17,6 +17,8 @@ data Computer = Laptop { weight :: Double, speed :: Int }
 
 data Sample a = First | Second a a | Third a
 
+data a :*: b = a :*: b
+
 data Assoced typ = Assoced typ String
 
 data FailList e a = Zero | Fail e | Const a (FailList e a)

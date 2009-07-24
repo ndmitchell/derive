@@ -80,9 +80,11 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fTyp (TyParen x@(TyApp (TyCon (Special ListCon)) _)) = x
         fTyp (TyParen x@TyCon{}) = x
         fTyp (TyParen x@TyVar{}) = x
+        fTyp (TyCon nam) = TyCon $ rename nam
         fTyp x = x
 
         fPat (PParen x@(PApp _ [])) = x
+        fPat (PApp nam xs) = PApp (rename nam) xs
         fPat x = x
 
         fMatch (Match sl nam pat sig (GuardedRhss [GuardedRhs _ [Qualifier x] bod]) decls)
@@ -115,6 +117,10 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
 
 isGuardFalse (Match sl nam pat sig (GuardedRhss [GuardedRhs _ [Qualifier x] bod]) decls) = x ~= "False"
 isGuardFalse _ = False
+
+
+rename (UnQual (Ident ('(':xs))) | head xs `notElem` ",)" = UnQual $ Symbol $ init xs
+rename x = x
 
 
 isAtom Con{} = True
@@ -220,10 +226,12 @@ dataDeclCtors (DataDecl _ _ _ _ _ ctors _) = map Left ctors
 
 ctorDeclName :: CtorDecl -> String
 ctorDeclName (Left (QualConDecl _ _ _ (ConDecl name _))) = prettyPrint name
+ctorDeclName (Left (QualConDecl _ _ _ (InfixConDecl _ name _))) = prettyPrint name
 ctorDeclName (Left (QualConDecl _ _ _ (RecDecl name _))) = prettyPrint name
 
 ctorDeclFields :: CtorDecl -> FieldDecl
 ctorDeclFields (Left (QualConDecl _ _ _ (ConDecl name fields))) = map ((,) "") fields
+ctorDeclFields (Left (QualConDecl _ _ _ (InfixConDecl x1 name x2))) = map ((,) "") [x1,x2]
 ctorDeclFields (Left (QualConDecl _ _ _ (RecDecl name fields))) = [(prettyPrint a, b) | (as,b) <- fields, a <- as]
 
 ctorDeclArity :: CtorDecl -> Int
