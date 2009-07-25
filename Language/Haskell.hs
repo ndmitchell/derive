@@ -57,6 +57,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fExp (App op x) | op ~= "id" = x
         fExp (InfixApp (App when true) dot res)
             | when ~= "when" && true ~= "True" = res
+        fExp (InfixApp x y z) | y ~= "++" && z ~= "[]" = x
         fExp (App (LeftSection x op) y) = fExp $ InfixApp x op (paren y)
         fExp (Paren x) | isAtom x = x
         fExp (Do [Qualifier x]) = x
