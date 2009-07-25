@@ -131,7 +131,6 @@ instance Convert HS.Exp TH.Exp where
     conv (Let x y) = LetE (c x) (c y)
     conv (Case x y) = CaseE (c x) (c y)
     conv (Do x) = DoE (c x)
-    conv (ListComp x y) = CompE (NoBindS (c x) : c y)
     conv (EnumFrom x) = ArithSeqE $ FromR (c x)
     conv (EnumFromTo x y) = ArithSeqE $ FromToR (c x) (c y)
     conv (EnumFromThen x y) = ArithSeqE $ FromThenR (c x) (c y)
@@ -140,6 +139,8 @@ instance Convert HS.Exp TH.Exp where
     conv (ExpTypeSig _ x y) = SigE (c x) (c y)
     conv (RecConstr x y) = RecConE (c x) (c y)
     conv (RecUpdate x y) = RecUpdE (c x) (c y) 
+    -- Work around bug 3395, convert to do notation instead
+    conv (ListComp x y) = c $ Do $ [i | QualStmt i <- y] ++ [Qualifier $ App (var "return") (Paren x)]
 
 instance Convert HS.GuardedRhs (TH.Guard, TH.Exp) where
     conv = undefined
@@ -191,7 +192,7 @@ instance Convert HS.Stmt TH.Stmt where
     conv (Qualifier x) = NoBindS (c x)
 
 instance Convert HS.QualStmt TH.Stmt where
-    conv = undefined
+    conv (QualStmt x) = c x
 
 instance Convert HS.FieldUpdate TH.FieldExp where
     conv (FieldUpdate x y) = (c x, c y)
