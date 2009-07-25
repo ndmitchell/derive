@@ -52,15 +52,15 @@ dslSerial =
     String "t",ShowInt CtorIndex])])])])],MapField (App "Var" (List [
     App "UnQual" (List [App "Ident" (List [Concat (List [String "x",
     ShowInt FieldIndex])])])]))]))]),App "BDecls" (List [List []])]))]
-    )]),Reverse (MapCtor (App "QualStmt" (List [App "Generator" (List
-    [App "PVar" (List [App "Ident" (List [Concat (List [String "t",
-    ShowInt CtorIndex])])]),App "InfixApp" (List [Application (List [
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (
-    List [String "alts",ShowInt CtorArity])])])]),App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "rs"])])]),App "Var" (
-    List [App "UnQual" (List [App "Ident" (List [String "d"])])])]),
-    App "QVarOp" (List [App "UnQual" (List [App "Ident" (List [String
-    "const"])])]),App "RecConstr" (List [App "UnQual" (List [App
-    "Ident" (List [CtorName])]),List []])])])])))])]),App "BDecls" (
-    List [List []])])]])])])]
+    )]),MapCtor (App "QualStmt" (List [App "Generator" (List [App
+    "PVar" (List [App "Ident" (List [Concat (List [String "t",ShowInt
+    CtorIndex])])]),App "InfixApp" (List [Application (List [App "Var"
+    (List [App "UnQual" (List [App "Ident" (List [Concat (List [String
+    "alts",ShowInt CtorArity])])])]),App "Var" (List [App "UnQual" (
+    List [App "Ident" (List [String "rs"])])]),App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "d"])])])]),App "QVarOp"
+    (List [App "UnQual" (List [App "Ident" (List [String "const"])])])
+    ,App "RecConstr" (List [App "UnQual" (List [App "Ident" (List [
+    CtorName])]),List []])])])]))])]),App "BDecls" (List [List []])])]
+    ])])])]
 -- GENERATED STOP

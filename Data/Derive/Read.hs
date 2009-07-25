@@ -11,9 +11,9 @@ module Data.Derive.Read(makeRead) where
 example :: Custom
 instance Read a => Read (Sample a) where
     readsPrec p0 r = 
-        readParen $(bracket 0) (\r0 -> $(comp 0)) r ++
-        readParen $(bracket 1) (\r0 -> $(comp 1)) r ++
-        readParen $(bracket 2) (\r0 -> $(comp 2)) r ++
+        readParen $(bracket 0) (\r0 -> $(comp 0 First )) r ++
+        readParen $(bracket 1) (\r0 -> $(comp 1 Second)) r ++
+        readParen $(bracket 2) (\r0 -> $(comp 2 Third )) r ++
         []
 
 test :: Sample
@@ -63,12 +63,10 @@ test :: (:*:)
 instance (Read a, Read b) => Read ((:*:) a b) where
     readsPrec p0 r =
         readParen (p0 > 10) (\r0 ->
-            [ ((:*:) x1 x2, r5)
-            | ("(", r1) <- lex r0
-            , (":*:", r2) <- lex r1
-            , (")", r3) <- lex r2
-            , (x1, r4) <- readsPrec 11 r3
-            , (x2, r5) <- readsPrec 11 r4]) r
+            [ ((:*:) x1 x2, r3)
+            | ("(:*:)", r1) <- lex r0
+            , (x1, r2) <- readsPrec 11 r1
+            , (x2, r3) <- readsPrec 11 r2]) r
 
 -}
 import Data.List
@@ -89,41 +87,21 @@ makeRead = derivationCustomDSL "Read" custom $
     App "Ident" (List [String "r"])])],App "Nothing" (List []),App
     "UnGuardedRhs" (List [Fold (App "InfixApp" (List [Head,App
     "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String
-    "++"])])]),Tail])) (List [Application (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "readParen"])])]),App
-    "SpliceExp" (List [App "ParenSplice" (List [App "App" (List [App
+    "++"])])]),Tail])) (Concat (List [MapCtor (Application (List [App
     "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "bracket"])])]),App "Lit" (List [App "Int" (List [Int 0])])])])]),
-    App "Paren" (List [App "Lambda" (List [List [App "PVar" (List [App
-    "Ident" (List [Concat (List [String "r",ShowInt (Int 0)])])])],App
-    "SpliceExp" (List [App "ParenSplice" (List [App "App" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String "comp"]
-    )])]),App "Lit" (List [App "Int" (List [Int 0])])])])])])]),App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String "r"])])
-    ])]),Application (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "readParen"])])]),App "SpliceExp" (List [App
-    "ParenSplice" (List [App "App" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "bracket"])])]),App
-    "Lit" (List [App "Int" (List [Int 1])])])])]),App "Paren" (List [
-    App "Lambda" (List [List [App "PVar" (List [App "Ident" (List [
-    Concat (List [String "r",ShowInt (Int 0)])])])],App "SpliceExp" (
-    List [App "ParenSplice" (List [App "App" (List [App "Var" (List [
-    App "UnQual" (List [App "Ident" (List [String "comp"])])]),App
-    "Lit" (List [App "Int" (List [Int 1])])])])])])]),App "Var" (List
-    [App "UnQual" (List [App "Ident" (List [String "r"])])])]),
-    Application (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "readParen"])])]),App "SpliceExp" (List [App
-    "ParenSplice" (List [App "App" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "bracket"])])]),App
-    "Lit" (List [App "Int" (List [Int 2])])])])]),App "Paren" (List [
-    App "Lambda" (List [List [App "PVar" (List [App "Ident" (List [
-    Concat (List [String "r",ShowInt (Int 0)])])])],App "SpliceExp" (
-    List [App "ParenSplice" (List [App "App" (List [App "Var" (List [
-    App "UnQual" (List [App "Ident" (List [String "comp"])])]),App
-    "Lit" (List [App "Int" (List [Int 2])])])])])])]),App "Var" (List
-    [App "UnQual" (List [App "Ident" (List [String "r"])])])]),App
-    "List" (List [List []])])]),App "BDecls" (List [List []])])]])])])
-    ]
+    "readParen"])])]),App "SpliceExp" (List [App "ParenSplice" (List [
+    App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
+    (List [String "bracket"])])]),App "Lit" (List [App "Int" (List [
+    CtorIndex])])])])]),App "Paren" (List [App "Lambda" (List [List [
+    App "PVar" (List [App "Ident" (List [Concat (List [String "r",
+    ShowInt (Int 0)])])])],App "SpliceExp" (List [App "ParenSplice" (
+    List [Application (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "comp"])])]),App "Lit" (List [App "Int" (
+    List [CtorIndex])]),App "Con" (List [App "UnQual" (List [App
+    "Ident" (List [CtorName])])])])])])])]),App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "r"])])])])),List [App
+    "List" (List [List []])]]))]),App "BDecls" (List [List []])])]])])
+    ])]
 -- GENERATED STOP
 
 custom = customSplice splice
@@ -137,26 +115,48 @@ splice d (H.App x (H.Lit (H.Int y))) | x ~= "bracket" =
     then con "False"
     else Paren $ InfixApp (var "p0") (QVarOp $ UnQual $ Symbol ">") (H.Lit $ H.Int 10)
 
-splice d (H.App x (H.Lit (H.Int y))) | x ~= "comp" =
+splice d (H.App (H.App x (H.Lit (H.Int y))) _) | x ~= "comp" =
     if hasFields c then readFields c else readCtor c
     where c = getCtor d y
 
 
 readCtor :: CtorDecl -> Exp
 readCtor c =
-    ListComp (Tuple [cpat, var ('r':show (cn+1))]) $ {- FIXME: serious bug here! -} reverse $
-        QualStmt (Generator sl (PTuple [PLit $ H.String $ ctorDeclName c, pVar "r1"]) (var "lex" `H.App` var "r0")) :
+    ListComp (Tuple [cpat, var ('r':show (cn+1))]) $
+        matchStr (ctorDeclName c) 0 :
         [QualStmt $ Generator sl
             (PTuple [pVar $ v 'x' 0, pVar $ v 'r' 1])
             (apps (var "readsPrec") [H.Lit $ H.Int 11, var $ v 'r' 0])
             | i <- [1..cn], let v c j = c : show (i+j)]
     where
         cn = ctorDeclArity c
-        cpat = apps (con $ ctorDeclName c) $ map (var . ('x':) . show) [1..cn]
+        cpat = apps (Con $ UnQual $ ctorDeclName' c) $ map (var . ('x':) . show) [1..cn]
 
 
 readFields :: CtorDecl -> Exp
-readFields _ = var "todo"        
+readFields c =
+    ListComp (Tuple [cpat, var $ 'r':show ((cn*4)+2)]) $
+        matchStr (ctorDeclName c) 0 :
+        concat [
+            matchStr (r == 1 ? "{" $ ",") r :
+            matchStr fld (r+1) :
+            matchStr "=" (r+2) :
+            QualStmt (Generator sl
+                (PTuple [pVar $ 'x':show i, pVar $ 'r':show (r+4)])
+                (apps (var "readsPrec") [H.Lit $ H.Int 0, var $ 'r':show (r+3)]))
+            : []
+            | (i,r,(fld,_)) <- zip3 [1..] [1,5..] (ctorDeclFields c)
+            ] ++
+        [matchStr "}" ((cn*4)+1)]
+    where
+        cn = ctorDeclArity c
+        cpat = apps (Con $ UnQual $ ctorDeclName' c) $ map (var . ('x':) . show) [1..cn]
+
+
+matchStr :: String -> Int -> QualStmt
+matchStr s i = QualStmt $ Generator sl (PTuple [PLit $ H.String s, pVar $ 'r':show (i+1)]) (var "lex" `H.App` var ('r':show i))
+
+
 
 
 {-

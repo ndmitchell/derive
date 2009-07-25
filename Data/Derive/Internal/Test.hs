@@ -35,4 +35,5 @@ instance Ord (a -> b)
 instance Bounded (a -> b) where minBound = undefined ; maxBound = undefined
 instance Binary (a -> b) where put = undefined ; get = undefined
 instance Eq (a -> b)
+instance Read (a -> b)
 -}

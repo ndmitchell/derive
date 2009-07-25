@@ -226,9 +226,12 @@ dataDeclCtors (DataDecl _ _ _ _ _ ctors _) = map Left ctors
 
 
 ctorDeclName :: CtorDecl -> String
-ctorDeclName (Left (QualConDecl _ _ _ (ConDecl name _))) = prettyPrint name
-ctorDeclName (Left (QualConDecl _ _ _ (InfixConDecl _ name _))) = prettyPrint name
-ctorDeclName (Left (QualConDecl _ _ _ (RecDecl name _))) = prettyPrint name
+ctorDeclName = prettyPrint . ctorDeclName'
+
+ctorDeclName' :: CtorDecl -> Name
+ctorDeclName' (Left (QualConDecl _ _ _ (ConDecl name _))) = name
+ctorDeclName' (Left (QualConDecl _ _ _ (InfixConDecl _ name _))) = name
+ctorDeclName' (Left (QualConDecl _ _ _ (RecDecl name _))) = name
 
 ctorDeclFields :: CtorDecl -> FieldDecl
 ctorDeclFields (Left (QualConDecl _ _ _ (ConDecl name fields))) = map ((,) "") fields
