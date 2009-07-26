@@ -52,7 +52,7 @@ h3 {
 <h1>Data.Derive: A User Manual</h1>
 
 <p style="text-align:right;margin-bottom:25px;">
-    by <a href="http://community.haskell.org/~ndm/">Neil Mitchell</a> &amp; Stefan O'Rear
+    by <a href="http://community.haskell.org/~ndm/">Neil Mitchell</a>
 </p>
 
 <p>
@@ -72,7 +72,7 @@ h3 {
 <h3>Acknowledgements</h3>
 
 <p>
-    Thanks to everyone who has submitted patches and given assistance, including: Twan van Laarhoven, Spencer Janssen, Andrea Vezzosi, Samuel Bronson, Joel Raymont, Benedikt Huber.
+    Thanks to everyone who has submitted patches and given assistance, including: Twan van Laarhoven, Spencer Janssen, Andrea Vezzosi, Samuel Bronson, Joel Raymont, Benedikt Huber, Stefan O'Rear.
 </p>
 
 
@@ -88,9 +88,8 @@ darcs get --partial <a href="http://community.haskell.org/~ndm/darcs/derive">htt
 	Install the program using the standard sequence of Cabal magic:
 </p>
 <pre>
-runhaskell Setup configure
-runhaskell Setup build
-runhaskell Setup install
+cabal update
+cabal install derive
 </pre>
 
 
@@ -205,9 +204,9 @@ module ModuleName where
 </p>
 
 <pre>
+{-# LANGUAGE TemplateHaskell #-}
 import Data.DeriveTH
-import Data.Derive.Eq
-import Data.Derive.Binary
+import Data.Binary
 
 data Color = RGB Int Int Int
            | CMYK Int Int Int Int
@@ -218,7 +217,7 @@ $( derive makeBinary ''Color )
 </pre>
 
 <p>
-	Note two things.  First, we need to import the derivations.  By convention, a derivation for a class <tt>FooBar</tt> is located in module <tt>Data.Derive.FooBar</tt> (nota bene: this need not be in package "derive") and is exported with the name <tt>makeFooBar</tt>.  Secondly, we need to tell the compiler to insert the instance using the TH <em>splice</em> construct, <tt>$( ... )</tt> (the spaces are optional).  The splice causes the compiler to run the function <tt>derive</tt> (exported from <tt>Data.DeriveTH</tt>), passing arguments <tt>makeFooBar</tt> and <tt>''Color</tt>.  The second argument deserves more explanation; it is a quoted symbol, somewhat like a quoted symbol in Lisp and with deliberately similar syntax.  (Two apostrophes are used to specify that this name is to be resolved as a type constructor; just <tt>'Color</tt> would look for a <i>data</i> constructor named <tt>Color</tt>.)
+	We need to tell the compiler to insert the instance using the TH <em>splice</em> construct, <tt>$( ... )</tt> (the spaces are optional).  The splice causes the compiler to run the function <tt>derive</tt> (exported from <tt>Data.DeriveTH</tt>), passing arguments <tt>makeFooBar</tt> and <tt>''Color</tt>.  The second argument deserves more explanation; it is a quoted symbol, somewhat like a quoted symbol in Lisp and with deliberately similar syntax.  (Two apostrophes are used to specify that this name is to be resolved as a type constructor; just <tt>'Color</tt> would look for a <i>data</i> constructor named <tt>Color</tt>.)
 </p>
 
 <h2>Writing a New Derivation</h2>
@@ -233,63 +232,8 @@ $( derive makeBinary ''Color )
 	<li>Not record based - the derivation must not change on record fields. <tt>Show</tt> outputs the fields, so this is not allowed.</li>
 </ul>
 <p>
-	If however your instance does meet these properties, you can use derivation by guess. Many instances do meet these conditions: <tt>Eq</tt>, <tt>Ord</tt>, <tt>Data</tt>, <tt>Serial</tt> etc.
+	If however your instance does meet these properties, you can use derivation by guess. Many instances do meet these conditions, for examples see: <tt>Eq</tt>, <tt>Ord</tt>, <tt>Data</tt>, <tt>Serial</tt> etc. If however you need to code the derivation manually see examples such as <tt>Update</tt> and <tt>Functor</tt>.
 </p>
-
-<h3>Derivation by Guess</h3>
-
-<p>
-	This is a unique feature of this library. You simply give an instance, and the program guesses what your instance derivation code should look like, and returns it. You paste the code in, and you have written an instance without learning any of the types or functions required to construct the abstract syntax. For example, lets take the <tt>Data</tt> instance. I recommend reading through the source in <tt>Data.Derive.Data</tt> first, then matching it to this description.
-</p>
-<p>
-	First copy the Data file, changing all the obvious bits (<tt>makeData</tt> etc) to whatever name you want. Next change the example to match your requirements. You basically define an instance for <tt>DataName</tt> which is defined as:
-</p>
-<pre>
-data DataName a = CtorZero
-                | CtorOne  a
-                | CtorTwo  a a
-                | CtorTwo' a a
-</pre>
-<p>
-	Try and make your declaration as inductive as possible. Use <tt>x1</tt> etc for variable names within a constructor match. Place all the constructors in the correct order. If you would be unable to see an obvious pattern, then the guesser won't either. Once we have written our sample instance:
-</p>
-<pre>
-> <b>ghci Data.Derive.Data -DGUESS</b>
-   ___         ___ _
-  / _ \ /\  /\/ __(_)
- / /_\// /_/ / /  | |      GHC Interactive, version 6.6, for Haskell 98.
-/ /_\\/ __  / /___| |      http://www.haskell.org/ghc/
-\____/\/ /_/\____/|_|      Type :? for help.
-
-Loading package base ... linking ... done.
-Ok, modules loaded: Data.Derive.Data, Data.DeriveGuess, Language.Haskell.TH.All,
- Language.Haskell.TH.SYB, Language.Haskell.TH.Data, Language.Haskell.TH.FixedPpr
-, Language.Haskell.TH.Helper, Language.Haskell.TH.Peephole.
-*Data.Derive.Data> <b>guess example</b>
-
-makeData = Derivation data' "Data"
-data' dat = [instance_context ["Data","Typeable"] "Data" dat [(FunD (mkName
-    "gfoldl") ((map (\(ctorInd,ctor) -> (Clause [(VarP (mkName "k")),(VarP (
-    mkName "r")),(ConP (mkName ("" ++ ctorName ctor)) ((map (\field -> (VarP (
-    mkName ("x" ++ show field)))) (id [1..ctorArity ctor]))++[]))] (NormalB (
-    foldr1With (VarE (mkName "k")) ((map (\field -> (VarE (mkName ("x" ++ show
-    field)))) (reverse [1..ctorArity ctor]))++[(AppE (VarE (mkName "r")) (ConE
-    (mkName ("" ++ ctorName ctor))))]++[]))) [])) (id (zip [0..] (dataCtors dat
-    ))))++[]))]]
-</pre>
-<p>
-	And thats it. The block of code spewed out will generate <tt>Data</tt> instances, we just paste it back into the file.
-</p>
-<p>
-	There is lots of clever stuff, induction hypotheses etc going on behind all this. If you have an instance which you think should be inferable, but isn't, then <a href="http://www-users.cs.york.ac.uk/~ndm/contact/">let me know</a>.
-</p>
-
-<h3>Derivation by Coding</h3>
-
-<p>
-	We use the Template Haskell data types extensively, for examples take a look at <tt>Binary</tt> and <tt>Functor</tt>. Its not particularly hard, but it is harder than just having them guessed.
-</p>
-
 
     </body>
 </html>
