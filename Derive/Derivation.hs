@@ -32,7 +32,12 @@ wantDeriveAnnotation src decls = [(d, decl) | (pos, ds) <- annotations, let decl
         annotations = [((i,j),parse xs) | (i,s) <- zip [1..] $ lines src, (j,'{':'-':'!':xs) <- zip [1..] $ tails s]
         
         parse :: String -> [String]
-        parse = words . reps ',' ' ' . takeWhile (/= '-')
+        parse = words . reps ',' ' ' . closeComment
+
+        closeComment ('!':'-':'}':xs) = ""
+        closeComment ('-':'}':xs) = ""
+        closeComment (x:xs) = x : closeComment xs
+        closeComment [] = ""
         
         match :: (Int,Int) -> DataDecl
         match p = head [d | d <- reverse decls, let sl = dataDeclSrcLoc d, (srcLine sl, srcColumn sl) < p]
