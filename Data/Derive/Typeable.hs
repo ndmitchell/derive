@@ -10,16 +10,15 @@
 -}
 module Data.Derive.Typeable(makeTypeable) where
 {-
+import Data.Typeable
 
 test :: Bool
-
 typename_Bool :: TyCon
 typename_Bool = mkTyCon "Example.Bool"
 instance Typeable Bool where
     typeOf _ = mkTyConApp typename_Bool []
 
 test :: Sample
-
 typename_Sample :: TyCon
 typename_Sample = mkTyCon "Example.Sample"
 instance Typeable1 Sample where
@@ -28,7 +27,6 @@ instance Typeable a => Typeable (Sample a) where
     typeOf = typeOfDefault
 
 test :: Either
-
 typename_Either :: TyCon
 typename_Either = mkTyCon "Example.Either"
 instance Typeable2 Either where

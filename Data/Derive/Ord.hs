@@ -1,7 +1,8 @@
 module Data.Derive.Ord where
 {-
-example :: Sample
+import Prelude
 
+example :: Sample
 instance Ord a => Ord (Sample a) where
     compare a b = check a b
         where

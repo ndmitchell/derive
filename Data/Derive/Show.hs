@@ -7,6 +7,7 @@
 module Data.Derive.Show(makeShow) where
 
 {-
+import Prelude
 
 example :: Custom
 instance Show a => Show (Sample a) where

@@ -8,6 +8,8 @@
 module Data.Derive.Read(makeRead) where
 
 {-
+import Prelude
+
 example :: Custom
 instance Read a => Read (Sample a) where
     readsPrec p0 r = 

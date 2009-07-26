@@ -15,6 +15,8 @@
 module Data.Derive.Functor(makeFunctor,makeFunctorN) where
 
 {-
+import Prelude
+
 test :: FailList
 instance Functor (FailList t1) where
     fmap _f Zero = Zero

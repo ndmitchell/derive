@@ -1,6 +1,6 @@
 module Data.Derive.EnumCyclic where
 {-
-import Prelude
+import Prelude(Enum)
 
 example :: Sample
 

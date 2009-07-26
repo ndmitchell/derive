@@ -18,14 +18,14 @@ evil = words $ "PlateDirect TTypeable Uniplate"
 generate :: IO ()
 generate = do
     xs <- getDirectoryContents "Data/Derive"
-    xs <- return [x | x <- xs, takeExtension x == ".hs", x /= "All.hs"]
+    xs <- return [x | x <- xs, takeExtension x == ".hs", x /= "All.hs", takeBaseName x `notElem` evil]
     lis <- mapM generateFile $ map ("Data/Derive" </>) xs
     let names = map dropExtension xs
         n = maximum $ map length names
     writeGenerated "Data/Derive/All.hs" $
         ["import Data.Derive." ++ x ++ replicate (4 + n - length x) ' ' ++ "as D" | x <- names] ++
         ["derivations :: [Derivation]"
-        ,"derivations = [make" ++ concat (intersperse ",make" (names \\ evil)) ++ "]"]
+        ,"derivations = [make" ++ concat (intersperse ",make" names) ++ "]"]
     writeGenerated "derive.htm" $ ["-->"] ++ lis ++ ["<!--"]
     writeGenerated "derive.cabal" $ map ("        Data.Derive."++) names
 
@@ -68,8 +68,23 @@ generateFile file = do
          else when b $
             error $ "Previously generated dynamic instance can not be regenerated, " ++ name
 
-    let pkg = head $ mapMaybe importPkg (srcImport src) ++ ["base"]
-    return $ "<li><b><a href='http://hackage.haskell.org/'>" ++ name ++ "</a></b> - from the library " ++ pkg ++ "</li>"
+    let imp = listToMaybe $ srcImport src
+    return $ concat $
+        ["<li>"
+        ,"<b><a href='" ++ instUrl name imp ++ "'>" ++ name ++ "</a></b>"] ++
+        [" - from the library <a href='" ++ pkgUrl pkg ++ "'>" ++ pkg ++ "</a>" | Just imp <- [imp], let pkg = fromMaybe "base" $ importPkg imp] ++
+        ["</li>"]
+
+pkgUrl x = "http://hackage.haskell.org/package/" ++ x
+
+instUrl name Nothing = "http://hackage.haskell.org/packages/archive/derive/latest/doc/html/Data-Derive-" ++ name ++ ".html"
+instUrl name (Just x) = "http://hackage.haskell.org/packages/archive/" ++ pkgName ++ "/" ++ pkgVersion ++ "/doc/html/" ++ modu ++ ".html#t%3A" ++ nam
+    where
+        (a,b) = break (== '-') $ fromMaybe "base" $ importPkg x
+        pkgName = a
+        pkgVersion = if null b then "latest" else tail b
+        modu = reps '.' '-' $ prettyPrint $ importModule x
+        nam = case importSpecs x of Just (False,IAbs y:_) -> prettyPrint y ; _ -> name
 
 
 wrap :: Int -> String -> [String]

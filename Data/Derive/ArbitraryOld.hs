@@ -1,6 +1,6 @@
 module Data.Derive.ArbitraryOld where
 {-
-import "QuickCheck-1" Test.QuickCheck
+import "QuickCheck-1.1.0.0" Test.QuickCheck(Arbitrary)
 
 example :: Sample
 

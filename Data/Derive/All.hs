@@ -26,7 +26,6 @@ import Data.Derive.LazySet          as D
 import Data.Derive.Monoid           as D
 import Data.Derive.NFData           as D
 import Data.Derive.Ord              as D
-import Data.Derive.PlateDirect      as D
 import Data.Derive.PlateTypeable    as D
 import Data.Derive.Read             as D
 import Data.Derive.Ref              as D
@@ -34,9 +33,7 @@ import Data.Derive.Serial           as D
 import Data.Derive.Set              as D
 import Data.Derive.Show             as D
 import Data.Derive.Traversable      as D
-import Data.Derive.TTypeable        as D
 import Data.Derive.Typeable         as D
-import Data.Derive.Uniplate         as D
 import Data.Derive.Update           as D
 derivations :: [Derivation]
 derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFold,makeFoldable,makeFrom,makeFunctor,makeHas,makeIs,makeLazySet,makeMonoid,makeNFData,makeOrd,makePlateTypeable,makeRead,makeRef,makeSerial,makeSet,makeShow,makeTraversable,makeTypeable,makeUpdate]
