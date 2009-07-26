@@ -15,6 +15,9 @@ data Either a b = Left a | Right b
 data Computer = Laptop { weight :: Double, speed :: Int }
               | Desktop { speed :: Int }
 
+data PolyRecord i = PR { pr1 :: i,
+                         pr2 :: [i] }
+
 data Sample a = First | Second a a | Third a
 
 data a :*: b = a :*: b
