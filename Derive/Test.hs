@@ -31,10 +31,10 @@ listType = DataDecl sl DataType [] (Ident "[]") [UnkindedVar $ Ident "a"]
 -- test each derivation
 test :: IO ()
 test = do
-    decls <- fmap moduleDecls $ readHSE "Data/Derive/Internal/Test.hs"
+    decls <- fmap (filter isDataDecl . moduleDecls) $ readHSE "Data/Derive/Internal/Test.hs"
 
     -- check the test bits
-    let ts = ("[]",listType) : map (dataDeclName &&& id) (filter isDataDecl decls)
+    let ts = ("[]",listType) : map (dataDeclName &&& id) decls
     mapM_ (testFile ts) derivations
 
     -- check the $(derive) bits
@@ -76,12 +76,12 @@ autoTest ss ts ds =
     [prettyPrint t | t <- ts2] ++
     ["$(derives [make" ++ derivationName d ++ "] " ++ types ++ ")" | d <- ds2]
     where
-        types = "[" ++ intercalate "," ["''" ++ dataDeclName t | t@DataDecl{} <- ts2] ++ "]"
+        types = "[" ++ intercalate "," ["''" ++ dataDeclName t | t <- ts2] ++ "]"
         ts2 = filter (not . isBuiltIn) ts
         ds2 = filter (flip notElem ignore . derivationName) $ order ds
         ss2 = filter (flip notElem ignore . srcName) ss
 
-isBuiltIn x = isDataDecl x && dataDeclName x `elem` ["Bool","Either"]
+isBuiltIn x = dataDeclName x `elem` ["Bool","Either"]
 
 
 

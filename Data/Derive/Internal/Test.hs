@@ -26,14 +26,4 @@ data FailList e a = Zero | Fail e | Const a (FailList e a)
 data State s a = StateT (s -> (s, a))
 
 data TwoParam a b = TwoParam b
-
-
-instance Show (a -> b)
-instance Default (a -> b) where def = undefined
-instance NFData (a -> b)
-instance Ord (a -> b)
-instance Bounded (a -> b) where minBound = undefined ; maxBound = undefined
-instance Binary (a -> b) where put = undefined ; get = undefined
-instance Eq (a -> b)
-instance Read (a -> b)
 -}
