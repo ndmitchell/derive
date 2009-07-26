@@ -140,7 +140,7 @@ instance Convert HS.Exp TH.Exp where
     conv (RecConstr x y) = RecConE (c x) (c y)
     conv (RecUpdate x y) = RecUpdE (c x) (c y) 
     -- Work around bug 3395, convert to do notation instead
-    conv (ListComp x y) = c $ Do $ [i | QualStmt i <- y] ++ [Qualifier $ App (var "return") (Paren x)]
+    conv (ListComp x y) = CompE $ c $ y ++ [QualStmt $ Qualifier x]
 
 instance Convert HS.GuardedRhs (TH.Guard, TH.Exp) where
     conv = undefined
