@@ -20,26 +20,40 @@ Description:
 Extra-Source-Files:
     derive.htm
 
-Flag small_base
-    Description: Choose the new smaller, split-up base package.
-
 Executable derive
     Main-Is: Main.hs
 
+    Other-Modules:
+        Derive.Derivation
+        Derive.Flags
+        Derive.Generate
+        Derive.Test
+        Derive.Utils
+
+    Build-Depends:
+        directory, process, bytestring
+
 Library
-    Build-Depends: haskell-src-meta, haskell-src-exts, filepath, mtl
-    if impl(ghc >= 6.10)
-        build-depends: base == 4.*, syb
-    if flag(small_base)
-        Build-Depends: base >= 3, containers, pretty, packedstring, random, process, directory
-    else
-        Build-Depends: base < 3
+    Build-Depends:
+        haskell-src-exts == 1.1.*, filepath, mtl,
+        base == 4.*, syb, template-haskell, uniplate, containers,
+        pretty, packedstring
 
     Exposed-Modules:
-        Data.DeriveGuess
         Data.DeriveTH
-        Data.DeriveTraversal
+        Data.DeriveDSL
         Data.Derive.All
+        Data.Derive.DSL.Apply
+        Data.Derive.DSL.Derive
+        Data.Derive.DSL.DSL
+        Data.Derive.DSL.HSE
+        Data.Derive.DSL.SYB
+        Data.Derive.Instance.Arities
+        Data.Derive.Class.Arities
+        Data.Derive.Class.Default
+        Data.Derive.Internal.Derivation
+        Data.Derive.Internal.Instance
+        Data.Derive.Internal.Traversal
         Language.Haskell.TH.All
         Language.Haskell.TH.Data
         Language.Haskell.TH.ExpandSynonym
