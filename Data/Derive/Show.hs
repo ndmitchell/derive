@@ -18,15 +18,15 @@ instance Show a => Show (Sample a) where
 
 test :: Sample
 instance Show a => Show (Sample a) where
-    showsPrec p First = showString "First"
+    showsPrec _ First = showString "First"
     showsPrec p (Second x1 x2) = showParen (p > 10) $ showString "Second " . showsPrec 11 x1 . showChar ' ' . showsPrec 11 x2
     showsPrec p (Third x1) = showParen (p > 10) $ showString "Third " . showsPrec 11 x1
 
 test :: Computer
 instance Show Computer where
-    showsPrec p (Laptop x1 x2) =
+    showsPrec _ (Laptop x1 x2) =
         showString "Laptop {weight = " . showsPrec 0 x1 . showString ", speed = " . showsPrec 0 x2 . showChar '}'
-    showsPrec p (Desktop x1) =
+    showsPrec _ (Desktop x1) =
         showString "Desktop {speed = " . showsPrec 0 x1 . showChar '}'
 
 test :: (:*:)

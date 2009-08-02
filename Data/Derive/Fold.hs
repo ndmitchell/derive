@@ -14,25 +14,25 @@ module Data.Derive.Fold(makeFold) where
 test :: Computer
 
 foldComputer :: (Double -> Int -> a) -> (Int -> a) -> Computer -> a
-foldComputer f1 f2 (Laptop x1 x2) = f1 x1 x2
-foldComputer f1 f2 (Desktop x1) = f2 x1
+foldComputer f _ (Laptop x1 x2) = f x1 x2
+foldComputer _ f (Desktop x1) = f x1
 
 test :: Assoced
 
 foldAssoced :: (typ -> String -> a) -> Assoced typ -> a
-foldAssoced f1 (Assoced x1 x2) = f1 x1 x2
+foldAssoced f (Assoced x1 x2) = f x1 x2
 
 test :: Either
 
 foldEither :: (a -> c) -> (b -> c) -> Either a b -> c
-foldEither f1 f2 (Left x1) = f1 x1
-foldEither f1 f2 (Right x1) = f2 x1
+foldEither f _ (Left x1) = f x1
+foldEither _ f (Right x1) = f x1
 
 test :: Bool
 
 foldBool :: a -> a -> Bool -> a
-foldBool f1 f2 False = f1
-foldBool f1 f2 True = f2
+foldBool f _ False = f
+foldBool _ f True = f
 
 -}
 
@@ -47,13 +47,13 @@ makeFold = Derivation "Fold" $ \(_,d) -> Right $ simplify $ mkFold d
 
 
 mkFold :: DataDecl -> [Decl]
-mkFold d = [TypeSig sl [name n] (foldType d), FunBind $ zipWith f funs $ dataDeclCtors d]
+mkFold d = [TypeSig sl [name n] (foldType d), FunBind $ zipWith f [0..] $ dataDeclCtors d]
     where
         n = "fold" ++ title (dataDeclName d)
-        funs = ['f' : show i | i <- [1..length (dataDeclCtors d)]]
-        f fun c = Match sl (name n) pat Nothing (UnGuardedRhs bod) (BDecls [])
-            where pat = map pVar funs ++ [PParen $ PApp (qname $ ctorDeclName c) (map pVar vars)]
-                  bod = apps (var fun) (map var vars)
+        f i c = Match sl (name n) pat Nothing (UnGuardedRhs bod) (BDecls [])
+            where pat = replicate i PWildCard ++ [pVar "f"] ++ replicate (length (dataDeclCtors d) - i - 1) PWildCard ++
+                        [PParen $ PApp (qname $ ctorDeclName c) (map pVar vars)]
+                  bod = apps (var "f") (map var vars)
                   vars = ['x' : show i | i <- [1..length (ctorDeclFields c)]]
 
 

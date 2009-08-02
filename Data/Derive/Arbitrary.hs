@@ -14,6 +14,7 @@ instance Arbitrary (Sample a) where
                     return (Second x1 x2)
             2 -> do x1 <- arbitrary
                     return (Third x1)
+            _ -> error "FATAL ERROR: Arbitrary instance, logic bug"
 
 test :: State
 instance (CoArbitrary s, Arbitrary s, Arbitrary a) => Arbitrary (State s a) where
@@ -49,19 +50,25 @@ makeArbitrary = derivationCustomDSL "Arbitrary" custom $
     "Symbol" (List [String "-"])])]),App "Lit" (List [App "Int" (List
     [Int 1])])])]])])]),App "Qualifier" (List [App "Case" (List [App
     "Var" (List [App "UnQual" (List [App "Ident" (List [String "x"])])
-    ]),MapCtor (App "Alt" (List [App "PLit" (List [App "Int" (List [
-    CtorIndex])]),App "UnGuardedAlt" (List [App "Do" (List [Concat (
-    List [MapField (App "Generator" (List [App "PVar" (List [App
-    "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])]),
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "arbitrary"])])])])),List [App "Qualifier" (List [App "App" (List
-    [App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "return"])])]),App "Paren" (List [Application (Concat (List [List
-    [App "Con" (List [App "UnQual" (List [App "Ident" (List [CtorName]
-    )])])],MapField (App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [Concat (List [String "x",ShowInt FieldIndex])])])]))]))])])
-    ])]])])]),App "BDecls" (List [List []])]))])])]])]),App "BDecls" (
-    List [List []])])])])]
+    ]),Concat (List [MapCtor (App "Alt" (List [App "PLit" (List [App
+    "Int" (List [CtorIndex])]),App "UnGuardedAlt" (List [App "Do" (
+    List [Concat (List [MapField (App "Generator" (List [App "PVar" (
+    List [App "Ident" (List [Concat (List [String "x",ShowInt
+    FieldIndex])])]),App "Var" (List [App "UnQual" (List [App "Ident"
+    (List [String "arbitrary"])])])])),List [App "Qualifier" (List [
+    App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
+    (List [String "return"])])]),App "Paren" (List [Application (
+    Concat (List [List [App "Con" (List [App "UnQual" (List [App
+    "Ident" (List [CtorName])])])],MapField (App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [Concat (List [String "x",
+    ShowInt FieldIndex])])])]))]))])])])]])])]),App "BDecls" (List [
+    List []])])),List [App "Alt" (List [App "PWildCard" (List []),App
+    "UnGuardedAlt" (List [App "App" (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "error"])])]),App "Lit"
+    (List [App "String" (List [String
+    "FATAL ERROR: Arbitrary instance, logic bug"])])])]),App "BDecls"
+    (List [List []])])]])])])]])]),App "BDecls" (List [List []])])])])
+    ]
 -- GENERATED STOP
 
 custom = customContext context

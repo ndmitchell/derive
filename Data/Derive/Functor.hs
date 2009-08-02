@@ -19,8 +19,8 @@ import Prelude
 
 test :: FailList
 instance Functor (FailList t1) where
-    fmap _f Zero = Zero
-    fmap _f (Fail a1) = Fail a1
+    fmap _  Zero = Zero
+    fmap _  (Fail a1) = Fail a1
     fmap _f (Const a1 a2) = Const (_f a1) (fmap _f a2)
 
 test :: State
@@ -29,7 +29,7 @@ instance Functor (State t1) where
 
 test :: Sample
 instance Functor Sample where
-    fmap _f First = First
+    fmap _  First = First
     fmap _f (Second a1 a2) = Second (_f a1) (_f a2)
     fmap _f (Third a1) = Third (_f a1)
 -}

@@ -68,11 +68,12 @@ ignore = ["ArbitraryOld","Serial","BinaryDefer","EnumCyclic","Ref","PlateTypeabl
 autoTest :: [Src] -> [DataDecl] -> [Derivation] -> [String]
 autoTest ss ts ds =
     ["{-# LANGUAGE TemplateHaskell,FlexibleInstances,MultiParamTypeClasses #-}"
-    ,"{-# OPTIONS_GHC -fno-warn-missing-fields #-}"
+    ,"{-# OPTIONS_GHC -Wall -fno-warn-missing-fields #-}"
     ,"import Data.DeriveTH"
-    ,"import Derive.TestInstances"] ++
+    ,"import Derive.TestInstances()"] ++
     [prettyPrint i | s <- ss2, i <- srcImportStd s] ++
-    ["main = putStrLn \"Type checking successful\""] ++
+    ["main :: IO ()"
+    ,"main = putStrLn \"Type checking successful\""] ++
     [prettyPrint t | t <- ts2] ++
     ["$(derives [make" ++ derivationName d ++ "] " ++ types ++ ")" | d <- ds2]
     where

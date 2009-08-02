@@ -16,14 +16,14 @@ data Derivation = Derivation
 
 
 derivationDSL :: String -> DSL -> Derivation
-derivationDSL name dsl = Derivation name $ applyDSL dsl . snd
+derivationDSL name dsl = derivationCustomDSL name (const id) dsl
 
 
 derivationCustomDSL :: String -> (FullDataDecl -> [Decl] -> [Decl]) -> DSL -> Derivation
 derivationCustomDSL name custom dsl = Derivation name $
     \d -> case applyDSL dsl $ snd d of
               Left x -> Left x
-              Right x -> Right $ custom d x
+              Right x -> Right $ simplify $ custom d x
 
 
 customSplice :: (FullDataDecl -> Exp -> Exp) -> (FullDataDecl -> [Decl] -> [Decl])

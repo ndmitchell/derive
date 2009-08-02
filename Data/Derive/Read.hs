@@ -38,7 +38,7 @@ instance Read a => Read (Sample a) where
 
 test :: Computer
 instance Read Computer where
-    readsPrec p0 r =
+    readsPrec _ r =
         readParen False (\r0 ->
             [ (Laptop x1 x2, r10)
             | ("Laptop", r1) <- lex r0

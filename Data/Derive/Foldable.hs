@@ -16,19 +16,19 @@ import qualified Data.Foldable(foldr)
 
 test :: FailList
 instance Foldable (FailList t1) where
-    foldr _f b Zero = b
-    foldr _f b (Fail a1) = b
+    foldr _  b Zero = b
+    foldr _  b (Fail _) = b
     foldr _f b (Const a1 a2) = _f a1 (Data.Foldable.foldr _f b a2)
 
 test :: Sample
 instance Foldable Sample where
-    foldr _f b First = b
+    foldr _  b First = b
     foldr _f b (Second a1 a2) = _f a1 (_f a2 b)
     foldr _f b (Third a1) = _f a1 b
 
 test :: Either
 instance Foldable (Either t1) where
-    foldr _f b (Left a1) = b
+    foldr _  b (Left _) = b
     foldr _f b (Right a1) = _f a1 b
 -}
 

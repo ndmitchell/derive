@@ -14,9 +14,9 @@ instance Ord a => Ord (Sample a) where
             EQ & x = x
             x & _ = x
 
-            tag (First{}) = 0
-            tag (Second{}) = 1
-            tag (Third{}) = 2
+            tag (First{}) = 0 :: Int
+            tag (Second{}) = 1 :: Int
+            tag (Third{}) = 2 :: Int
 
 -}
 -- GENERATED START
@@ -87,6 +87,7 @@ dslOrd =
     App "Ident" (List [String "tag"]),List [App "PParen" (List [App
     "PRec" (List [App "UnQual" (List [App "Ident" (List [CtorName])]),
     List []])])],App "Nothing" (List []),App "UnGuardedRhs" (List [App
-    "Lit" (List [App "Int" (List [CtorIndex])])]),App "BDecls" (List [
-    List []])]))])]])])]])])])]
+    "ExpTypeSig" (List [App "Lit" (List [App "Int" (List [CtorIndex])]
+    ),App "TyCon" (List [App "UnQual" (List [App "Ident" (List [String
+    "Int"])])])])]),App "BDecls" (List [List []])]))])]])])]])])])]
 -- GENERATED STOP

@@ -47,6 +47,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
             | op ~= "&&" && y ~= "True" = x
             | x ~= "id" && op ~= "." = y
             | y ~= "id" && op ~= "." = x
+        fExp (InfixApp (Lit (String x)) op (Lit (String y))) | op ~= "++" = Lit $ String $ x ++ y
         fExp (App (App (App flp f) x) y) | flp ~= "flip" = fExp $ appP (fExp $ appP f y) x        
         fExp (App (Paren x@App{}) y) = fExp $ App x y
         fExp (App (Paren (InfixApp x op y)) z) | op ~= "." = fExp $ appP x $ fExp $ appP y z
@@ -71,10 +72,11 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
             | x ~= "True" = t
             | x ~= "False" = f
         fExp (App (App when b) x)
-            | b ~= "True" = x
-            | b ~= "False" = App (Var $ UnQual $ Ident "return") (Con $ Special $ TupleCon Boxed 0)
+            | when ~= "when" && b ~= "True" = x
+            | when ~= "when" && b ~= "False" = App (Var $ UnQual $ Ident "return") (Con $ Special $ TupleCon Boxed 0)
         fExp (App (Paren (Lambda _ [PVar x] y)) z) | once x2 y = fExp $ subst x2 z y
             where x2 = Var $ UnQual x
+        fExp (App (Paren (Lambda _ [PWildCard] x)) _) = x
         fExp x = x
 
         fTyp (TyApp x y) | x ~= "[]" = TyApp (TyCon (Special ListCon)) y
@@ -92,7 +94,11 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
             | x ~= "True" = fMatch $ Match sl nam pat sig (UnGuardedRhs bod) decls
         fMatch (Match sl nam [PVar x] sig (UnGuardedRhs (Case (Var (UnQual x2)) [Alt _ pat (UnGuardedAlt y) (BDecls [])])) decls)
             | x == x2 = fMatch $ Match sl nam [PParen pat] sig (UnGuardedRhs y) decls
-        fMatch (Match a b c d e bind) = fBinds (Match a b c d e) bind
+        fMatch o@(Match a b c d e bind) = fBinds (Match a b (transformBi f c) d e) bind
+            where
+                known = nub [x | UnQual x <- universeBi o]
+                f (PVar x) | x `notElem` known = PWildCard
+                f x = x
 
         fDecl (PatBind a b c d bind) = fBinds (PatBind a b c d) bind
         fDecl (FunBind xs) = FunBind $ filter (not . isGuardFalse) xs

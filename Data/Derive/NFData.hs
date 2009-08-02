@@ -1,6 +1,6 @@
 module Data.Derive.NFData where
 {-
-import "parallel" Control.Parallel.Strategies
+import "parallel" Control.Parallel.Strategies(NFData, rnf)
 
 example :: Sample
 instance NFData a => NFData (Sample a) where

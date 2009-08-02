@@ -1,37 +1,33 @@
-module Data.Derive.Is where
+module Data.Derive.Is(makeIs) where
 {-
 
-example :: Sample
+test :: Sample
 
-isFirst  (First {}) = True; isFirst  _ | length [First{},Second{},Third{}] > 1 = False
-isSecond (Second{}) = True; isSecond _ | length [First{},Second{},Third{}] > 1 = False
-isThird  (Third {}) = True; isThird  _ | length [First{},Second{},Third{}] > 1 = False
+isFirst :: Sample a -> Bool
+isFirst (First{}) = True ; isFirst _ = False
+
+isSecond :: Sample a -> Bool
+isSecond (Second{}) = True ; isSecond _ = False
+
+isThird :: Sample a -> Bool
+isThird (Third{}) = True ; isThird _ = False
 
 -}
--- GENERATED START
 
-import Data.Derive.DSL.DSL
+import Language.Haskell
 import Data.Derive.Internal.Derivation
 
-makeIs :: Derivation
-makeIs = derivationDSL "Is" dslIs
 
-dslIs =
-    MapCtor (App "FunBind" (List [List [App "Match" (List [App "Ident"
-    (List [Concat (List [String "is",CtorName])]),List [App "PParen" (
-    List [App "PRec" (List [App "UnQual" (List [App "Ident" (List [
-    CtorName])]),List []])])],App "Nothing" (List []),App
-    "UnGuardedRhs" (List [App "Con" (List [App "UnQual" (List [App
-    "Ident" (List [String "True"])])])]),App "BDecls" (List [List []])
-    ]),App "Match" (List [App "Ident" (List [Concat (List [String "is"
-    ,CtorName])]),List [App "PWildCard" (List [])],App "Nothing" (List
-    []),App "GuardedRhss" (List [List [App "GuardedRhs" (List [List [
-    App "Qualifier" (List [App "InfixApp" (List [App "App" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "length"])])]),App "List" (List [MapCtor (App "RecConstr" (List [
-    App "UnQual" (List [App "Ident" (List [CtorName])]),List []]))])])
-    ,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
-    String ">"])])]),App "Lit" (List [App "Int" (List [Int 1])])])])],
-    App "Con" (List [App "UnQual" (List [App "Ident" (List [String
-    "False"])])])])]]),App "BDecls" (List [List []])])]]))
--- GENERATED STOP
+makeIs :: Derivation
+makeIs = Derivation "Is" $ \(_,d) -> Right $ concatMap (makeIsCtor d) $ dataDeclCtors d
+
+
+makeIsCtor :: DataDecl -> CtorDecl -> [Decl]
+makeIsCtor d c =
+        [TypeSig sl [name nam] (dataDeclType d `TyFun` tyCon "Bool")
+        ,FunBind $ match : [defMatch | length (dataDeclCtors d) > 1]]
+    where
+        nam = "is" ++ ctorDeclName c
+        
+        match = Match sl (name nam) [PParen $ PRec (qname $ ctorDeclName c) []] Nothing (UnGuardedRhs $ con "True") (BDecls [])
+        defMatch = Match sl (name nam) [PWildCard] Nothing (UnGuardedRhs $ con "False") (BDecls [])

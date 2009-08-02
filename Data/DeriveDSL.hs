@@ -15,7 +15,7 @@ deriveDSL = listToMaybe . derive
 
 
 applyDSL :: DSL -> DataDecl -> Either String [Decl]
-applyDSL dsl inp = Right $ simplify $ apply dsl $ toInput inp
+applyDSL dsl inp = Right $ apply dsl $ toInput inp
 
 
 dynamicDSL :: DSL -> Maybe [Decl]

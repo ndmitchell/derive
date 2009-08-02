@@ -16,12 +16,15 @@ test :: Sample
 
 fromFirst :: Sample a -> ()
 fromFirst First = ()
+fromFirst _ = error "fromFirst failed, not a First"
 
 fromSecond :: Sample a -> (a, a)
 fromSecond (Second x1 x2) = (x1,x2)
+fromSecond _ = error "fromSecond failed, not a Second"
 
 fromThird :: Sample a -> a
 fromThird (Third x1) = x1
+fromThird _ = error "fromThird failed, not a Third"
 
 -}
 
@@ -34,7 +37,7 @@ makeFrom = Derivation "From" $ \(_,d) -> Right $ concatMap (makeFromCtor d) $ da
 
 
 makeFromCtor :: DataDecl -> CtorDecl -> [Decl]
-makeFromCtor d c = [TypeSig sl [name from] typ, FunBind [match]]
+makeFromCtor d c = [TypeSig sl [name from] typ, FunBind $ match : [defMatch | length (dataDeclCtors d) > 1]]
     where
         n = ctorDeclName c
         from = "from" ++ n
@@ -46,6 +49,9 @@ makeFromCtor d c = [TypeSig sl [name from] typ, FunBind [match]]
         pat = (length vars == 0 ? id $ PParen) $ PApp (qname n) (map pVar vars)
         vars = take (length $ ctorDeclFields c) $ map ((:) 'x' . show) [1..]
         rhs = valTuple $ map var vars
+
+        defMatch = Match sl (name from) [PWildCard] Nothing (UnGuardedRhs err) (BDecls [])
+        err = App (var "error") $ Lit $ String $ from ++ " failed, not a " ++ n
 
 
 tyTuple [] = TyCon $ Special UnitCon
