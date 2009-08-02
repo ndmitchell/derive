@@ -1,4 +1,4 @@
-Cabal-Version:  >= 1.2
+Cabal-Version:  >= 1.6
 Build-Type:     Default
 Name:           derive
 Version:        2.0.0
