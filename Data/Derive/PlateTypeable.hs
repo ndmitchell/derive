@@ -1,6 +1,7 @@
 module Data.Derive.PlateTypeable where
 {-
 import "uniplate" Data.Generics.PlateTypeable(PlateAll)
+import Data.Generics.PlateTypeable
 
 example :: Sample
 
