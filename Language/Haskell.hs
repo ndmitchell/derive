@@ -78,6 +78,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fExp (App (Paren (Lambda _ [PVar x] y)) z) | once x2 y = fExp $ subst x2 z y
             where x2 = Var $ UnQual x
         fExp (App (Paren (Lambda _ [PWildCard] x)) _) = x
+        fExp (Lambda s ps x) = Lambda s (minPat x ps) x
         fExp x = x
 
         fTyp (TyApp x y) | x ~= "[]" = TyApp (TyCon (Special ListCon)) y
@@ -88,6 +89,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fTyp x = x
 
         fPat (PParen x@(PApp _ [])) = x
+        fPat (PParen (PParen x)) = PParen x
         fPat (PApp nam xs) = PApp (rename nam) xs
         fPat x = x
 
@@ -95,11 +97,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
             | x ~= "True" = fMatch $ Match sl nam pat sig (UnGuardedRhs bod) decls
         fMatch (Match sl nam [PVar x] sig (UnGuardedRhs (Case (Var (UnQual x2)) [Alt _ pat (UnGuardedAlt y) (BDecls [])])) decls)
             | x == x2 = fMatch $ Match sl nam [PParen pat] sig (UnGuardedRhs y) decls
-        fMatch o@(Match a b c d e bind) = fBinds (Match a b (transformBi f c) d e) bind
-            where
-                known = nub [x | UnQual x <- universeBi o]
-                f (PVar x) | x `notElem` known = PWildCard
-                f x = x
+        fMatch o@(Match a b c d e bind) = fBinds (Match a b (minPat o c) d e) bind
 
         fDecl (PatBind a b c d bind) = fBinds (PatBind a b c d) bind
         fDecl (FunBind xs) = FunBind $ filter (not . isGuardFalse) xs
@@ -122,6 +120,15 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
 
         subst from to = transformBi $ \x -> if x == from then to else x
         once x y = length (filter (== x) (universeBi y)) <= 1  
+
+        minPat o ps = transformBi f ps
+            where
+                known = nub [x | UnQual x <- universeBi o]
+                f (PVar x) | x `notElem` known = PWildCard
+                f (PAsPat x y) | x `notElem` known = y
+                f x = x
+
+
 
 isGuardFalse (Match sl nam pat sig (GuardedRhss [GuardedRhs _ [Qualifier x] bod]) decls) = x ~= "False"
 isGuardFalse _ = False
