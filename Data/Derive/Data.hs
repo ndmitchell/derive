@@ -1,4 +1,4 @@
-module Data.Derive.Data where
+module Data.Derive.Data(makeData) where
 {-
 import Data.Data
 

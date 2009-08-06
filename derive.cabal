@@ -71,6 +71,7 @@ Library
         Data.Derive.BinaryDefer
         Data.Derive.Bounded
         Data.Derive.Data
+        Data.Derive.DataAbstract
         Data.Derive.Default
         Data.Derive.Enum
         Data.Derive.EnumCyclic
