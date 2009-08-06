@@ -81,7 +81,7 @@ autoTest :: String -> [DataDecl] -> [(Src,Derivation)] -> IO ()
 autoTest name ts ds =
     writeFile (name++".hs") $ unlines $
         ["{-# LANGUAGE TemplateHaskell,FlexibleInstances,MultiParamTypeClasses #-}"
-        ,"{-# OPTIONS_GHC -Wall -fno-warn-missing-fields #-}"
+        ,"{-# OPTIONS_GHC -Wall -fno-warn-missing-fields -fno-warn-unused-imports #-}"
         ,"module " ++ name ++ " where"
         ,"import Prelude"
         ,"import Data.DeriveTH"
