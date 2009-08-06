@@ -17,7 +17,7 @@ import Data.Traversable
 import Control.Applicative(pure, (<*>))
 
 instance Traversable (FailList t1) where
-    traverse _f (Zero) = pure Nil
+    traverse _f (Zoro) = pure Nil
     traverse _f (Fail a1) = pure (Fail a1)
     traverse _f (Const a1 a2) = (Const <$> _f a1) <*> traverse _f a2
 
