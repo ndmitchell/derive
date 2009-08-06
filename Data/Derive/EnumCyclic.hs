@@ -18,7 +18,7 @@ instance Enum (Sample a) where
     succ a = if b == length [First{},Second{},Third{}] then toEnum 0 else toEnum (b+1)
         where b = fromEnum a
 
-    pred a = if b == 0 then toEnum length [First{},Second{},Third{}] else toEnum (b-1)
+    pred a = if b == 0 then toEnum (length [First{},Second{},Third{}]) else toEnum (b-1)
         where b = fromEnum a
 
 -}
@@ -85,20 +85,21 @@ dslEnumCyclic =
     "If" (List [App "InfixApp" (List [App "Var" (List [App "UnQual" (
     List [App "Ident" (List [String "b"])])]),App "QVarOp" (List [App
     "UnQual" (List [App "Symbol" (List [String "=="])])]),App "Lit" (
-    List [App "Int" (List [Int 0])])]),Application (List [App "Var" (
+    List [App "Int" (List [Int 0])])]),App "App" (List [App "Var" (
     List [App "UnQual" (List [App "Ident" (List [String "toEnum"])])])
-    ,App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "length"])])]),App "List" (List [MapCtor (App "RecConstr" (List [
-    App "UnQual" (List [App "Ident" (List [CtorName])]),List []]))])])
-    ,App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "toEnum"])])]),App "Paren" (List [App "InfixApp" (
-    List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
-    String "b"])])]),App "QVarOp" (List [App "UnQual" (List [App
-    "Symbol" (List [String "-"])])]),App "Lit" (List [App "Int" (List
-    [Int 1])])])])])])]),App "BDecls" (List [List [App "PatBind" (List
-    [App "PVar" (List [App "Ident" (List [String "b"])]),App "Nothing"
-    (List []),App "UnGuardedRhs" (List [App "App" (List [App "Var" (
-    List [App "UnQual" (List [App "Ident" (List [String "fromEnum"])])
-    ]),App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "a"])])])])]),App "BDecls" (List [List []])])]])])]])])])]
+    ,App "Paren" (List [App "App" (List [App "Var" (List [App "UnQual"
+    (List [App "Ident" (List [String "length"])])]),App "List" (List [
+    MapCtor (App "RecConstr" (List [App "UnQual" (List [App "Ident" (
+    List [CtorName])]),List []]))])])])]),App "App" (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "toEnum"])])])
+    ,App "Paren" (List [App "InfixApp" (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "b"])])]),App "QVarOp" (
+    List [App "UnQual" (List [App "Symbol" (List [String "-"])])]),App
+    "Lit" (List [App "Int" (List [Int 1])])])])])])]),App "BDecls" (
+    List [List [App "PatBind" (List [App "PVar" (List [App "Ident" (
+    List [String "b"])]),App "Nothing" (List []),App "UnGuardedRhs" (
+    List [App "App" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "fromEnum"])])]),App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "a"])])])])]),App
+    "BDecls" (List [List []])])]])])]])])])]
 -- GENERATED STOP
