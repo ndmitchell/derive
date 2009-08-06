@@ -38,6 +38,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fExp (App op (List xs))
             | op ~= "length" = Lit $ Int $ fromIntegral $ length xs
             | op ~= "head" = head xs
+            | op ~= "null" = con $ show $ null xs
         fExp (InfixApp (Lit (Int i)) op (Lit (Int j)))
             | op ~= "-" = Lit $ Int $ i - j
             | op ~= "+" = Lit $ Int $ i + j
