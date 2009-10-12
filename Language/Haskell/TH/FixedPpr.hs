@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 -- TH.Ppr contains a prettyprinter for the
 -- Template Haskell datatypes
 
@@ -9,6 +10,7 @@ module Language.Haskell.TH.FixedPpr where
 import Text.PrettyPrint.HughesPJ (render)
 import Language.Haskell.TH.PprLib
 import Language.Haskell.TH.Syntax
+import Language.Haskell.TH.Data(isTupleT)
 import Data.Char ( toLower, isAlpha )
 
 nestDepth :: Int
@@ -107,7 +109,11 @@ pprExpInfix (ConE c) = pprName_ False c
 
 pprExp :: Precedence -> Exp -> Doc
 pprExp _ (VarE v)     = ppr v
-pprExp _ (ConE c)     = ppr c
+pprExp _ (ConE c)     
+ | isTupleT (ConT c)  = text (nameBase c)
+ | c == '[]           = text ("[]")
+ | c == '(:)          = text ("(:)")
+ | otherwise          = ppr c
 pprExp i (LitE l)     = pprLit i l
 pprExp i (AppE e1 e2) = parensIf (i >= appPrec) $ pprExp opPrec e1
                                               <+> pprExp appPrec e2
@@ -203,8 +209,14 @@ pprPat :: Precedence -> Pat -> Doc
 pprPat i (LitP l)     = pprLit i l
 pprPat _ (VarP v)     = ppr v
 pprPat _ (TupP ps)    = parens $ sep $ punctuate comma $ map ppr ps
-pprPat i (ConP s ps)  = parensIf (i > noPrec) $ ppr s
+pprPat i (ConP s ps)  = parensIf (i > noPrec) $ x
                                             <+> sep (map (pprPat appPrec) ps)
+    where
+      x | isTupleT (ConT s) = text (nameBase s)
+        | s == '[]          = text "[]"
+        | s == '(:)         = text "(:)"
+        | otherwise         = ppr s
+
 pprPat i (InfixP p1 n p2)
                       = parensIf (i > noPrec)
                       $ pprPat opPrec p1 <+> pprName_ False n <+> pprPat opPrec p2
@@ -237,7 +249,7 @@ instance Ppr Dec where
              $ text "deriving"
            <+> parens (hsep $ punctuate comma $ map ppr decs)
         where pref :: [Doc] -> [Doc]
-              pref [] = [char '='] -- Can't happen in H98
+              pref [] = [] -- Can't happen in H98
               pref (d:ds) = (char '=' <+> d):map (char '|' <+>) ds
     ppr (NewtypeD ctxt t xs c decs)
         = text "newtype"
@@ -253,9 +265,21 @@ instance Ppr Dec where
                                 <+> ppr c <+> hsep (map ppr xs) <+> ppr fds
                                  $$ where_clause ds
     ppr (InstanceD ctxt i ds) = text "instance" <+> pprCxt ctxt <+> ppr i
-                             $$ where_clause ds
+                             $$ where_clause (map deQualLhsHead ds)
     ppr (SigD f t) = ppr f <+> text "::" <+> ppr t
     ppr (ForeignD f) = ppr f
+                       
+deQualLhsHead :: Dec -> Dec
+deQualLhsHead (FunD n cs) = FunD (deQualName n) cs
+deQualLhsHead (ValD p b ds) = ValD (go p) b ds
+    where
+      go (VarP n) = VarP (deQualName n)
+      go (InfixP p1 n p2) = InfixP p1 (deQualName n) p2
+      go x = x
+deQualLhsHead x = x
+                  
+deQualName :: Name -> Name
+deQualName = mkName . nameBase
 
 ------------------------------
 instance Ppr FunDep where
@@ -306,7 +330,11 @@ pprStrictType (NotStrict, t) = pprParendType t
 ------------------------------
 pprParendType :: Type -> Doc
 pprParendType (VarT v)   = ppr v
-pprParendType (ConT c)   = ppr c
+pprParendType (ConT c) 
+     | c == ''[]         = pprParendType ListT
+     | c == ''(->)        = pprParendType ArrowT
+     | isTupleT (ConT c) = pprParendType (TupleT (length (nameBase c) - 1))
+     | otherwise         = ppr c
 pprParendType (TupleT 0) = text "()"
 pprParendType (TupleT n) = parens (hcat (replicate (n-1) comma))
 pprParendType ArrowT     = parens (text "->")

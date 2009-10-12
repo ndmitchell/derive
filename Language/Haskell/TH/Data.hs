@@ -115,5 +115,5 @@ isTupleT :: Type -> Bool
 isTupleT (TupleT _) = True
 isTupleT (ConT x) = head sx == '(' && last sx == ')' &&
                     all (== ',') (take (length sx - 2) (tail sx))
-    where sx = show x
+    where sx = nameBase x
 isTupleT _ = False
