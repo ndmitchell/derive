@@ -24,7 +24,7 @@ main = do
 mainFile :: [Flag] -> FilePath -> IO ()
 mainFile flags file = do
     src <- readFile file
-    let modu = unParseOk $ parseFileContents src -- FIXME: with this file mode
+    let modu = unParseOk $ parseFileContentsWithMode defaultParseMode{parseFilename=file} src
     flags <- return $ foldl addFlags flags
         [(sl,words x) | OptionsPragma sl (Just (UnknownTool "DERIVE")) x <- modulePragmas modu]
     let res = performDerive (moduleName modu) $ wantDerive flags (src,modu)
