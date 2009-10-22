@@ -187,7 +187,10 @@ modulePragmas (Module _ _ pragmas _ _ _ _) = pragmas
 showDecls x = unlines $ map prettyPrint x
 
 
+-- | TODO: Use the fromParseResult in HSE once it gives source location
+unParseOk :: ParseResult Module -> Module
 unParseOk (ParseOk x) = x
+unParseOk (ParseFailed src msg) = error $ prettyPrint src ++ ", " ++ msg
 
 
 tyApp x [] = x
