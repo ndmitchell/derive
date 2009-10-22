@@ -171,7 +171,7 @@ data Color = RGB Int Int Int
 	One way is to use CPP. Ensure your compiler is set up for compiling with the C Pre Processor. For example:
 </p>
 <pre>
-{-# OPTIONS_GHC -cpp #-}
+{-# LANGUAGE CPP #-}
 {-# OPTIONS_DERIVE --output=file.h #-}
 
 module ModuleName where
