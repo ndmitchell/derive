@@ -110,7 +110,7 @@ Haskell, Domain Specific Languages
 \section{Introduction}
 \label{sec:introduction}
 
-In Haskell \cite{haskell}, \textit{type classes} \cite{wadler:type_classes} are used to provide similar operations for many data types. For each data type of interest, a user must define an associated instance. The instance definitions usually follow a highly regular pattern. Many libraries define new type classes, for example \citet{trinder:strategies} define the |NFData| type class, which reduces a value to normal form. As an example, we can define a data type to describe some computer programming languages, and provide an |NFData| instance:
+In Haskell \cite{haskell}, \textit{type classes} \cite{wadler:type_classes} are used to provide similar operations for many data types. For each data type of interest, a user must define an associated instance. The instance definitions usually follow a highly regular pattern. Many libraries define new type classes, for example Trinder et. al. \citet{trinder:strategies} define the |NFData| type class, which reduces a value to normal form. As an example, we can define a data type to describe some computer programming languages, and provide an |NFData| instance:
 
 \begin{code}
 data Language  =  Haskell [Extension] Compiler
@@ -127,19 +127,13 @@ We also need to define |NFData| instances for the data types |Extension|, |Compi
 
 Writing an |NFData| instance for a single simple data type is easy -- but for multiple complex data types the effort can be substantial. The standard solution is to express the \textit{relationship} between a data type and it's instance. In standard tools, such as DrIFT \cite{drift}, the person describing a relationship must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying a relationship is not as straightforward as one might hope.
 
-\begin{figure}
+Using the techniques described in this paper, these relationships can often be automatically inferred from a single example. To define the generation of \textit{all} |NFData| instances, we require an example to be given for the |Sample| data types:
+
 \h{.default .two}\begin{code}
 data Sample alpha  =  First
-                   |  Second  alpha alpha
-                   |  Third   alpha
-\end{code}
-\caption{The |Sample| data type.}
-\label{fig:sample}
-\end{figure}
+                   |  Second alpha alpha
+                   |  Third alpha
 
-Using the techniques described in this paper, these relationships can often be automatically inferred from a single example. To define the generation of \textit{all} |NFData| instances, we require an example to be given for the |Sample| data type defined in Figure~\ref{fig:sample}:
-
-\begin{code}
 instance NFData alpha => NFData (Sample alpha) where
     rnf (First           ) = ()
     rnf (Second x_1 x_2  ) = rnf x_1 `seq` rnf x_2 `seq` ()
@@ -154,7 +148,7 @@ This paper makes the following contributions:
 
 \begin{itemize}
 \item We describe a scheme which allows us to infer predictable and correct relationships (\S\ref{sec:scheme}).
-\item We describe how this scheme is applicable to instance generation, both in a high-level manner (\S\ref{sec:instances}), and more detailed practical concerns (\S\ref{sec:using}).
+\item We describe how this scheme is applicable to instance generation (\S\ref{sec:instances}).
 \item We outline a method for deriving a relationship in our DSL, without resorting to unguided search (\S\ref{sec:guess}).
 \item We give results (\S\ref{sec:results}), including reasons why our inference fails (\S\ref{sec:failure}). In our experience, over 60\% of Haskell type classes can be derived using our method.
 \end{itemize}
@@ -172,7 +166,7 @@ data DSL
 apply :: DSL -> Input -> Output
 \end{code}
 
-Now we turn to the derivation scheme. Given a single result of the |Output| type, for a particular sample |Input|, we wish to derive a suitable DSL. It may not be possible to derive a suitable DSL, so our derivation function must allow for the possibility of failure. Instead of producing at most one DSL, we instead produce a list of DSLs, following the lead of \citet{wadler:list_of_successes}. Once again, we can implement this in Haskell as:
+Now we turn to the derivation scheme. Given a single result of the |Output| type, for a particular sample |Input|, we wish to derive a suitable DSL. It may not be possible to derive a suitable DSL, so our derivation function must allow for the possibility of failure. Instead of producing at most one DSL, we instead produce a list of DSLs, following the lead of Wadler \citet{wadler:list_of_successes}. Once again, we can implement this in Haskell as:
 
 \begin{code}
 sample  :: Input
@@ -215,8 +209,7 @@ forall o `elem` Output `o` forall d_1,d_2 `elem` derive o `o` d_1 ~== d_2
 This property is dependent on the implementation of the |derive| function, so is insufficient for ensuring predictability. To ensure predictability we require that all results satisfying the correctness property are congruent:
 
 \ignore\begin{code}
-forall d_1, d_2 `elem` DSL `o`
-    apply d_1 sample == apply d_2 sample => d_1 ~== d_2
+forall d_1, d_2 `elem` DSL `o` apply d_1 sample == apply d_2 sample => d_1 ~== d_2
 \end{code}
 
 The combination of this predictability property and the correctness property implies the consistency property. It is important to note that predictability does not impose conditions on the |derive| function, only on the DSL and sample input. The sample input is chosen by the author of the derivation scheme, so the user is not required to understand the reasons for it's form. To ensure predictability the user may have to know some details about the DSL, but hopefully these will not be too onerous.
@@ -292,13 +285,11 @@ While the output type is largely dictated by the need to generate Haskell, we ha
 Our |Input| type represents algebraic data types. We include details such as the arity of each constructor (|ctorArity|), the 0-based index of each constructor (|ctorIndex|) and the number of type variables (|dataVars|), but omit details such as types and record field names. Our |Input| type is:
 
 \h{.default .two}\begin{code}
-data Input = Input
-    {dataName :: String, dataVars :: Int, dataCtors :: [Ctor]}
-data Ctor = Ctor
-    {ctorName :: String, ctorIndex :: Int, ctorArity :: Int}
+data Input  = Input {dataName :: String, dataVars :: Int, dataCtors :: [Ctor]}
+data Ctor   = Ctor {ctorName :: String, ctorIndex :: Int, ctorArity :: Int}
 \end{code}
 
-\noindent Values of |Input| for the |Sample| data type (Figure \ref{fig:sample}) and the |Language| data type (\S\ref{sec:introduction}) are:
+\noindent Values of |Input| for the |Sample| data type (from \S\ref{sec:introduction}) and the |Language| data type (\S\ref{sec:introduction}) are:
 
 \begin{code}
 sampleType :: Input
@@ -437,10 +428,8 @@ The operations group consists of useful functions for manipulating lists, string
 Some examples of these operations in use are:
 
 \h{exprlist}\begin{code}
-Concat (List [String "hello ", String "world"])
-    .==. OString "hello world"
-Reverse (List [Int 1, Int 2, Int 3])
-    .==. OList [OInt 3, OInt 2, OInt 1]
+Concat (List [String "hello ", String "world"]) .==. OString "hello world"
+Reverse (List [Int 1, Int 2, Int 3]) .==. OList [OInt 3, OInt 2, OInt 1]
 ShowInt (Int 42) .==. OString "42"
 \end{code}
 
@@ -484,8 +473,7 @@ The second operation is |Application|. The haskell-src-exts library uses binary 
 The final operation is |Instance|, and is used to represent a common pattern of instance declaration. For example, given the type \h{type}|Either alpha beta|, a typical instance declaration might be:
 
 \ignore\begin{code}
-instance (Show alpha, Ord alpha, Show beta, Ord beta) =>
-    ShowOrd (Either alpha beta) where ellipses
+instance (Show alpha, Ord alpha, Show beta, Ord beta) => ShowOrd (Either alpha beta) where ellipses
 \end{code}
 
 \noindent This pattern requires each type variable to be a member of a set of type classes. The resulting instance construction is:
@@ -518,9 +506,7 @@ Given this instance, we could either infer the |arities| function always returns
 
 \begin{code}
 instance Arities (Sample alpha) where
-    arities _ =  [  const 0 (braces First)
-                 ,  const 2 (braces Second)
-                 ,  const 1 (braces Third)]
+    arities _ = [const 0 (braces First), const 2 (braces Second), const 1 (braces Third)]
 \end{code}
 
 While this code code is more verbose, any good optimiser (i.e. GHC) will generate identical code. We return to the issue of possible simplifications in \S\ref{sec:output_simplify}.
@@ -564,12 +550,10 @@ forall o `elem` Output `o` forall g `elem` guess o `o` applyGuess g == o
 \end{code}
 \begin{code}
 applyGuess :: Guess -> Output
-applyGuess (Guess       d) = applyEnv d
-    Env{envInput=sample}
-applyGuess (GuessCtr i  d) = applyEnv d
-    Env{envInput=sample,envCtor=dataCtors sample !! i}
-applyGuess (GuessFld i  d) = applyEnv d
-    Env{envInput=sample,envField=i}
+applyGuess (Guess       d) = applyEnv d Env{envInput=sample}
+applyGuess (GuessCtr i  d) = applyEnv d Env{envInput=sample,envCtor=c}
+    where c = dataCtors sample !! i
+applyGuess (GuessFld i  d) = applyEnv d Env{envInput=sample,envField=i}
 \end{code}
 
 \subsection{Guessing Constant Leafs}
@@ -582,8 +566,7 @@ To guess an |OString| value is simple -- if it has a banned substring (i.e. |Sam
 OString "hello" .==. Guess (String "hello")
 OString "Sample" .==. Guess DataName
 OString "First" .==. GuessCtr 0 CtorName
-OString "isThird" .==. GuessCtr 2
-    (Concat (List [String "is",CtorName]))
+OString "isThird" .==. GuessCtr 2 (Concat (List [String "is",CtorName]))
 \end{code}
 
 \subsubsection{Application}
@@ -615,10 +598,8 @@ guess (OInt i) =
 
 \h{exprlist}\begin{code}
 OInt 0  .==.  [Guess (Int 0)]
-OInt 1  .==.  [GuessFld 1 FieldIndex, GuessCtr 1 CtorIndex
-              ,Guess (Int 1)]
-OInt 2  .==.  [GuessFld 2 FieldIndex, GuessCtr 1 CtorArity
-              ,Guess (Int 2)]
+OInt 1  .==.  [GuessFld 1 FieldIndex, GuessCtr 1 CtorIndex, Guess (Int 1)]
+OInt 2  .==.  [GuessFld 2 FieldIndex, GuessCtr 1 CtorArity, Guess (Int 2)]
 OInt 3  .==.  [Guess (Int 3)]
 \end{code}
 
@@ -630,8 +611,7 @@ When guessing an |OInt|, we never generate guesses for any constructors other th
 Lists are the most complex values to guess. To guess a list requires a list of suitable guesses for each element, which can be collapsed into a single guess. Given a suitable |collapse| function we can write:
 
 \begin{code}
-guess (OList xs) = mapMaybe
-    (liftM fromLists . collapse . toLists) (mapM guess xs)
+guess (OList xs) = mapMaybe (liftM fromLists . collapse . toLists) (mapM guess xs)
 
 fromLists  = lift Concat
 toLists    = map (lift (\x -> List [x]))
@@ -683,6 +663,7 @@ As with fold, the introduction of |Application| is practically motivated. We rep
 
 As per the restrictions given in \S\ref{sec:predictability}, the only way of creating an |Instance| value as output is to use the |Instance| DSL operator -- it is forbidden to use |App "Instance"|. Given this restriction, we translate values to |Instance| where they follow the pattern set out in \S\ref{sec:dsl_custom}.
 
+%if 0
 \section{Using Derived DSLs}
 \label{sec:using}
 
@@ -801,6 +782,7 @@ Currently the creation of dynamic instances is limited to a small number of exam
 \end{enumerate}
 
 The use of dynamic instances removes the inconvenience of a separate preprocessor, but only works on a restricted set of instances. Dynamic instances increase runtime, due to the overhead of reflection and the reduction of optimisation opportunities. Previously, only a handful of classes have provided dynamic instances -- the only one we are aware of is the |Binary| class. One reason for not providing dynamic instances is that they are complex to write -- use of the SYB libraries requires an intricate combination of type-level and value-level programming. Using \derive{} many type classes could have dynamic instances created with ease, by first deriving an instance from one example and then translating the DSL.
+%endif
 
 \section{Results}
 \label{sec:results}
@@ -887,7 +869,9 @@ This section describes our experiences of specifying instances in a form suitabl
 
 \subsubsection{Brackets Matter}
 
-The original \derive{} program used Template Haskell, which include brackets in the abstract syntax tree. For example, the expressions |(First)| and |First| are considered equal. However, using haskell-src-exts, brackets are explicit and care must be taken to ensure every constructor has the same level of bracketing. Examples of otherwise unnecessary brackets can be seen in \S\ref{sec:fromCtorName}, where the constructor |First| is bracketed. Currently some redundant brackets are removed by the transformations described in \S\ref{sec:output_simplify}.
+The original \derive{} program used Template Haskell, which include brackets in the abstract syntax tree. For example, the expressions |(First)| and |First| are considered equal. However, using haskell-src-exts, brackets are explicit and care must be taken to ensure every constructor has the same level of bracketing. Examples of otherwise unnecessary brackets can be seen in \S\ref{sec:fromCtorName}, where the constructor |First| is bracketed.
+
+%Currently some redundant brackets are removed by the transformations described in \S\ref{sec:output_simplify}.
 
 \subsubsection{Variable Naming}
 
@@ -901,7 +885,7 @@ When performing a fold, it is important to explicitly include the base-case. In 
 forall x `o` rnf x `seq` () == rnf x
 \end{code}
 
-Therefore we could write the |Second| alternative more compactly as |rnf x_1 `seq` rnf x_2|. However, doing so would mean there was not one consistent pattern suitable for all constructors, and the derivation would fail. In general, when considering folds, the base-case should always be written explicitly.
+Therefore we could write the |Second| alternative more compactly as the expression |rnf x_1 `seq` rnf x_2|. However, doing so would mean there was not one consistent pattern suitable for all constructors, and the derivation would fail. In general, when considering folds, the base-case should always be written explicitly.
 
 \subsubsection{Empty Record Construction}
 
@@ -981,7 +965,7 @@ We see several lines of future work:
 
 \begin{itemize}
 \item By deriving an explicit DSL, we can reuse the DSL for other purposes. We have already shown the creation of dynamic instances in \S\ref{sec:dynamic_instances}, but there are other possible uses. A DSL could be used to prove properties, for example that all |Eq| instances are reflexive, or that |put|/|get| in |Binary| are inverses. Another use might be to generate human readable documentation of an instance. We suspect there are many other uses.
-\item The |Sample| data type (Figure \ref{fig:sample}) allows many instances to be inferred -- but more would be desirable. We have discussed possible extensions in \S\ref{sec:failure}, but none seems to offer compelling benefits. An alternative approach would be to introduce new sample data types with features specifically for certain types of definition. Care would have to be taken that these definitions still preserved predictability, and did not substantially increase the complexity of writing examples.
+\item The |Sample| data type (from \S\ref{sec:introduction}) allows many instances to be inferred -- but more would be desirable. We have discussed possible extensions in \S\ref{sec:failure}, but none seems to offer compelling benefits. An alternative approach would be to introduce new sample data types with features specifically for certain types of definition. Care would have to be taken that these definitions still preserved predictability, and did not substantially increase the complexity of writing examples.
 \item While our scheme is implemented in a typed language, most of the actual DSL operations work upon a universal data type with runtime type checking -- essentially a dynamically typed language. In order to preserve types throughout we could make use of GADTs \cite{spj:gadt}.
 \item We have implemented our scheme specifically for instance generators in Haskell, but the same scheme could be applied to other computer languages and other situations. One possible target would be F\#, where there are interfaces instead of type classes. Another target could be an object-orientated language, where design patterns \cite{design_patterns} are popular.
 \end{itemize}
@@ -992,6 +976,7 @@ Computers are ideally suited to applying a relationship using new parameters, bu
 
 Thanks to Stefan O'Rear for help writing the first version of the \derive{} tool. Thanks to Niklas Broberg for the excellent haskell-src-exts library. Thanks to Hongseok Yang for fruitful discussions on the original instance generation work. Thanks to Mike Dodds for constructive criticism on earlier drafts.
 
+%if 0
 \appendix
 
 \section{Arities DSL}
@@ -1020,6 +1005,7 @@ List [Instance [] "Arities" (List [App "InsDecl" (
     ]])]
 )])]
 \end{code}
+%endif
 
 \bibliographystyle{plain}
 \balance
