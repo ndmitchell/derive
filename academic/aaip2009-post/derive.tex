@@ -56,6 +56,7 @@ srcLoc :: SrcLoc
 tuple0 = ()
 tuple1 = id
 tuple2 = (,,)
+braces x = undefined
 
 isFirst, isSecond, isThird :: Sample a -> Bool
 
@@ -123,11 +124,11 @@ instance NFData Languge where
     rnf (Java x_1         ) = rnf x_1 `seq` ()
 \end{code}
 
-We also need to define |NFData| instances for the data types |Extension|, |Compiler| and |Version|. Any instance of |NFData| follows naturally from the structure of the data type: for each constructor, all fields have |seq| applied, before returning |()|.
+We also need to define |NFData| instances for each of the data types |Extension|, |Compiler| and |Version|. Any instance of |NFData| follows naturally from the structure of the data type: for each constructor, all fields have |seq| applied, before returning |()|.
 
 Writing an |NFData| instance for a single simple data type is easy -- but for multiple complex data types the effort can be substantial. The standard solution is to express the \textit{relationship} between a data type and it's instance. In standard tools, such as DrIFT \cite{drift}, the person describing a relationship must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying a relationship is not as straightforward as one might hope.
 
-Using the techniques described in this paper, these relationships can often be automatically inferred from a single example. To define the generation of \textit{all} |NFData| instances, we require an example to be given for the |Sample| data types:
+Using the techniques described in this paper, these relationships can often be automatically inferred from a single example. To define the generation of \textit{all} |NFData| instances, we require an example to be given for the |Sample| data type:
 
 \h{.default .two}\begin{code}
 data Sample alpha  =  First
@@ -140,7 +141,7 @@ instance NFData alpha => NFData (Sample alpha) where
     rnf (Third x_1       ) = rnf x_1 `seq` ()
 \end{code}
 
-The |NFData| instance for |Sample| follows the same pattern as for |Language|. From this example, we can infer the general relationship. However, there are many possible relationships between the |Sample| data type and this result -- for example the function might always generate the instance for |Sample|, regardless of the input type. We overcome this problem by requiring the relationship to be written in a domain specific language (DSL), and that the example has certain properties (see \S\ref{sec:scheme}). With our restrictions, we can regain predictability.
+The |NFData| instance for |Sample| follows the same pattern as for |Language|. From this example, we can infer the general relationship. However, there are many possible relationships between the |Sample| data type and the instance above -- for example the relationship might always generate an instance for |Sample|, regardless of the input type. We overcome this problem by requiring the relationship to be written in a domain specific language (DSL), and that the example has certain properties (see \S\ref{sec:scheme}). With these restrictions, we can regain predictability.
 
 \subsection{Contributions}
 
@@ -156,24 +157,20 @@ This paper makes the following contributions:
 \section{Our Derivation Scheme}
 \label{sec:scheme}
 
-In this section we define a general scheme for deriving functions, which we later use to derive type-class instance generators. In general terms, a function takes an input to an output. In our case, we restrict ourselves to functions that can be described by a DSL (domain specific language). We need an |apply| function to serve as an interpreter for our DSL, which takes a DSL and an input and produces an output. Our scheme can be implemented in Haskell as follows:
+In this section we define a general scheme for deriving relationships, which we later use to derive type-class instance generators. In general terms, a function takes an input to an output. In our case, we restrict ourselves to functions that can be described by a DSL (domain specific language). The person defining a derivation scheme is required to define suitable types named |Input|, |Output| and the |DSL|. To use a value of DSL, we need an |apply| function to serve as an interpreter, which takes a DSL value and an input and produces an output:
 
 \h{.short}\begin{code}
-data Input
-data Output
-data DSL
-
 apply :: DSL -> Input -> Output
 \end{code}
 
-Now we turn to the derivation scheme. Given a single result of the |Output| type, for a particular sample |Input|, we wish to derive a suitable DSL. It may not be possible to derive a suitable DSL, so our derivation function must allow for the possibility of failure. Instead of producing at most one DSL, we instead produce a list of DSLs, following the lead of Wadler \citet{wadler:list_of_successes}. Once again, we can implement this in Haskell as:
+Now we turn to the derivation scheme. Given a single result of the |Output| type, for a particular sample |Input|, we wish to derive a suitable DSL. It may not be possible to derive a suitable DSL, so our derivation function must allow for the possibility of failure. Instead of producing at most one DSL, we instead produce a list of DSLs, following the lead of Wadler \citet{wadler:list_of_successes}:
 
 \begin{code}
 sample  :: Input
 derive  :: Output -> [DSL]
 \end{code}
 
-We require our scheme to have two properties -- correctness (it works) and predictability (it is what the user intended). We now define both of these properties more formally, along with restrictions necessary to achieve them.
+We require instantiations of our scheme to have two properties -- correctness (it works) and predictability (it is what the user intended). We now define both of these properties more formally, along with restrictions necessary to achieve them.
 
 \subsection{Correctness}
 \label{sec:correctness}
@@ -184,15 +181,12 @@ The derivation of a particular output is correct if all derived DSLs, when appli
 forall o `elem` Output `o` forall d `elem` derive o `o` apply d sample == o
 \end{code}
 
-Given an existing |derive'| function, which does not necessarily ensure correctness, we can create a correct version by filtering out the incorrect DSLs. By applying this modification we can remove some constraints from the |derive'| function -- either simplifying the implementation, or gaining a higher assurance of correctness.
-
-\begin{code}
-derive o = [d | d <- derive' o, apply d sample == o]
-\end{code}
+Note that given an incorrect |derive| function it is possible to create a correct |derive| function by simply filtering out the incorrect results -- correctness can be tested inside the |derive| function.
 
 \subsection{Predictability}
+\label{sec:pred}
 
-A derived relationship is predictable if the user can be confident that it matches their expectations. In particular, we don't want the user to have to understand the complex |derive| function to gain predictability. In this section we attempt to simplify the task of defining predictable derivation schemes.
+A derived relationship is predictable if the user can be confident that it matches their expectations. In particular, we don't want the user to have to understand the complex |derive| function to be confident the relationship matches their intuition. In this section we attempt to simplify the task of defining predictable derivation schemes.
 
 Before defining predictability, it is useful to define congruence of DSLs. We define two DSLs to be congruent |(~==)|, if for every input they produce identical results -- i.e. |apply d_1 == apply d_2|.
 
@@ -206,19 +200,25 @@ Our |derive| function returns a list of suitable DSLs. To ensure consistency, it
 forall o `elem` Output `o` forall d_1,d_2 `elem` derive o `o` d_1 ~== d_2
 \end{code}
 
-This property is dependent on the implementation of the |derive| function, so is insufficient for ensuring predictability. To ensure predictability we require that all results satisfying the correctness property are congruent:
+This property is dependent on the implementation of the |derive| function, so is insufficient for ensuring predictability. To ensure predictability we require that \textit{all} results satisfying the correctness property are congruent:
 
 \ignore\begin{code}
 forall d_1, d_2 `elem` DSL `o` apply d_1 sample == apply d_2 sample => d_1 ~== d_2
 \end{code}
 
-The combination of this predictability property and the correctness property implies the consistency property. It is important to note that predictability does not impose conditions on the |derive| function, only on the DSL and sample input. The sample input is chosen by the author of the derivation scheme, so the user is not required to understand the reasons for it's form. To ensure predictability the user may have to know some details about the DSL, but hopefully these will not be too onerous.
+The combination of this predictability property and the correctness property implies the consistency property. It is important to note that predictability does not impose conditions on the |derive| function, only on the DSL and sample input.
 
-\subsection{Summary}
+\subsection{Scheme Roles}
 
-If the predictability property holds for the DSL and sample value, and we use the modified |derive| in terms of |derive'|, then any result produced by |derive| will be a valid relationship. These properties allow us to write the |derive| function focusing on other attributes (which we discuss in \S\ref{sec:guess}).
+The creation and use of a derivation scheme can be split into separate roles, perhaps completed by different people, each focusing on only a few aspects of the scheme.
 
-To use this general scheme, we need to instantiate it to our particular problem (\S\ref{sec:instances}), check the predictability property (\S\ref{sec:predictability}), and implement a |derive| function (\S\ref{sec:guess}).
+\paragraph{The scheme creator} defines the |Input|, |Output| and |DSL| types, the |apply| function, and the |sample| value of type |Input| (\S\ref{sec:instances}). Their choice must satisfy the predictability property (\S\ref{sec:predictability}).
+
+\paragraph{The derivation function author} defines the |derive| function (\S\ref{sec:guess}). They may choose to ensure the correctness property, or filter the results. They do not need to concern themselves with predictability.
+
+\paragraph{The relationship creator} gives an appropriate output based on the previously defined |sample| input (\S\ref{sec:introduction} and examples throughout). In order to ensure their relationship matches their intuition, they may wish to familiarise themselves with some details of the |DSL|, but hopefully these will not be too onerous.
+
+\paragraph{The relationship user} simply gives an input, and receives an output -- the output will always be what the relationship creator intended.
 
 \section{Deriving Instances}
 \label{sec:instances}
@@ -233,8 +233,8 @@ We wish to generate any sequence of Haskell declarations, where a declaration is
 \begin{description}
 \item[String] A sequence of Haskell declarations can be represented as the string of the program text. However, the lack of structure in a string poses several problems. When constructing strings it is easy to generate invalid programs, particularly given the indentation and layout requirements of Haskell. It is also hard to recover structure from the program that is likely to be useful for deriving relationships.
 \item[Pretty printing combinators] Some tools such as DrIFT \cite{drift} generate Haskell code using pretty printing combinators. These combinators supply more structure than strings, but the structure is linked to the presentation, rather than the meaning of constructs.
-\item[Typed abstract syntax tree (AST)] The standard way of working with Haskell source code is using a typed AST -- an AST where different types of fragment (i.e. declarations, expressions and patterns) are restricted to different positions within the tree. The first version of \derive{} used a typed AST, specifically Template Haskell \cite{template_haskell}. This approach preserves all the structure, and makes it reasonably easy to ensure the generated program is syntactically correct. By combining a typed AST with a parser and pretty printer we can convert between strings as necessary.
-\item[Untyped abstract syntax tree (AST)] An untyped AST is an AST where all fragments have the same type, and types do not restrict where a fragment may be placed. The removal of types increases the number of invalid programs that can be represented -- for example a declaration could occur where an expression was expected. However, by removing types we increase the similarity of the tree, in turn simplifying function that operate on the tree in a uniform manner.
+\item[Typed abstract syntax tree (AST)] The standard representation of Haskell source code is a typed AST -- an AST where different types of fragment (i.e. declarations, expressions and patterns) are restricted to different positions within the tree. The first version of \derive{} used a typed AST, specifically Template Haskell \cite{template_haskell}. This approach preserves all the structure, and makes it reasonably easy to ensure the generated program is syntactically correct. By combining a typed AST with a parser and pretty printer we can convert between strings as necessary.
+\item[Untyped abstract syntax tree (AST)] An untyped AST is an AST where all fragments have the same type, and types do not restrict where a fragment may be placed. The removal of types increases the number of invalid programs that can be represented -- for example a declaration could occur where an expression was expected. However, by removing types we increase the similarity of the tree, in turn simplifying functions that operate on the tree in a uniform manner.
 \end{description}
 
 For our purposes, it is clear that both strings and pretty printing combinators are unsuitable -- they lack sufficient structure to implement the |derive| operation. The choice between a typed and untyped AST is one of safety vs simplicity. The use of a typed AST in the first version of \derive{} caused many complexities -- notably the DSL was hard to represent in a well-typed manner and some functions had to be duplicated for each type. The loss of safety from using an untyped AST is not too serious, as both DSLs and ASTs are automatically generated, rather than being written by hand. Therefore, we chose to use untyped ASTs for the current version of \derive{}. We discuss possible changes to regain type safety in \S\ref{sec:conclusion}.
@@ -289,7 +289,7 @@ data Input  = Input {dataName :: String, dataVars :: Int, dataCtors :: [Ctor]}
 data Ctor   = Ctor {ctorName :: String, ctorIndex :: Int, ctorArity :: Int}
 \end{code}
 
-\noindent Values of |Input| for the |Sample| data type (from \S\ref{sec:introduction}) and the |Language| data type (\S\ref{sec:introduction}) are:
+\noindent Values of |Input| for the |Sample| data type and the |Language| data type (both defined in \S\ref{sec:introduction}) are:
 
 \begin{code}
 sampleType :: Input
@@ -347,30 +347,21 @@ data DSL
 apply :: DSL -> Input -> Output
 apply dsl input = applyEnv dsl Env{envInput=input}
 
-data Env = Env  {envInput :: Input
-                ,envCtor :: Ctor
-                ,envField :: Int
-                ,envFold :: (Output,Output) }
+data Env = Env {  envInput :: Input,  envCtor :: Ctor,
+                  envField :: Int,    envFold :: (Output,Output) }
 
 applyEnv :: DSL -> Env -> Output
 applyEnv dsl env@(Env input ctor field fold) = f dsl
     where
     vars = take (dataVars input) $ map (:[]) ['a'..]
 
-    f (Instance ctx hd body) =
-        OApp "InstDecl"
-            [ toOut
-                    [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
-                    |v <- vars, c <- ctx]
-            , toOut $ UnQual $ Ident hd
-            , toOut [foldl TyApp
-                    (TyCon $ UnQual $ Ident $ dataName input)
-                    [TyVar $ Ident v | v <- vars]]
-            , f body]
-
-    f (Application (f -> OList xs)) =
-        foldl1 (\a b -> OApp "App" [a,b]) xs
-
+    f (Instance ctx hd body) = OApp "InstDecl"
+        [ toOut [ClassA (UnQual $ Ident c) [TyVar $ Ident v] |v <- vars, c <- ctx]
+        , toOut $ UnQual $ Ident hd
+        , toOut [foldl TyApp (TyCon $ UnQual $ Ident $ dataName input)
+                [TyVar $ Ident v | v <- vars]]
+        , f body]
+    f (Application (f -> OList xs)) = foldl1 (\a b -> OApp "App" [a,b]) xs
     f (MapCtor   dsl) = OList [applyEnv dsl env{envCtor=c   }
          | c <- dataCtors input]
     f (MapField  dsl) = OList [applyEnv dsl env{envField=i  }
@@ -487,7 +478,7 @@ The |Instance| fields describe which classes are required for each type variable
 \subsection{Restrictions for Predictability}
 \label{sec:predictability}
 
-To ensure predictability there must be no non-congruent DSL values which give equal results when applied to the sample input. Currently this invariant is violated -- consider the counterexample |DataName| vs |String "Sample"|. When applied to the sample input, both will generate |OString "Sample"|, but when applied to other data types they generate different values. To regain predictability we impose three additional restrictions on the |DSL|:
+To ensure predictability there must be no non-congruent DSL values which give equal results when applied to the sample input (see \S\ref{sec:pred}). Currently this invariant is violated -- consider the counterexample |DataName| vs |String "Sample"|. When applied to the sample input, both will generate |OString "Sample"|, but when applied to other data types they generate different values. To regain predictability we impose three additional restrictions on the |DSL|:
 
 \begin{enumerate}
 \item The strings |Sample|, |First|, |Second| and |Third| cannot be contained in any |String| construction. Therefore, in the above example, |String "Sample"| is invalid.
@@ -509,18 +500,18 @@ instance Arities (Sample alpha) where
     arities _ = [const 0 (braces First), const 2 (braces Second), const 1 (braces Third)]
 \end{code}
 
-While this code code is more verbose, any good optimiser (i.e. GHC) will generate identical code. We return to the issue of possible simplifications in \S\ref{sec:output_simplify}.
+While this code is more verbose, any good optimiser (i.e. GHC \cite{ghc6_10}) will generate identical code.
 
 While our DSL has forms of iteration (i.e. |MapCtor|), it does not have any conditional constructs such as |if| or |case|. The lack of conditionals is important for predictability -- for every possible choice it would be necessary for the |Sample| type to choose all branches, thus increasing the size of |Sample|.
 
-The restrictions in this section ensure that no fragment of output can be represented by both a constant and be parameterised by the data type. The |Sample| type ensures no fragment can be parameterised in multiple ways, by having different artiy/index values for some constructors -- explaining why the |Second| constructor has arity 2, while the |Third| has arity 1. The restrictions in this section, along with the |Sample| data type, ensure predictability. We have checked the predictability property using QuickCheck \cite{quickcheck}.
+The restrictions in this section ensure that no fragment of output can be represented by both a constant and be parameterised by the data type. The |Sample| type ensures no fragment can be parameterised in multiple ways, by having different arity/index values for some constructors -- explaining why the |Second| constructor has arity 2, while the |Third| has arity 1. The restrictions in this section, along with the |Sample| data type, ensure predictability. We have checked the predictability property using QuickCheck \cite{quickcheck}.
 
 \section{Implementing |derive|}
 \label{sec:guess}
 
 This section covers the implementation of a |derive| function, as described in \S\ref{sec:scheme}. There are many ways to write a |derive| function, our approach is merely one option -- we hope that the scheme we have described provides ample opportunity for experimentation.
 
-Before implementing |derive| it is useful to think about which properties are desirable. It is not necessary to guarantee correctness (see \S\ref{sec:correctness}), but our method chooses to only generate correct results. We have shown that our DSL and sample input guarantee predictability without regard to the |derive| function, provided we meet the restrictions in \S\ref{sec:predictability}, which we obey. We want our |derive| function to terminate, and ideally terminate within a reasonable time bound. Finally, we would like the |derive| function to find an answer if one exists, i.e.:
+Before implementing |derive| it is useful to think about which properties are desirable. It is easy to ensure correctness by filtering incorrect results (see \S\ref{sec:correctness}), but our method chooses to only generate correct results. We have shown that our DSL and sample input guarantee predictability without regard to the |derive| function, provided we meet the restrictions in \S\ref{sec:predictability}, which we obey. We want our |derive| function to terminate, and ideally terminate within a reasonable time bound. Finally, we would like the |derive| function to find an answer if one exists, i.e.:
 
 \ignore\begin{code}
 forall o `elem` Output, d `elem` DSL `o` null (derive o) => apply d sample /= o
@@ -611,7 +602,8 @@ When guessing an |OInt|, we never generate guesses for any constructors other th
 Lists are the most complex values to guess. To guess a list requires a list of suitable guesses for each element, which can be collapsed into a single guess. Given a suitable |collapse| function we can write:
 
 \begin{code}
-guess (OList xs) = mapMaybe (liftM fromLists . collapse . toLists) (mapM guess xs)
+guess (OList xs) =
+    mapMaybe (liftM fromLists . collapse . toLists) (mapM guess xs)
 
 fromLists  = lift Concat
 toLists    = map (lift (\x -> List [x]))
@@ -837,7 +829,7 @@ data Computer  =  Desktop  {memory :: Int}
 
 \noindent It is easy to write the definition:
 
-\begin{code}
+\ignore\begin{code}
 hasWeight (braces Desktop)  = False
 hasWeight (braces Laptop)   = True
 \end{code}
@@ -869,7 +861,7 @@ This section describes our experiences of specifying instances in a form suitabl
 
 \subsubsection{Brackets Matter}
 
-The original \derive{} program used Template Haskell, which include brackets in the abstract syntax tree. For example, the expressions |(First)| and |First| are considered equal. However, using haskell-src-exts, brackets are explicit and care must be taken to ensure every constructor has the same level of bracketing. Examples of otherwise unnecessary brackets can be seen in \S\ref{sec:fromCtorName}, where the constructor |First| is bracketed.
+The original \derive{} program used Template Haskell, which include brackets in the abstract syntax tree. For example, the expressions |(First)| and |First| are considered equal. However, using haskell-src-exts, brackets are explicit and care must be taken to ensure every constructor has the same level of bracketing. Examples of otherwise unnecessary brackets can be seen with |fromFirst| in \S\ref{sec:fromCtorName}, where the constructor |First| is bracketed.
 
 %Currently some redundant brackets are removed by the transformations described in \S\ref{sec:output_simplify}.
 
@@ -889,7 +881,7 @@ Therefore we could write the |Second| alternative more compactly as the expressi
 
 \subsubsection{Empty Record Construction}
 
-One useful feature of Haskell records is the empty record construction. The expression |(braces Second)| creates the value |Second bot bot|. This expression is useful for generating constructors to pass as the second argument to |const|\footnote{|"Second"| would also work, but the use of a string feels too unpleasant.}, for some generic programming operations, and for values that are lazily evaluated. The pattern |(braces Second)| matches all |Second| constructors, regardless of their fields.
+One useful feature of Haskell records is the empty record construction. The expression |(braces Second)| evaluates to |Second bot bot|. This expression is useful for generating constructors to pass as the second argument to |const|\footnote{|"Second"| would also work, but the use of a string feels too unpleasant.}, for some generic programming operations, and for values that are lazily evaluated. The pattern |(braces Second)| matches all |Second| constructors, regardless of their fields.
 
 \subsubsection{Constructor Count}
 
@@ -917,7 +909,7 @@ instance Binary alpha => Binary (Sample alpha) where
             getTag = if useTag then getWord8 else return 0
 \end{code}
 
-The value |length [braces First, braces Second, braces Third]| is used to compute the number of constructors in the data type, which can be tested to get the correct behaviour. This pattern is used in other classes, for example |Enum| and |Arbitrary|. Using the simplifications from \S\ref{sec:output_simplify} we can remove the test and produce code specialised to the number of constructors.
+The value |length [braces First, braces Second, braces Third]| is used to compute the number of constructors in the data type, which can be tested to get the correct behaviour. This pattern is used in other classes, for example |Enum| and |Arbitrary|. Using simplifications we can remove the test and produce code specialised to the number of constructors.
 
 The pattern for the number of constructors is useful, but seems a little verbose. In the first version of \derive{} the constructor count was guessed from the number 3. Unfortunately, the inclusion of this guess breaks the restrictions we have imposed for predictability. Another way of simplifying this pattern would be to introduce a meta function |ctorCount|, which expanded to the number of constructors. This solution would mean inputs were not real example instances, and would require users to learn part of the DSL -- something we have tried to avoid. In the end, we simply accept that the constructor count is slightly verbose.
 
@@ -927,7 +919,7 @@ We have implemented the methods described in this paper, and have used them to g
 
 \begin{enumerate}
 \item We derive the DSL from an example.
-\item We apply the DSL (without output optimisation) to the |Sample| data type and check it matches the input example.
+\item We apply the DSL to the |Sample| data type and check it matches the input example.
 \item We apply the DSL to three other data types, namely lists, the eight element tuple and the expression type from the Yhc Core library \cite{me:yhc_core}.
 \end{enumerate}
 
@@ -936,9 +928,11 @@ To perform all steps for 17 examples takes 0.3 seconds when compiled with GHC -O
 \section{Related Work}
 \label{sec:related}
 
-An earlier version of the \derive{} tool was presented in a previous paper \cite{me:yds_derive}. The previous work described only the derivation algorithm. There was no intermediate DSL, and no predictability. Given a single example the tool could produce multiple different answers, and would always use the first generated -- not always corresponding to the users intention. This paper presents a much more general scheme, along with many improvements to the previous work. Some of the areas of future work in the previous paper have been tackled, such as dynamic instances (see \S\ref{sec:dynamic_instances}). Crucial improvements have been made to the derivation algorithm, particularly when dealing with lists.
+An earlier version of the \derive{} tool was presented in a previous paper \cite{me:yds_derive}. The previous work described only the derivation algorithm. There was no intermediate DSL, and no predictability. Given a single example the tool could produce multiple different answers, and would always use the first generated -- not always corresponding to the users intention. In practice the lack of predictability meant the scheme could only be used under careful supervision, and thus offered only minimal benefits over writing the relationship by hand. This paper presents a much more general scheme, along with many improvements to the previous work. Crucial improvements have been made to the derivation algorithm, particularly when dealing with lists.
 
-We are unaware of any work (other than our own) that attempts to automatically derive Haskell type classes. Therefore we split the remaining related work in to two sections -- that which explicitly defines instance relationships, and that which tries to derive relationships.
+\subsection{Deriving Type Classes}
+
+Jeuring et. al. \cite{jeuring:generating_generic_functions} generate Haskell type classes by using the Djinn tool \cite{djinn} to automatically generate candidate instances, which were then checked using QuickCheck properties \cite{quickcheck}. Their work takes a substantially different approach to ours -- rather than generating relationships from implementations, they generate relationships from specifications (both types and properties). The tool based on their work is still a proof of concept, and has only been used to infer a handful of relationships (such as maps and zips), specifically it is limited to not calling other generic functions, and does not support recursive data types. Using properties to ensure both predictability and correctness is an interesting approach, but does require sufficient properties to completely capture the semantics of the type class.
 
 \subsection{Specifying Type Classes}
 
@@ -964,7 +958,7 @@ One of the key strengths of our derivation scheme is that concerns of correctnes
 We see several lines of future work:
 
 \begin{itemize}
-\item By deriving an explicit DSL, we can reuse the DSL for other purposes. We have already shown the creation of dynamic instances in \S\ref{sec:dynamic_instances}, but there are other possible uses. A DSL could be used to prove properties, for example that all |Eq| instances are reflexive, or that |put|/|get| in |Binary| are inverses. Another use might be to generate human readable documentation of an instance. We suspect there are many other uses.
+\item By deriving an explicit DSL, we can reuse the DSL for other purposes. A DSL could be used to prove properties, for example that all |Eq| instances are reflexive, or that |put|/|get| in |Binary| are inverses. Another use might be to generate human readable documentation of an instance. We suspect there are many other uses.
 \item The |Sample| data type (from \S\ref{sec:introduction}) allows many instances to be inferred -- but more would be desirable. We have discussed possible extensions in \S\ref{sec:failure}, but none seems to offer compelling benefits. An alternative approach would be to introduce new sample data types with features specifically for certain types of definition. Care would have to be taken that these definitions still preserved predictability, and did not substantially increase the complexity of writing examples.
 \item While our scheme is implemented in a typed language, most of the actual DSL operations work upon a universal data type with runtime type checking -- essentially a dynamically typed language. In order to preserve types throughout we could make use of GADTs \cite{spj:gadt}.
 \item We have implemented our scheme specifically for instance generators in Haskell, but the same scheme could be applied to other computer languages and other situations. One possible target would be F\#, where there are interfaces instead of type classes. Another target could be an object-orientated language, where design patterns \cite{design_patterns} are popular.
