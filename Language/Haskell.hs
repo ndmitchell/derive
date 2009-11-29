@@ -81,10 +81,11 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fExp (Lambda s ps x) = Lambda s (minPat x ps) x
         fExp x = x
 
-        fTyp (TyApp x y) | x ~= "[]" = TyApp (TyCon (Special ListCon)) y
-        fTyp (TyParen x@(TyApp (TyCon (Special ListCon)) _)) = x
+        fTyp (TyApp x y) | x ~= "[]" = TyList y
+        fTyp (TyApp (TyCon (Special ListCon)) x) = TyList x
         fTyp (TyParen x@TyCon{}) = x
         fTyp (TyParen x@TyVar{}) = x
+        fTyp (TyParen x@TyList{}) = x
         fTyp (TyCon nam) = TyCon $ rename nam
         fTyp x = x
 
