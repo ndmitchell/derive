@@ -89,7 +89,7 @@ vars f c n = [f $ c : show i | i <- [1..n]]
 
 -- | Derivation for a Traversable like class with just 1 method
 traversalDerivation1 :: TraveralType -> String -> Derivation
-traversalDerivation1 tt nm = Derivation (className $ traversalArg tt) (traversalInstance1 tt nm) 
+traversalDerivation1 tt nm = derivationCustom (className $ traversalArg tt) (traversalInstance1 tt nm) 
     where className n = nm ++ (if n > 1 then show n else "")
 
 

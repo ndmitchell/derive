@@ -28,7 +28,7 @@ import Data.Char
 
 
 makeRef :: Derivation
-makeRef = Derivation "Ref" $ \(_,d) -> Right $ concatMap (makeRefField d) $ dataDeclFields d
+makeRef = derivationCustom "Ref" $ \(_,d) -> Right $ concatMap (makeRefField d) $ dataDeclFields d
 
 
 makeRefField :: DataDecl -> String -> [Decl]

@@ -22,6 +22,14 @@ foralls x = TyForall (Just $ map UnkindedVar $ nub [y | TyVar y <- universe x]) 
 tyApps x [] = x
 tyApps x (y:ys) = tyApps (TyApp x y) ys
 
+
+fromTyApps (TyApp x y) = let (a,b) = fromTyApps x in (x, b ++ [y])
+fromTyApps x = (x, [])
+
+fromTyTuple (TyTuple _ xs) = xs
+fromTyTuple x = [x]
+
+
 isTyFun TyFun{} = True
 isTyFun _ = False
 
@@ -186,12 +194,6 @@ modulePragmas (Module _ _ pragmas _ _ _ _) = pragmas
 
 
 showDecls x = unlines $ map prettyPrint x
-
-
--- | TODO: Use the fromParseResult in HSE once it gives source location
-unParseOk :: ParseResult Module -> Module
-unParseOk (ParseOk x) = x
-unParseOk (ParseFailed src msg) = error $ prettyPrint src ++ ", " ++ msg
 
 
 tyApp x [] = x

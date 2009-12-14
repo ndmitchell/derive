@@ -86,6 +86,7 @@ Library
         Data.Derive.Monoid
         Data.Derive.NFData
         Data.Derive.Ord
+        Data.Derive.PlateDirect
         Data.Derive.PlateTypeable
         Data.Derive.Read
         Data.Derive.Ref

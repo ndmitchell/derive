@@ -1,6 +1,7 @@
 
 module Data.Derive.Internal.Derivation(
-    Derivation(..), derivationDSL, derivationCustomDSL,
+    Derivation(..),
+    derivationParams, derivationCustom, derivationDSL, derivationCustomDSL,
     customSplice, customContext
     ) where
 
@@ -11,8 +12,16 @@ import Data.Generics.PlateData
 
 data Derivation = Derivation
     {derivationName :: String
-    ,derivationOp :: FullDataDecl -> Either String [Decl]
+    ,derivationOp :: Type -> (String -> FullDataDecl) -> FullDataDecl -> Either String [Decl]
     }
+
+
+derivationParams :: String -> ([Type] -> (String -> FullDataDecl) -> FullDataDecl -> Either String [Decl]) -> Derivation
+derivationParams name op = Derivation name $ \ty grab decs -> op (snd $ fromTyApps ty) grab decs
+
+
+derivationCustom :: String -> (FullDataDecl -> Either String [Decl]) -> Derivation
+derivationCustom name op = derivationParams name $ \ty grab decs -> op decs
 
 
 derivationDSL :: String -> DSL -> Derivation
@@ -20,7 +29,7 @@ derivationDSL name dsl = derivationCustomDSL name (const id) dsl
 
 
 derivationCustomDSL :: String -> (FullDataDecl -> [Decl] -> [Decl]) -> DSL -> Derivation
-derivationCustomDSL name custom dsl = Derivation name $
+derivationCustomDSL name custom dsl = derivationCustom name $
     \d -> case applyDSL dsl $ snd d of
               Left x -> Left x
               Right x -> Right $ simplify $ custom d x

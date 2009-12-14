@@ -15,24 +15,24 @@ import Data.Derive.Internal.Derivation
 ---------------------------------------------------------------------
 -- WHAT DO YOU WANT TO DERIVE
 
-wantDerive :: [Flag] -> (String, Module) -> [(String, DataDecl)]
+wantDerive :: [Flag] -> (String, Module) -> [(Type, DataDecl)]
 wantDerive flag (str,modu) = nub $ wantDeriveFlag flag decls ++ wantDeriveAnnotation str decls
     where decls = filter isDataDecl $ moduleDecls modu
 
 
-wantDeriveFlag :: [Flag] -> [DataDecl] -> [(String, DataDecl)]
-wantDeriveFlag flags decls = [(x, d) | Derive xs <- flags, x <- xs, d <- decls]
+wantDeriveFlag :: [Flag] -> [DataDecl] -> [(Type, DataDecl)]
+wantDeriveFlag flags decls = [(TyCon $ UnQual $ Ident x, d) | Derive xs <- flags, x <- xs, d <- decls]
 
 
 -- find annotations by looking for {-! !-} parts, and matching up the source loc
-wantDeriveAnnotation :: String -> [DataDecl] -> [(String, DataDecl)]
+wantDeriveAnnotation :: String -> [DataDecl] -> [(Type, DataDecl)]
 wantDeriveAnnotation src decls = [(d, decl) | (pos, ds) <- annotations, let decl = match pos, d <- ds]
     where
-        annotations :: [((Int,Int), [String])]
+        annotations :: [((Int,Int), [Type])]
         annotations = [((i,j),parse xs) | (i,s) <- zip [1..] $ lines src, (j,'{':'-':'!':xs) <- zip [1..] $ tails s]
         
-        parse :: String -> [String]
-        parse = words . reps ',' ' ' . closeComment
+        parse :: String -> [Type]
+        parse x = fromTyTuple $ fromParseResult $ parseType $ "(" ++ closeComment x ++ ")"
 
         closeComment ('!':'-':'}':xs) = ""
         closeComment ('-':'}':xs) = ""
@@ -46,16 +46,17 @@ wantDeriveAnnotation src decls = [(d, decl) | (pos, ds) <- annotations, let decl
 ---------------------------------------------------------------------
 -- ACTUALLY DERIVE IT
 
-performDerive :: ModuleName -> [(String, DataDecl)] -> [String]
+performDerive :: ModuleName -> [(Type, DataDecl)] -> [String]
 performDerive modu = concatMap ((:) "" . f)
     where
         f (name,dat) =
-            case d (modu,dat) of
+            case d name (error "unsupported currently") (modu,dat) of
                 Left x -> unsafePerformIO $ let res = msg x in hPutStrLn stderr res >> return ["-- " ++ res]
                 Right x -> concatMap (lines . prettyPrint) x
-            where d = head $ [op | Derivation n op <- derivations, n == name] ++ 
+            where d = head $ [op | Derivation n op <- derivations, n == name2] ++ 
                              error (msg "Unknown derivation")
-                  msg x = "Deriving " ++ name ++ " for " ++ dataDeclName dat ++ ": " ++ x
+                  name2 = prettyPrint $ fst $ fromTyApps name
+                  msg x = "Deriving " ++ name2 ++ " for " ++ dataDeclName dat ++ ": " ++ x
 
 
 ---------------------------------------------------------------------

@@ -27,7 +27,7 @@ import Data.Maybe
 
 
 makeSet :: Derivation
-makeSet = Derivation "Set" $ \(_,d) -> Right $ concatMap (makeSetField d) $ dataDeclFields d
+makeSet = derivationCustom "Set" $ \(_,d) -> Right $ concatMap (makeSetField d) $ dataDeclFields d
 
 
 makeSetField :: DataDecl -> String -> [Decl]

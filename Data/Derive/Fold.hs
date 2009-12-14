@@ -43,7 +43,7 @@ import Data.Generics.PlateData
 
 
 makeFold :: Derivation
-makeFold = Derivation "Fold" $ \(_,d) -> Right $ simplify $ mkFold d
+makeFold = derivationCustom "Fold" $ \(_,d) -> Right $ simplify $ mkFold d
 
 
 mkFold :: DataDecl -> [Decl]

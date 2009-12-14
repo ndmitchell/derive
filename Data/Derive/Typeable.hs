@@ -70,7 +70,7 @@ instance (Typeable a, Typeable b, Typeable c) => Typeable (tycon a b c) where { 
 
 
 makeTypeable :: Derivation
-makeTypeable = Derivation "Typeable" $ \(ModuleName modu,x) -> Right $ mkTypeable modu x
+makeTypeable = derivationCustom "Typeable" $ \(ModuleName modu,x) -> Right $ mkTypeable modu x
 
 
 mkTypeable :: String -> DataDecl -> [Decl]

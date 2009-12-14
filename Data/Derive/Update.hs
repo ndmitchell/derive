@@ -31,7 +31,7 @@ import Data.Maybe
 
 
 makeUpdate :: Derivation
-makeUpdate = Derivation "Update" $ \(_,d) -> Right $ concatMap (makeUpdateField d) $ dataDeclFields d
+makeUpdate = derivationCustom "Update" $ \(_,d) -> Right $ concatMap (makeUpdateField d) $ dataDeclFields d
 
 
 makeUpdateField :: DataDecl -> String -> [Decl]

@@ -33,7 +33,7 @@ import Data.Derive.Internal.Derivation
 
 
 makeFrom :: Derivation
-makeFrom = Derivation "From" $ \(_,d) -> Right $ concatMap (makeFromCtor d) $ dataDeclCtors d
+makeFrom = derivationCustom "From" $ \(_,d) -> Right $ concatMap (makeFromCtor d) $ dataDeclCtors d
 
 
 makeFromCtor :: DataDecl -> CtorDecl -> [Decl]

@@ -22,6 +22,7 @@ import Data.Derive.Internal.Derivation
 overlap = ["BinaryDefer","EnumCyclic","LazySet","DataAbstract"]
 
 exclude = ["ArbitraryOld","PlateTypeable","Ref","Serial"]
+excludeTH = ["PlateDirect"]
 
 -- These must be first and in every set
 priority = ["Eq","Typeable"]
@@ -52,7 +53,7 @@ test = do
                      | d <- derivations, derivationName d `notElem` exclude]
     
     let within xs = flip elem xs . derivationName . fst
-        (pri,norm) = partition (within priority) devs
+        (pri,norm) = partition (within priority) $ filter (not . within excludeTH) devs
         (dev2,dev1) = partition (within overlap) norm
     
     autoTest (name++"1") decls $ pri ++ dev1
@@ -69,7 +70,7 @@ testFile types (Derivation name op) = do
     src <- readSrc $ "Data/Derive/" ++ name ++ ".hs"
     forM_ (srcTest src) $ \(typ,res) -> do
         let t = fromMaybe (error $ "wanting type: " ++ typ) $ lookup typ types
-        let Right r = op (ModuleName "Example", t)
+        let Right r = op (TyCon $ UnQual $ Ident name) (error "Unsupported so far") (ModuleName "Example", t)
         when (not $ r `outEq` res) $
             error $ "Results don't match!\nExpected:\n" ++ showOut res ++ "\nGot:\n" ++ showOut r ++ "\n\n" ++ detailedNeq res r
 

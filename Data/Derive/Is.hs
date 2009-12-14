@@ -19,7 +19,7 @@ import Data.Derive.Internal.Derivation
 
 
 makeIs :: Derivation
-makeIs = Derivation "Is" $ \(_,d) -> Right $ concatMap (makeIsCtor d) $ dataDeclCtors d
+makeIs = derivationCustom "Is" $ \(_,d) -> Right $ concatMap (makeIsCtor d) $ dataDeclCtors d
 
 
 makeIsCtor :: DataDecl -> CtorDecl -> [Decl]

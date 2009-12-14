@@ -25,7 +25,7 @@ import Data.List
 
 
 makeHas :: Derivation
-makeHas = Derivation "Has" $ \(_,d) -> Right $ concatMap (makeHasField d) $ dataDeclFields d
+makeHas = derivationCustom "Has" $ \(_,d) -> Right $ concatMap (makeHasField d) $ dataDeclFields d
 
 
 makeHasField :: DataDecl -> String -> [Decl]

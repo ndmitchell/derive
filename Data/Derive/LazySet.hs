@@ -25,7 +25,7 @@ import Data.Maybe
 
 
 makeLazySet :: Derivation
-makeLazySet = Derivation "LazySet" $ \(_,d) -> Right $ concatMap (makeLazySetField d) $ dataDeclFields d
+makeLazySet = derivationCustom "LazySet" $ \(_,d) -> Right $ concatMap (makeLazySetField d) $ dataDeclFields d
 
 
 makeLazySetField :: DataDecl -> String -> [Decl]
