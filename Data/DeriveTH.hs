@@ -12,7 +12,7 @@ import Control.Monad
 
 import Data.Derive.All
 import Data.Derive.Internal.Derivation
-import Language.Haskell.TH.All as TH hiding (Derivation,toName)
+import Language.Haskell.TH.All as TH hiding (Derivation(..),toName)
 import Language.Haskell as HS
 import Language.Haskell.Convert
 
@@ -36,7 +36,7 @@ deriveFromDec :: Derivation -> Dec -> Q [Dec]
 deriveFromDec d x = do
     x <- liftM normData $ expandData x
     let unsup = error "This derivation does not yet support Template Haskell mode"
-    case derivationOp d unsup unsup $ toFullDataDecl x of
+    case derivationOp d (tyCon $ derivationName d) unsup $ toFullDataDecl x of
         Left y -> runIO (putStrLn $ "Warning, couldn't derive: " ++ y) >> return []
         Right v -> return $ convert v
 

@@ -7,14 +7,17 @@
 -- >      deriving ({-! PlateDirect (Foo Int), PlateDirect (Foo Int) Int !-})
 --
 --   All types referred to must be in scope at the time.
+--
+--   @deriving PlateDirect@ with no arguments will be assumed to derive the Uniplate
+--   instance on all types being unit.
 module Data.Derive.PlateDirect(makePlateDirect) where
 
-{-
--}
 
 {-
 import Data.Generics.PlateDirect
+-}
 
+{-
 test :: PlateDirect (Sample Int)
 
 instance Uniplate (Sample Int) where
@@ -50,13 +53,15 @@ makePlateDirect :: Derivation
 makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) ->
     case args of
         _ | not $ null [() | TyVar _ <- universeBi args] -> error "PlateDirect only accepts monomorphic types"
+        [] -> Right [InstDecl sl [] (UnQual $ Ident "Uniplate") [x] $ make (snd . grab) ty x x]
+            where x = tyApps (tyCon $ dataDeclName ty) $ replicate (dataDeclArity ty) $ TyCon $ Special UnitCon
         [x] -> Right [InstDecl sl [] (UnQual $ Ident "Uniplate") [x] $ make (snd . grab) ty x x]
         [x,y] -> Right [InstDecl sl [] (UnQual $ Ident "Biplate") [x,y] $ make (snd . grab) ty x y]
         _ -> error $ "PlateDirect requires exactly one or two arguments, got " ++ show (length args)
 
 
 make :: (String -> DataDecl) -> DataDecl -> Type -> Type -> [InstDecl]
-make _ _ _ _ = []
+make _ _ _ _ = [InsDecl $ FunBind [Match sl (Ident "uniplate") [] Nothing (UnGuardedRhs $ var "undefined") (BDecls [])]]
 
 
 {-

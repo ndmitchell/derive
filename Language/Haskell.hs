@@ -29,9 +29,12 @@ fromTyApps x = (x, [])
 fromTyTuple (TyTuple _ xs) = xs
 fromTyTuple x = [x]
 
+tyRoot = prettyPrint . fst . fromTyApps
 
 isTyFun TyFun{} = True
 isTyFun _ = False
+
+
 
 x ~= y = prettyPrint x == y
 

@@ -16,7 +16,7 @@ data Src = Src
     {srcName :: String
     ,srcImport :: [ImportDecl]
     ,srcExample :: Maybe [Decl]
-    ,srcTest :: [(String,[Decl])]
+    ,srcTest :: [(Type,[Decl])]
     ,srcCustom :: Bool
     }
 
@@ -37,12 +37,12 @@ readHSE file = do
     return $ fromParseResult $ parseFileContentsWithMode mode $ unlines $ "module Example where":src
 
 
-data Pragma = Example Bool | Test String
+data Pragma = Example Bool | Test Type
 
 asPragma :: Decl -> Maybe Pragma
 asPragma (TypeSig _ [x] t)
     | x ~= "example" = Just $ Example $ prettyPrint t == "Custom"
-    | x ~= "test" = Just $ Test $ prettyPrint t
+    | x ~= "test" = Just $ Test t
 asPragma _ = Nothing
 
 
