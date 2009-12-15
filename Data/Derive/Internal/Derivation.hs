@@ -12,12 +12,12 @@ import Data.Generics.PlateData
 
 data Derivation = Derivation
     {derivationName :: String
-    ,derivationOp :: Type -> (String -> FullDataDecl) -> FullDataDecl -> Either String [Decl]
+    ,derivationOp :: Type -> (String -> Decl) -> FullDataDecl -> Either String [Decl]
     }
 
 
-derivationParams :: String -> ([Type] -> (String -> FullDataDecl) -> FullDataDecl -> Either String [Decl]) -> Derivation
-derivationParams name op = Derivation name $ \ty grab decs -> op (snd $ fromTyApps ty) grab decs
+derivationParams :: String -> ([Type] -> (String -> Decl) -> FullDataDecl -> Either String [Decl]) -> Derivation
+derivationParams name op = Derivation name $ \ty grab decs -> op (snd $ fromTyApps $ fromTyParen ty) grab decs
 
 
 derivationCustom :: String -> (FullDataDecl -> Either String [Decl]) -> Derivation

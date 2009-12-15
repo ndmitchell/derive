@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternGuards #-}
 -- NOTE: Cannot be guessed as it relies on type information
 
 -- | Derive Uniplate and Biplate using the Direct combinators.
@@ -14,21 +15,17 @@ module Data.Derive.PlateDirect(makePlateDirect) where
 
 
 {-
-import Data.Generics.PlateDirect
--}
-
-{-
 test :: PlateDirect (Sample Int)
 
 instance Uniplate (Sample Int) where
-    uniplate (First) = plate First
-    uniplate (Second x1 x2) = plate Second |* x1 |* x2
-    uniplate (Third x1) = plate Third |* x1
+    uniplate x = plate x
 
 
 test :: PlateDirect (Sample Int) Int
 
-instance Biplate Sample Int where
+instance Biplate (Sample Int) Int where
+    biplate (Second x1 x2) = plate Second |* x1 |* x2
+    biplate (Third x1) = plate Third |* x1
     biplate x = plate x
 
 test :: PlateDirect Computer
@@ -40,75 +37,110 @@ test :: PlateDirect Computer Double
 
 instance Biplate Computer Double where
     biplate (Laptop x1 x2) = plate Laptop |* x1 |- x2
-    biplate x = x
+    biplate x = plate x
 
+test :: PlateDirect (Assoced (Maybe Bool)) Char
+
+instance Biplate (Assoced (Maybe Bool)) Char where
+    biplate (Assoced x1 x2) = plate (Assoced x1) ||* x2
 -}
 
 import Language.Haskell
 import Data.Generics.PlateData
 import Data.Derive.Internal.Derivation
+import Data.Maybe
+import Control.Arrow
 
 
 makePlateDirect :: Derivation
 makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) ->
-    case args of
+    let known = map (declName &&& id) knownCtors
+        grab2 x | declName ty == x = ty
+        grab2 x = fromMaybe (grab x) $ lookup x known
+    in case args of
         _ | not $ null [() | TyVar _ <- universeBi args] -> error "PlateDirect only accepts monomorphic types"
-        [] -> Right [InstDecl sl [] (UnQual $ Ident "Uniplate") [x] $ make (snd . grab) ty x x]
+        [] -> make True grab2 x ty x
             where x = tyApps (tyCon $ dataDeclName ty) $ replicate (dataDeclArity ty) $ TyCon $ Special UnitCon
-        [x] -> Right [InstDecl sl [] (UnQual $ Ident "Uniplate") [x] $ make (snd . grab) ty x x]
-        [x,y] -> Right [InstDecl sl [] (UnQual $ Ident "Biplate") [x,y] $ make (snd . grab) ty x y]
+        [x] -> make True grab2 x ty x
+        [x,y] -> make False grab2 y ty x
         _ -> error $ "PlateDirect requires exactly one or two arguments, got " ++ show (length args)
-
-
-make :: (String -> DataDecl) -> DataDecl -> Type -> Type -> [InstDecl]
-make _ _ _ _ = [InsDecl $ FunBind [Match sl (Ident "uniplate") [] Nothing (UnGuardedRhs $ var "undefined") (BDecls [])]]
-
-
-{-
-
-plateDirect' :: Dec -> [Dec]
-plateDirect' (DataD _ typ [] cs _) =
-        [InstanceD [] (l2 "PlateAll" t t) [funN "plateAll" [sclause [] (l0 "plateSelf")]]
-        ,InstanceD [] (l1 "PlateOne" t) [funN "plateOne" (map f cs)]
-        ]
-    where
-        t = l0 $ show typ
         
-        f x = sclause [ctp x 'x'] $ foldl1 AppE args
-            where args = l1 "plate" (l0 $ ctorName x) : zipWith g (ctv x 'x') (ctorTypes x)
-        
-        g s (AppT (ConT c) t) | show c == "[]" = g s (AppT ListT t)
-        g s (AppT ListT (ConT t)) | t == typ  = l1 "||*" s
-        g s (AppT ListT _) = l1 "||+" s
-        g s (ConT  t) | t == typ  = l1 "|*" s
-        g s _ = l1 "|+" s
 
-plateDirect' (NewtypeD a b c d e) = plateDirect' (DataD a b c [d] e)
-plateDirect' _ = []
--}
-
-{-
--- an attempt at something better which doesn't really work
-
-getTypes :: Type -> Q [Type]
-getTypes t = do
-        let (ConT c, cs) = typeApp t
-        TyConI dat <- reify c
-        return $ concatMap ctorTypes $ dataCtors dat
-
-
-reaches :: Type -> Q [Type]
-reaches t = f [] [t]
+make :: Bool -> (String -> DataDecl) -> Type -> DataDecl -> Type -> Either String [Decl]
+make uni grab to ty from = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni]) [InsDecl $ FunBind ms]]
     where
-        f done [] = return done
-        f done (t:odo)
-            | t `elem` done = f done odo
-            | otherwise = do
-                ts <- getTypes t
-                f (t:done) (odo ++ ts)
+        match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) (BDecls [])
+        ms = map (uncurry match) (catMaybes bods) ++ [match (pVar "x") (var "plate" `App` var "x") | any isNothing bods]
+        bods = map (make1 grab to) $ substData from ty
 
 
-against :: Type -> Type -> Type
-against = error "here"
+make1 :: (String -> DataDecl) -> Type -> (String,[Type]) -> Maybe (Pat, Exp)
+make1 grab to (name,tys)
+        | all (== "|-") ops = Nothing
+        | otherwise = Just (pat,bod)
+    where
+        ops = map (show . operator grab to) tys
+        vars = ['x':show i | i <- [1..length tys]]
+        pat = PParen $ PApp (qname name) $ map pVar vars
+        bod = foldl (\x (y,z) -> InfixApp x (QVarOp $ UnQual $ Symbol y) z) (App (var "plate") $ paren $ apps (con name) (map snd good)) bad
+            where (good,bad) = span ((==) "|-" . fst) $ zip ops $ map var vars
 
--}
+
+data Ans = Hit | Miss | Try | ListHit | ListTry
+
+instance Show Ans where
+    show Hit = "|*"
+    show Miss = "|-"
+    show Try = "|+"
+    show ListHit = "||*"
+    show ListTry = "||+"
+
+ansList Hit = ListHit
+ansList Miss = Miss
+ansList _ = ListTry
+
+
+ansJoin (Miss:xs) = ansJoin xs
+ansJoin [] = Miss
+ansJoin _ = Try
+
+
+operator :: (String -> DataDecl) -> Type -> Type -> Ans
+operator grab to from
+    | isTyParen to || isTyParen from = operator grab (fromTyParen to) (fromTyParen from)
+    | to == from = Hit
+    | Just from2 <- fromTyList from = ansList $ operator grab to from2
+    | otherwise = case subst from $ grab $ prettyPrint $ fst $ fromTyApps from of
+        Left from2 -> operator grab to from2
+        Right ctrs -> ansJoin $ map (operator grab to) $ concatMap snd ctrs
+
+
+subst :: Type -> Decl -> Either Type [(String,[Type])]
+subst ty x@TypeDecl{} = Left $ substType ty x
+subst ty x = Right $ substData ty x
+
+substData :: Type -> Decl -> [(String,[Type])]
+substData ty dat = [(ctorDeclName x, map (transform f . fromBangType . snd) $ ctorDeclFields x) | x <- dataDeclCtors dat]
+    where
+        rep = zip (dataDeclVars dat) (snd $ fromTyApps $ fromTyParen ty)
+        f (TyVar x) = fromMaybe (TyVar x) $ lookup (prettyPrint x) rep
+        f x = x
+
+substType :: Type -> Decl -> Type
+substType ty (TypeDecl _ _ vars d) = transform f d
+    where
+        rep = zip (map prettyPrint vars) (snd $ fromTyApps $ fromTyParen ty)
+        f (TyVar x) = fromMaybe (TyVar x) $ lookup (prettyPrint x) rep
+        f x = x
+
+
+knownCtors :: [Decl]
+knownCtors = map (fromParseResult . parseDecl)
+    ["data Int = Int"
+    ,"data Bool = Bool"
+    ,"data Char = Char"
+    ,"data Double = Double"
+    ,"data Float = Float"
+    ,"data Maybe a = Nothing | Just a"
+    ,"type String = [Char]"
+    ]

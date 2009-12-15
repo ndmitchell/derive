@@ -68,7 +68,8 @@ testFile types (Derivation name op) = do
     putStrLn $ "Testing " ++ name
     src <- readSrc $ "Data/Derive/" ++ name ++ ".hs"
     forM_ (srcTest src) $ \(typ,res) -> do
-        let t = fromMaybe (error $ "wanting type: " ++ prettyPrint typ) $ lookup (tyRoot typ) types
+        let d = if tyRoot typ /= name then tyRoot typ else tyRoot $ head $ snd $ fromTyApps $ fromTyParen typ
+        let t = fromMaybe (error $ "internal error in tests, wanting type: " ++ d) $ lookup d types
         let Right r = op typ (error "Unsupported so far") (ModuleName "Example", t)
         when (not $ r `outEq` res) $
             error $ "Results don't match!\nExpected:\n" ++ showOut res ++ "\nGot:\n" ++ showOut r ++ "\n\n" ++ detailedNeq res r

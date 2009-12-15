@@ -55,7 +55,7 @@ performDerive modu = concatMap ((:) "" . f)
                 Right x -> concatMap (lines . prettyPrint) x
             where d = head $ [op | Derivation n op <- derivations, n == name2] ++ 
                              error (msg "Unknown derivation")
-                  name2 = prettyPrint $ fst $ fromTyApps name
+                  name2 = prettyPrint $ fst $ fromTyApps $ fromTyParen name
                   msg x = "Deriving " ++ name2 ++ " for " ++ dataDeclName dat ++ ": " ++ x
 
 

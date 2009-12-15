@@ -23,17 +23,25 @@ tyApps x [] = x
 tyApps x (y:ys) = tyApps (TyApp x y) ys
 
 
-fromTyApps (TyApp x y) = let (a,b) = fromTyApps x in (x, b ++ [y])
+fromTyApps (TyApp x y) = let (a,b) = fromTyApps x in (a, b ++ [y])
 fromTyApps x = (x, [])
 
 fromTyTuple (TyTuple _ xs) = xs
 fromTyTuple x = [x]
 
-tyRoot = prettyPrint . fst . fromTyApps
+fromTyParen (TyParen x) = fromTyParen x
+fromTyParen x = x
+
+tyRoot = prettyPrint . fst . fromTyApps . fromTyParen
 
 isTyFun TyFun{} = True
 isTyFun _ = False
 
+isTyParen TyParen{} = True ; isTyParen _ = False
+
+fromTyList (TyList x) = Just x
+fromTyList (TyApp (TyCon (Special ListCon)) x) = Just x
+fromTyList x = Nothing
 
 
 x ~= y = prettyPrint x == y
@@ -263,3 +271,9 @@ ctorDeclFields (Left (QualConDecl _ _ _ (RecDecl name fields))) = [(prettyPrint 
 
 ctorDeclArity :: CtorDecl -> Int
 ctorDeclArity = length . ctorDeclFields
+
+declName :: Decl -> String
+declName (DataDecl _ _ _ name _ _ _) = prettyPrint name
+declName (GDataDecl _ _ _ name _ _ _ _) = prettyPrint name
+declName (TypeDecl _ name _ _) = prettyPrint name
+
