@@ -21,7 +21,9 @@ import Data.Derive.Internal.Derivation
 -- These overlap with other derivations
 overlap = ["BinaryDefer","EnumCyclic","LazySet","DataAbstract"]
 
-exclude = ["ArbitraryOld","PlateTypeable","Ref","Serial"]
+-- REASONS:
+-- PlateTypeable, PlateDirect: I use PlateData internally meaning the Data instance is in scope, and these overlap
+exclude = ["ArbitraryOld","PlateTypeable","PlateDirect","Ref","Serial"]
 
 -- These must be first and in every set
 priority = ["Eq","Typeable"]
@@ -69,8 +71,8 @@ testFile types (Derivation name op) = do
     src <- readSrc $ "Data/Derive/" ++ name ++ ".hs"
     forM_ (srcTest src) $ \(typ,res) -> do
         let d = if tyRoot typ /= name then tyRoot typ else tyRoot $ head $ snd $ fromTyApps $ fromTyParen typ
-        let t = fromMaybe (error $ "internal error in tests, wanting type: " ++ d) $ lookup d types
-        let Right r = op typ (error "Unsupported so far") (ModuleName "Example", t)
+        let grab x = fromMaybe (error $ "Error in tests, couldn't resolve type: " ++ x) $ lookup x types
+        let Right r = op typ grab (ModuleName "Example", grab d)
         when (not $ r `outEq` res) $
             error $ "Results don't match!\nExpected:\n" ++ showOut res ++ "\nGot:\n" ++ showOut r ++ "\n\n" ++ detailedNeq res r
 

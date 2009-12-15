@@ -35,7 +35,7 @@ derives xs ys = liftM concat $ sequence [derive x y | y <- ys, x <- xs]
 deriveFromDec :: Derivation -> Dec -> Q [Dec]
 deriveFromDec d x = do
     x <- liftM normData $ expandData x
-    let unsup = error "This derivation does not yet support Template Haskell mode"
+    let unsup x = error $ "Derivation of " ++ derivationName d ++ " does not yet support Template Haskell, requires info for " ++ x
     case derivationOp d (tyCon $ derivationName d) unsup $ toFullDataDecl x of
         Left y -> runIO (putStrLn $ "Warning, couldn't derive: " ++ y) >> return []
         Right v -> return $ convert v

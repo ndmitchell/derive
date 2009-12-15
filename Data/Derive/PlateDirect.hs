@@ -15,6 +15,8 @@ module Data.Derive.PlateDirect(makePlateDirect) where
 
 
 {-
+import "uniplate" Data.Generics.PlateDirect
+
 test :: PlateDirect (Sample Int)
 
 instance Uniplate (Sample Int) where
@@ -43,6 +45,12 @@ test :: PlateDirect (Assoced (Maybe Bool)) Char
 
 instance Biplate (Assoced (Maybe Bool)) Char where
     biplate (Assoced x1 x2) = plate (Assoced x1) ||* x2
+
+test :: PlateDirect (Either Bool Computer) Int
+
+instance Biplate (Either Bool Computer) Int where
+        biplate (Right x1) = plate Right |+ x1
+        biplate x = plate x
 -}
 
 import Language.Haskell
@@ -108,6 +116,7 @@ ansJoin _ = Try
 operator :: (String -> DataDecl) -> Type -> Type -> Ans
 operator grab to from
     | isTyParen to || isTyParen from = operator grab (fromTyParen to) (fromTyParen from)
+    | isTyFun from = Try
     | to == from = Hit
     | Just from2 <- fromTyList from = ansList $ operator grab to from2
     | otherwise = case subst from $ grab $ prettyPrint $ fst $ fromTyApps from of
@@ -143,4 +152,10 @@ knownCtors = map (fromParseResult . parseDecl)
     ,"data Float = Float"
     ,"data Maybe a = Nothing | Just a"
     ,"type String = [Char]"
-    ]
+    ] ++
+    map tupleDefn (0:[2..32])
+
+tupleDefn :: Int -> Decl
+tupleDefn n = DataDecl sl DataType [] (Ident s) (map (UnkindedVar . Ident) vars) [QualConDecl sl [] [] $ ConDecl (Ident s) (map (UnBangedTy . tyVar) vars)] []
+    where s = "(" ++ replicate n ',' ++ ")"
+          vars = ['v':show i | i <- [1..n]]
