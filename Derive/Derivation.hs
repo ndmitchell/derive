@@ -5,6 +5,7 @@ import System.IO
 import System.IO.Unsafe
 import Language.Haskell
 import Control.Monad
+import Data.Maybe
 import Data.List
 import Derive.Utils
 import Derive.Flags
@@ -46,11 +47,18 @@ wantDeriveAnnotation src decls = [(d, decl) | (pos, ds) <- annotations, let decl
 ---------------------------------------------------------------------
 -- ACTUALLY DERIVE IT
 
-performDerive :: ModuleName -> [(Type, DataDecl)] -> [String]
+performDerive :: Module -> [(Type, DataDecl)] -> [String]
 performDerive modu = concatMap ((:) "" . f)
     where
+        tbl = concatMap g $ moduleDecls modu
+        g x@(DataDecl _ _ _ name _ _ _) = [(prettyPrint name, x)]
+        g x@(GDataDecl _ _ _ name _ _ _ _) = [(prettyPrint name, x)]
+        g x@(TypeDecl _ name _ _) = [(prettyPrint name, x)]
+        g _ = []
+        grab x = fromMaybe (error $ "Can't access definition for: " ++ x) $ lookup x tbl
+
         f (name,dat) =
-            case d name (error "unsupported currently") (modu,dat) of
+            case d name grab (moduleName modu,dat) of
                 Left x -> unsafePerformIO $ let res = msg x in hPutStrLn stderr res >> return ["-- " ++ res]
                 Right x -> concatMap (lines . prettyPrint) x
             where d = head $ [op | Derivation n op <- derivations, n == name2] ++ 

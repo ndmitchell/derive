@@ -29,5 +29,5 @@ mainFile flags file = do
     let modu = fromParseResult $ parseFileContentsWithMode defaultParseMode{parseFilename=file} src
     flags <- return $ foldl addFlags flags
         [(sl,words x) | OptionsPragma sl (Just (UnknownTool "DERIVE")) x <- modulePragmas modu]
-    let res = performDerive (moduleName modu) $ wantDerive flags (src,modu)
+    let res = performDerive modu $ wantDerive flags (src,modu)
     writeDerive file (moduleName modu) flags res

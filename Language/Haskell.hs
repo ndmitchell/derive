@@ -23,6 +23,7 @@ tyApps x [] = x
 tyApps x (y:ys) = tyApps (TyApp x y) ys
 
 
+fromTyApps (TyTuple _ xs) = (tyCon $ "(" ++ replicate (length xs) ',' ++ ")", xs)
 fromTyApps (TyApp x y) = let (a,b) = fromTyApps x in (a, b ++ [y])
 fromTyApps x = (x, [])
 
