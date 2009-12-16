@@ -17,3 +17,7 @@ data Computer = Laptop { weight :: Int }
 data State s a = StateT (s -> (s, a))
                  deriving ( {-! Functor !-} )
 
+
+{-!
+deriving instance Show Color
+!-}
