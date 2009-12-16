@@ -26,8 +26,33 @@ mainFile :: [Flag] -> FilePath -> IO ()
 mainFile flags file = do
     src <- readFile file
     src <- return $ unlines $ filter (not . isPrefixOf "#") $ lines src
-    let modu = fromParseResult $ parseFileContentsWithMode defaultParseMode{parseFilename=file} src
+    let parse = fromParseResult . parseFileContentsWithMode defaultParseMode{parseFilename=file,extensions=extension}
+        real = parse src
+        mine = parse $ uncomment src
     flags <- return $ foldl addFlags flags
-        [(sl,words x) | OptionsPragma sl (Just (UnknownTool "DERIVE")) x <- modulePragmas modu]
-    let res = performDerive modu $ wantDerive flags (src,modu)
-    writeDerive file (moduleName modu) flags res
+        [(sl,words x) | OptionsPragma sl (Just (UnknownTool "DERIVE")) x <- modulePragmas mine]
+    let res = performDerive mine $ wantDerive flags real mine
+    writeDerive file (moduleName mine) flags res
+
+
+uncomment :: String -> String
+uncomment ('{':'-':'!':xs) = ' ':' ':' ':uncomment xs
+uncomment ('!':'-':'}':xs) = ' ':' ':' ':uncomment xs
+uncomment (x:xs) = x:uncomment xs
+uncomment [] = []
+
+
+-- Taken from HLint, update occasionally
+extension =
+    [OverlappingInstances,UndecidableInstances,IncoherentInstances,RecursiveDo
+    ,ParallelListComp,MultiParamTypeClasses,NoMonomorphismRestriction,FunctionalDependencies
+    ,Rank2Types,RankNTypes,PolymorphicComponents,ExistentialQuantification,ScopedTypeVariables
+    ,ImplicitParams,FlexibleContexts,FlexibleInstances,EmptyDataDecls
+    ,KindSignatures,BangPatterns,TypeSynonymInstances,TemplateHaskell
+    ,ForeignFunctionInterface,Generics,NoImplicitPrelude,NamedFieldPuns,PatternGuards
+    ,GeneralizedNewtypeDeriving,ExtensibleRecords,RestrictedTypeSynonyms,HereDocuments
+    ,MagicHash,TypeFamilies,StandaloneDeriving,UnicodeSyntax,PatternSignatures,UnliftedFFITypes
+    ,LiberalTypeSynonyms,TypeOperators,RecordWildCards,RecordPuns,DisambiguateRecordFields
+    ,OverloadedStrings,GADTs,MonoPatBinds,RelaxedPolyRec,ExtendedDefaultRules,UnboxedTuples
+    ,DeriveDataTypeable,ConstrainedClassMethods,PackageImports,ImpredicativeTypes
+    ,NewQualifiedOperators,PostfixOperators,QuasiQuotes,ViewPatterns]

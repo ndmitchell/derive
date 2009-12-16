@@ -4,6 +4,7 @@ module Derive.Derivation(wantDerive, performDerive, writeDerive) where
 import System.IO
 import System.IO.Unsafe
 import Language.Haskell
+import Control.Arrow
 import Control.Monad
 import Data.Maybe
 import Data.List
@@ -11,60 +12,70 @@ import Derive.Utils
 import Derive.Flags
 import Data.Derive.All
 import Data.Derive.Internal.Derivation
+import qualified Data.Map as Map
 
 
 ---------------------------------------------------------------------
 -- WHAT DO YOU WANT TO DERIVE
 
-wantDerive :: [Flag] -> (String, Module) -> [(Type, DataDecl)]
-wantDerive flag (str,modu) = nub $ wantDeriveFlag flag decls ++ wantDeriveAnnotation str decls
-    where decls = filter isDataDecl $ moduleDecls modu
+wantDerive :: [Flag] -> Module -> Module -> [Type]
+wantDerive flag real mine = nub $ map fromTyParens $ wantDeriveFlag flag decls ++ wantDeriveAnnotation real mine
+    where decls = filter isDataDecl $ moduleDecls mine
 
 
-wantDeriveFlag :: [Flag] -> [DataDecl] -> [(Type, DataDecl)]
-wantDeriveFlag flags decls = [(TyCon $ UnQual $ Ident x, d) | Derive xs <- flags, x <- xs, d <- decls]
+wantDeriveFlag :: [Flag] -> [DataDecl] -> [Type]
+wantDeriveFlag flags decls = [TyApp (tyCon x) d | Derive xs <- flags, x <- xs, d <- declst]
+    where declst = [tyApps (tyCon $ dataDeclName d) (map tyVar $ dataDeclVars d) | d <- decls]
+
+wantDeriveAnnotation :: Module -> Module -> [Type]
+wantDeriveAnnotation real mine = moduleDerives mine \\ moduleDerives real
 
 
--- find annotations by looking for {-! !-} parts, and matching up the source loc
-wantDeriveAnnotation :: String -> [DataDecl] -> [(Type, DataDecl)]
-wantDeriveAnnotation src decls = [(d, decl) | (pos, ds) <- annotations, let decl = match pos, d <- ds]
+moduleDerives :: Module -> [Type]
+moduleDerives = concatMap f . moduleDecls 
     where
-        annotations :: [((Int,Int), [Type])]
-        annotations = [((i,j),parse xs) | (i,s) <- zip [1..] $ lines src, (j,'{':'-':'!':xs) <- zip [1..] $ tails s]
-        
-        parse :: String -> [Type]
-        parse x = fromTyTuple $ fromParseResult $ parseType $ "(" ++ closeComment x ++ ")"
+        f (DataDecl _ _ _ name vars _ deriv) = g name vars deriv
+        f (GDataDecl _ _ _ name vars _ _ deriv) = g name vars deriv
+        f (DerivDecl _ _ name args) = [TyCon name `tyApps` args]
+        f _ = []
 
-        closeComment ('!':'-':'}':xs) = ""
-        closeComment ('-':'}':xs) = ""
-        closeComment (x:xs) = x : closeComment xs
-        closeComment [] = ""
-        
-        match :: (Int,Int) -> DataDecl
-        match p = head [d | d <- reverse decls, let sl = dataDeclSrcLoc d, (srcLine sl, srcColumn sl) < p]
+        g name vars deriv = [TyCon a `tyApps` (b:bs) | (a,bs) <- deriv]
+            where b = TyCon (UnQual name) `tyApps` map (tyVar . prettyPrint) vars
 
 
 ---------------------------------------------------------------------
 -- ACTUALLY DERIVE IT
 
-performDerive :: Module -> [(Type, DataDecl)] -> [String]
+performDerive :: Module -> [Type] -> [String]
 performDerive modu = concatMap ((:) "" . f)
     where
-        tbl = concatMap g $ moduleDecls modu
-        g x@(DataDecl _ _ _ name _ _ _) = [(prettyPrint name, x)]
-        g x@(GDataDecl _ _ _ name _ _ _ _) = [(prettyPrint name, x)]
-        g x@(TypeDecl _ name _ _) = [(prettyPrint name, x)]
-        g _ = []
-        grab x = fromMaybe (error $ "Can't access definition for: " ++ x) $ lookup x tbl
+        grab = getDecl modu
 
-        f (name,dat) =
-            case d name grab (moduleName modu,dat) of
+        f ty = case d ty grab (moduleName modu, grab typ1Name) of
                 Left x -> unsafePerformIO $ let res = msg x in hPutStrLn stderr res >> return ["-- " ++ res]
                 Right x -> concatMap (lines . prettyPrint) x
-            where d = head $ [op | Derivation n op <- derivations, n == name2] ++ 
-                             error (msg "Unknown derivation")
-                  name2 = prettyPrint $ fst $ fromTyApps $ fromTyParen name
-                  msg x = "Deriving " ++ name2 ++ " for " ++ dataDeclName dat ++ ": " ++ x
+            where
+                d = derivationOp $ getDerivation clsName
+                (cls,typ1:_) = fromTyApps ty
+                clsName = prettyPrint cls
+                typ1Name = tyRoot typ1
+                msg x = "Deriving " ++ prettyPrint ty ++ ": " ++ x
+
+
+getDecl :: Module -> (String -> Decl)
+getDecl modu = \name -> Map.findWithDefault (error $ "Can't find data type definition for: " ++ name) name mp
+    where
+        mp = Map.fromList $ concatMap f $ moduleDecls modu
+        f x@(DataDecl _ _ _ name _ _ _) = [(prettyPrint name, x)]
+        f x@(GDataDecl _ _ _ name _ _ _ _) = [(prettyPrint name, x)]
+        f x@(TypeDecl _ name _ _) = [(prettyPrint name, x)]
+        f _ = []
+
+
+getDerivation :: String -> Derivation
+getDerivation = \name -> Map.findWithDefault (error $ "Don't know how to derive type class: " ++ name) name mp
+    where
+        mp = Map.fromList $ map (derivationName &&& id) derivations
 
 
 ---------------------------------------------------------------------
