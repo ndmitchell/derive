@@ -18,47 +18,50 @@ module Data.Derive.PlateDirect(makePlateDirect) where
 import "uniplate" Data.Generics.PlateDirect
 
 test :: PlateDirect (Sample Int)
-
 instance Uniplate (Sample Int) where
     uniplate x = plate x
 
-
 test :: PlateDirect (Sample Int) Int
-
 instance Biplate (Sample Int) Int where
     biplate (Second x1 x2) = plate Second |* x1 |* x2
     biplate (Third x1) = plate Third |* x1
     biplate x = plate x
 
 test :: PlateDirect Computer
-
 instance Uniplate Computer where
     uniplate x = plate x
 
 test :: PlateDirect Computer Double
-
 instance Biplate Computer Double where
     biplate (Laptop x1 x2) = plate Laptop |* x1 |- x2
     biplate x = plate x
 
 test :: PlateDirect (Assoced (Maybe Bool)) Char
-
 instance Biplate (Assoced (Maybe Bool)) Char where
     biplate (Assoced x1 x2) = plate (Assoced x1) ||* x2
 
-test :: PlateDirect (Either Bool Computer) Int
 
+-- test following external declarations
+test :: PlateDirect (Either Bool Computer) Int
 instance Biplate (Either Bool Computer) Int where
-        biplate (Right x1) = plate Right |+ x1
-        biplate x = plate x
+    biplate (Right x1) = plate Right |+ x1
+    biplate x = plate x
+
+-- test recursive bits
+test :: PlateDirect (List Int) Bool
+instance Biplate (List Int) Bool where
+    biplate x = plate x
+
 -}
 
 import Language.Haskell
 import Data.Generics.PlateData
 import Data.Derive.Internal.Derivation
 import Data.Maybe
+import qualified Data.Set as Set
 import Control.Arrow
 
+import Debug.Trace
 
 makePlateDirect :: Derivation
 makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) ->
@@ -87,7 +90,7 @@ make1 grab to (name,tys)
         | all (== "|-") ops = Nothing
         | otherwise = Just (pat,bod)
     where
-        ops = map (show . operator grab to) tys
+        ops = map (show . operator grab to Set.empty) tys
         vars = ['x':show i | i <- [1..length tys]]
         pat = PParen $ PApp (qname name) $ map pVar vars
         bod = foldl (\x (y,z) -> InfixApp x (QVarOp $ UnQual $ Symbol y) z) (App (var "plate") $ paren $ apps (con name) (map snd good)) bad
@@ -113,32 +116,32 @@ ansJoin [] = Miss
 ansJoin _ = Try
 
 
-operator :: (String -> DataDecl) -> Type -> Type -> Ans
-operator grab to from
-    | isTyParen to || isTyParen from = operator grab (fromTyParen to) (fromTyParen from)
+operator :: (String -> DataDecl) -> Type -> Set.Set Type -> Type -> Ans
+operator grab to seen from
+    | from `Set.member` seen = Miss
     | isTyFun from = Try
     | to == from = Hit
-    | Just from2 <- fromTyList from = ansList $ operator grab to from2
+    | Just from2 <- fromTyList from = ansList $ operator grab to seen2 from2
     | otherwise = case subst from $ grab $ prettyPrint $ fst $ fromTyApps from of
-        Left from2 -> operator grab to from2
-        Right ctrs -> ansJoin $ map (operator grab to) $ concatMap snd ctrs
-
+        Left from2 -> operator grab to seen2 from2
+        Right ctrs -> ansJoin $ map (operator grab to seen2) $ concatMap snd ctrs
+    where seen2 = Set.insert from seen
 
 subst :: Type -> Decl -> Either Type [(String,[Type])]
 subst ty x@TypeDecl{} = Left $ substType ty x
 subst ty x = Right $ substData ty x
 
 substData :: Type -> Decl -> [(String,[Type])]
-substData ty dat = [(ctorDeclName x, map (transform f . fromBangType . snd) $ ctorDeclFields x) | x <- dataDeclCtors dat]
+substData ty dat = [(ctorDeclName x, map (fromTyParens . transform f . fromBangType . snd) $ ctorDeclFields x) | x <- dataDeclCtors dat]
     where
-        rep = zip (dataDeclVars dat) (snd $ fromTyApps $ fromTyParen ty)
+        rep = zip (dataDeclVars dat) (snd $ fromTyApps ty)
         f (TyVar x) = fromMaybe (TyVar x) $ lookup (prettyPrint x) rep
         f x = x
 
 substType :: Type -> Decl -> Type
-substType ty (TypeDecl _ _ vars d) = transform f d
+substType ty (TypeDecl _ _ vars d) = fromTyParens $ transform f d
     where
-        rep = zip (map prettyPrint vars) (snd $ fromTyApps $ fromTyParen ty)
+        rep = zip (map prettyPrint vars) (snd $ fromTyApps ty)
         f (TyVar x) = fromMaybe (TyVar x) $ lookup (prettyPrint x) rep
         f x = x
 
@@ -150,7 +153,10 @@ knownCtors = map (fromParseResult . parseDecl)
     ,"data Char = Char"
     ,"data Double = Double"
     ,"data Float = Float"
+    ,"data Integer = Integer"
     ,"data Maybe a = Nothing | Just a"
+    ,"type Rational = Ratio Integer"
+    ,"data (Integral a) => Ratio a = !a :% !a"
     ,"type String = [Char]"
     ] ++
     map tupleDefn (0:[2..32])
