@@ -58,10 +58,10 @@ import Language.Haskell
 import Data.Generics.PlateData
 import Data.Derive.Internal.Derivation
 import Data.Maybe
-import qualified Data.Set as Set
+import qualified Data.Map as Map
 import Control.Arrow
+import Control.Monad.State
 
-import Debug.Trace
 
 makePlateDirect :: Derivation
 makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) ->
@@ -70,31 +70,29 @@ makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) ->
         grab2 x = fromMaybe (grab x) $ lookup x known
     in case args of
         _ | not $ null [() | TyVar _ <- universeBi args] -> error "PlateDirect only accepts monomorphic types"
-        [] -> make True grab2 x ty x
+        [] -> make True grab2 x x ty
             where x = tyApps (tyCon $ dataDeclName ty) $ replicate (dataDeclArity ty) $ TyCon $ Special UnitCon
-        [x] -> make True grab2 x ty x
-        [x,y] -> make False grab2 y ty x
+        [x] -> make True grab2 x x ty
+        [x,y] -> make False grab2 x y ty
         _ -> error $ "PlateDirect requires exactly one or two arguments, got " ++ show (length args)
         
 
-make :: Bool -> (String -> DataDecl) -> Type -> DataDecl -> Type -> Either String [Decl]
-make uni grab to ty from = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni]) [InsDecl $ FunBind ms]]
+make :: Bool -> (String -> DataDecl) -> Type -> Type -> DataDecl -> Either String [Decl]
+make uni grab from to ty = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni]) [InsDecl $ FunBind ms]]
     where
         match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) (BDecls [])
         ms = map (uncurry match) (catMaybes bods) ++ [match (pVar "x") (var "plate" `App` var "x") | any isNothing bods]
-        bods = map (make1 grab to) $ substData from ty
+        bods = run (fromTyParens to) $ mapM (make1 grab) $ substData from ty
 
 
-make1 :: (String -> DataDecl) -> Type -> (String,[Type]) -> Maybe (Pat, Exp)
-make1 grab to (name,tys)
-        | all (== "|-") ops = Nothing
-        | otherwise = Just (pat,bod)
-    where
-        ops = map (show . operator grab to Set.empty) tys
-        vars = ['x':show i | i <- [1..length tys]]
+make1 :: (String -> DataDecl) -> (String,[Type]) -> S (Maybe (Pat, Exp))
+make1 grab (name,tys) = do
+    ops <- mapM (fmap show . operator grab) tys
+    let vars = ['x':show i | i <- [1..length tys]]
         pat = PParen $ PApp (qname name) $ map pVar vars
+        (good,bad) = span ((==) "|-" . fst) $ zip ops $ map var vars
         bod = foldl (\x (y,z) -> InfixApp x (QVarOp $ UnQual $ Symbol y) z) (App (var "plate") $ paren $ apps (con name) (map snd good)) bad
-            where (good,bad) = span ((==) "|-" . fst) $ zip ops $ map var vars
+    return $ if all (== "|-") ops then Nothing else Just (pat,bod)
 
 
 data Ans = Hit | Miss | Try | ListHit | ListTry
@@ -116,16 +114,30 @@ ansJoin [] = Miss
 ansJoin _ = Try
 
 
-operator :: (String -> DataDecl) -> Type -> Set.Set Type -> Type -> Ans
-operator grab to seen from
-    | from `Set.member` seen = Miss
-    | isTyFun from = Try
-    | to == from = Hit
-    | Just from2 <- fromTyList from = ansList $ operator grab to seen2 from2
-    | otherwise = case subst from $ grab $ prettyPrint $ fst $ fromTyApps from of
-        Left from2 -> operator grab to seen2 from2
-        Right ctrs -> ansJoin $ map (operator grab to seen2) $ concatMap snd ctrs
-    where seen2 = Set.insert from seen
+type S a = State (Map.Map Type Ans) a
+
+run :: Type -> S a -> a
+run to act = evalState act (Map.singleton to Hit)
+
+operator :: (String -> DataDecl) -> Type -> S Ans
+operator grab from = do
+    mp <- get
+    case Map.lookup from mp of
+        Just y -> return y
+        Nothing -> do
+            modify $ Map.insert from Miss
+            ans <- operator2 grab from
+            modify $ Map.insert from ans
+            return ans
+
+operator2 :: (String -> DataDecl) -> Type -> S Ans
+operator2 grab from
+    | isTyFun from = return Try
+    | Just from2 <- fromTyList from = fmap ansList $ operator grab from2
+    | otherwise = case subst from $ grab $ tyRoot from of
+        Left from2 -> operator grab from2
+        Right ctrs -> fmap ansJoin $ mapM (operator grab) $ concatMap snd ctrs
+
 
 subst :: Type -> Decl -> Either Type [(String,[Type])]
 subst ty x@TypeDecl{} = Left $ substType ty x
@@ -134,7 +146,7 @@ subst ty x = Right $ substData ty x
 substData :: Type -> Decl -> [(String,[Type])]
 substData ty dat = [(ctorDeclName x, map (fromTyParens . transform f . fromBangType . snd) $ ctorDeclFields x) | x <- dataDeclCtors dat]
     where
-        rep = zip (dataDeclVars dat) (snd $ fromTyApps ty)
+        rep = zip (dataDeclVars dat) (snd $ fromTyApps $ fromTyParen ty)
         f (TyVar x) = fromMaybe (TyVar x) $ lookup (prettyPrint x) rep
         f x = x
 

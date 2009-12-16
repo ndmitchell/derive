@@ -17,7 +17,7 @@ data Derivation = Derivation
 
 
 derivationParams :: String -> ([Type] -> (String -> Decl) -> FullDataDecl -> Either String [Decl]) -> Derivation
-derivationParams name op = Derivation name $ \ty grab decs -> op (snd $ fromTyApps $ fromTyParens ty) grab decs
+derivationParams name op = Derivation name $ \ty grab decs -> op (snd $ fromTyApps $ fromTyParen ty) grab decs
 
 
 derivationCustom :: String -> (FullDataDecl -> Either String [Decl]) -> Derivation
