@@ -33,6 +33,8 @@ fromTyTuple x = [x]
 fromTyParen (TyParen x) = fromTyParen x
 fromTyParen x = x
 
+fromTyParens = transform fromTyParen
+
 tyRoot = prettyPrint . fst . fromTyApps . fromTyParen
 
 isTyFun TyFun{} = True
