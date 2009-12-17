@@ -66,20 +66,20 @@ import Control.Monad.State
 makePlateDirect :: Derivation
 makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) ->
     let known = map (declName &&& id) knownCtors
-        grab2 x | declName ty == x = ty
         grab2 x = fromMaybe (grab x) $ lookup x known
     in case args of
         _ | not $ null [() | TyVar _ <- universeBi args] -> error "PlateDirect only accepts monomorphic types"
-        [] -> make True grab2 x x ty
+        [] -> make True grab2 x x
             where x = tyApps (tyCon $ dataDeclName ty) $ replicate (dataDeclArity ty) $ TyCon $ Special UnitCon
-        [x] -> make True grab2 x x ty
-        [x,y] -> make False grab2 x y ty
+        [x] -> make True grab2 x x
+        [x,y] -> make False grab2 x y
         _ -> error $ "PlateDirect requires exactly one or two arguments, got " ++ show (length args)
         
 
-make :: Bool -> (String -> DataDecl) -> Type -> Type -> DataDecl -> Either String [Decl]
-make uni grab from to ty = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni]) [InsDecl $ FunBind ms]]
+make :: Bool -> (String -> DataDecl) -> Type -> Type -> Either String [Decl]
+make uni grab from to = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni]) [InsDecl $ FunBind ms]]
     where
+        ty = grab $ tyRoot from
         match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) (BDecls [])
         ms = map (uncurry match) (catMaybes bods) ++ [match (pVar "x") (var "plate" `App` var "x") | any isNothing bods]
         bods = run (fromTyParens to) $ mapM (make1 grab) $ substData from ty
@@ -171,7 +171,12 @@ knownCtors = map (fromParseResult . parseDecl)
     ,"data (Integral a) => Ratio a = !a :% !a"
     ,"type String = [Char]"
     ] ++
+    listCtor :
     map tupleDefn (0:[2..32])
+
+listCtor = DataDecl sl  DataType [] (Ident "[]") [UnkindedVar $ Ident "a"]
+    [QualConDecl sl [] [] $ ConDecl (Ident "[]") []
+    ,QualConDecl sl [] [] $ ConDecl (Ident "(:)") [UnBangedTy $ tyVar "a", UnBangedTy $ TyList $ tyVar "a"]] []
 
 tupleDefn :: Int -> Decl
 tupleDefn n = DataDecl sl DataType [] (Ident s) (map (UnkindedVar . Ident) vars) [QualConDecl sl [] [] $ ConDecl (Ident s) (map (UnBangedTy . tyVar) vars)] []
