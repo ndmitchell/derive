@@ -124,7 +124,7 @@ instance NFData Languge where
     rnf (Java x_1         ) = rnf x_1 `seq` ()
 \end{code}
 
-We also need to define |NFData| instances for each of the data types |Extension|, |Compiler| and |Version|. Any instance of |NFData| follows naturally from the structure of the data type: for each constructor, all fields have |seq| applied, before returning |()|.
+We also need to define |NFData| instances for lists, and each of the data types |Extension|, |Compiler| and |Version|. Any instance of |NFData| follows naturally from the structure of the data type: for each constructor, all fields have |seq| applied, before returning |()|.
 
 Writing an |NFData| instance for a single simple data type is easy -- but for multiple complex data types the effort can be substantial. The standard solution is to express the \textit{relationship} between a data type and it's instance. In standard tools, such as DrIFT \cite{drift}, the person describing a relationship must be familiar with both the representation of a data type, and various code-generation functions. The result is that specifying a relationship is not as straightforward as one might hope.
 
@@ -157,7 +157,7 @@ This paper makes the following contributions:
 \section{Our Derivation Scheme}
 \label{sec:scheme}
 
-In this section we define a general scheme for deriving relationships, which we later use to derive type-class instance generators. In general terms, a function takes an input to an output. In our case, we restrict ourselves to functions that can be described by a DSL (domain specific language). The person defining a derivation scheme is required to define suitable types named |Input|, |Output| and the |DSL|. To use a value of DSL, we need an |apply| function to serve as an interpreter, which takes a DSL value and an input and produces an output:
+In this section we define a general scheme for deriving relationships, which we later use to derive type-class instance generators. In general terms, a function takes an input to an output. In our case, we restrict ourselves to functions that can be described by a value of a DSL (domain specific language). The person defining a derivation scheme is required to define suitable types named |Input|, |Output| and the |DSL|. To use a value of DSL, we need an |apply| function to serve as an interpreter, which takes a DSL value and an input and produces an output:
 
 \h{.short}\begin{code}
 apply :: DSL -> Input -> Output
@@ -200,13 +200,13 @@ Our |derive| function returns a list of suitable DSLs. To ensure consistency, it
 forall o `elem` Output `o` forall d_1,d_2 `elem` derive o `o` d_1 ~== d_2
 \end{code}
 
-This property is dependent on the implementation of the |derive| function, so is insufficient for ensuring predictability. To ensure predictability we require that \textit{all} results satisfying the correctness property are congruent:
+This property is dependent on the implementation of the |derive| function, so is insufficient for ensuring predictability. To ensure predictability we require that \textit{all} results which give the same answer on the sample input are congruent:
 
 \ignore\begin{code}
 forall d_1, d_2 `elem` DSL `o` apply d_1 sample == apply d_2 sample => d_1 ~== d_2
 \end{code}
 
-The combination of this predictability property and the correctness property implies the consistency property. It is important to note that predictability does not impose conditions on the |derive| function, only on the DSL and sample input.
+The combination of this predictability property and the correctness property from \S\ref{sec:correctness} implies the consistency property. It is important to note that predictability does not impose conditions on the |derive| function, only on the DSL, the |apply| function and the sample input.
 
 \subsection{Scheme Roles}
 
@@ -234,7 +234,7 @@ We wish to generate any sequence of Haskell declarations, where a declaration is
 \item[String] A sequence of Haskell declarations can be represented as the string of the program text. However, the lack of structure in a string poses several problems. When constructing strings it is easy to generate invalid programs, particularly given the indentation and layout requirements of Haskell. It is also hard to recover structure from the program that is likely to be useful for deriving relationships.
 \item[Pretty printing combinators] Some tools such as DrIFT \cite{drift} generate Haskell code using pretty printing combinators. These combinators supply more structure than strings, but the structure is linked to the presentation, rather than the meaning of constructs.
 \item[Typed abstract syntax tree (AST)] The standard representation of Haskell source code is a typed AST -- an AST where different types of fragment (i.e. declarations, expressions and patterns) are restricted to different positions within the tree. The first version of \derive{} used a typed AST, specifically Template Haskell \cite{template_haskell}. This approach preserves all the structure, and makes it reasonably easy to ensure the generated program is syntactically correct. By combining a typed AST with a parser and pretty printer we can convert between strings as necessary.
-\item[Untyped abstract syntax tree (AST)] An untyped AST is an AST where all fragments have the same type, and types do not restrict where a fragment may be placed. The removal of types increases the number of invalid programs that can be represented -- for example a declaration could occur where an expression was expected. However, by removing types we increase the similarity of the tree, in turn simplifying functions that operate on the tree in a uniform manner.
+\item[Untyped abstract syntax tree (AST)] An untyped AST is an AST where all fragments have the same type, and types do not restrict where a fragment may be placed. The removal of types increases the number of invalid programs that can be represented -- for example a declaration could occur where an expression was expected. However, by removing types we make it easier to express some operations that operate on the tree in a uniform manner.
 \end{description}
 
 For our purposes, it is clear that both strings and pretty printing combinators are unsuitable -- they lack sufficient structure to implement the |derive| operation. The choice between a typed and untyped AST is one of safety vs simplicity. The use of a typed AST in the first version of \derive{} caused many complexities -- notably the DSL was hard to represent in a well-typed manner and some functions had to be duplicated for each type. The loss of safety from using an untyped AST is not too serious, as both DSLs and ASTs are automatically generated, rather than being written by hand. Therefore, we chose to use untyped ASTs for the current version of \derive{}. We discuss possible changes to regain type safety in \S\ref{sec:conclusion}.
@@ -260,7 +260,7 @@ data Output  =  OString String
              |  OApp String [Output]
 \end{code}
 
-\noindent|OString| and |OInt| represent strings and integers. The |OList| constructor generates a list from a sequence of |Output| values. The expression |OApp c xs| represents the constructor |c| with fields |xs|. For example |Just [1,2]| would be represented by the expression |OApp "Just" [OList [OInt 1,OInt 2]]|.
+\noindent|OString| and |OInt| represent strings and integers. The |OList| constructor generates a list from a sequence of |Output| values. The expression |OApp c xs| represents the constructor |c| with fields |xs|. For example |Just [1,2]| would be represented by the expression |OApp "Just" [OList [OInt 1,OInt 2]]|. These constructed values represent the AST defined by haskell-src-exts, so can represent all of Haskell -- e.g. a case expression would be |OApp "Case" [on,alts]|.
 
 Our |Output| type can represent many impossible values, for example the expression |OApp "Just" []| (wrong number of fields) or |OApp "Maybe" []| (not a constructor). We consider any |Output| value that does not represent a haskell-src-exts value to be an error. The root |Output| value must represent a value of type \h{.hse type}|[Decl]|. We can translate between our |Output| type and the haskell-src-exts type \h{.hse type}|[Decl]|:
 
@@ -410,11 +410,11 @@ Some operations have restrictions on what their arguments must evaluate to, and 
 
 \subsubsection{Constants}
 
-We include constants in our DSL, so we can lift values of |Output| to values of |DSL|. The |String|, |Int|, |List| operations are directly equivalent to the corresponding |Output| values. The |App| constructor is similar to |OApp|, but instead of taking a \textit{list} of arguments, |App| takes a single argument, which must to evaluate to an |OList|. Requiring an |OList| rather than an explicit list allows the arguments to |App| to be constructed by operations such as |Reverse| or |Concat|.
+We include constants in our DSL, so we can lift values of |Output| to values of |DSL|. The |String|, |Int|, |List| operations are directly equivalent to the corresponding |Output| values. The |App| constructor is similar to |OApp|, but instead of taking a \textit{list} of arguments, |App| takes a single argument, which must evaluate to an |OList|. Requiring an |OList| rather than an explicit list allows the arguments to |App| to be constructed by operations such as |Reverse| or |Concat|.
 
 \subsubsection{Operations}
 
-The operations group consists of useful functions for manipulating lists, strings and integers. The operations have been added as required, based on functions in the Haskell Prelude. The |Concat| operation corresponds to |concat|, and concatenates either a list of lists, or a list of strings. The |Reverse| operation performs |reverse| on a list. The |ShowInt| operation performs |show|, converting an integer to a string. We have only included functions for which we have found a specific need, for example |Reverse| cannot be applied to a string, even though there is a sensible interpretation. We do not provide an append or |(++)| operation, but one can be created from a combination of |List| and |Concat|. These operations are all simple, and would be appropriate for many DSLs.
+The operations group consists of useful functions for manipulating lists, strings and integers. The operations have been added as required, based on functions in the Haskell Prelude. The |Concat| operation corresponds to |concat|, and concatenates either a list of lists, or a list of strings. The |Reverse| operation performs |reverse| on a list. The |ShowInt| operation performs |show|, converting an integer to a string. We do not provide an append or |(++)| operation, but one can be created from a combination of |List| and |Concat|.
 
 Some examples of these operations in use are:
 
@@ -493,25 +493,25 @@ instance Arities (Sample alpha) where
     arities _ = [0,2,1]
 \end{code}
 
-Given this instance, we could either infer the |arities| function always returns |[0,2,1]|, or it returns the arity of each constructor. While a human can spot the intention, there is a potential ambiguity. Using the second restriction, we conclude that this must represent the constant operation. To derive a version returning the arities we can write:
+Given this instance, we could either infer the |arities| function always returns |[0,2,1]|, or it returns the arity of each constructor. While a human can spot the intention, there is a potential ambiguity. Using the third restriction, we conclude that this must represent the constant operation. To derive a version returning the arities we can write:
 
 \begin{code}
 instance Arities (Sample alpha) where
     arities _ = [const 0 (braces First), const 2 (braces Second), const 1 (braces Third)]
 \end{code}
 
-While this code is more verbose, any good optimiser (i.e. GHC \cite{ghc6_10}) will generate identical code.
+While this code is more verbose, any good optimiser (e.g. GHC \cite{ghc6_10}) will generate identical code.
 
-While our DSL has forms of iteration (i.e. |MapCtor|), it does not have any conditional constructs such as |if| or |case|. The lack of conditionals is important for predictability -- for every possible choice it would be necessary for the |Sample| type to choose all branches, thus increasing the size of |Sample|.
+While our DSL has forms of iteration (i.e. |MapCtor|), it does not have any conditional constructs such as |if| or |case|. The lack of conditionals is deliberate -- to maintain predictability every branch of every conditional would need to be exercised by a different constructor or field in the |Sample| type, thus increasing the size of |Sample|.
 
-The restrictions in this section ensure that no fragment of output can be represented by both a constant and be parameterised by the data type. The |Sample| type ensures no fragment can be parameterised in multiple ways, by having different arity/index values for some constructors -- explaining why the |Second| constructor has arity 2, while the |Third| has arity 1. The restrictions in this section, along with the |Sample| data type, ensure predictability. We have checked the predictability property using QuickCheck \cite{quickcheck}.
+The restrictions in this section aim to ensure that no fragment of output can be represented by both a constant and be parameterised by the data type. The |Sample| type ensures no fragment can be parameterised in multiple ways, by having different arity/index values for some constructors -- explaining why the |Second| constructor has arity 2, while the |Third| has arity 1. We believe that the restrictions in this section, along with the |Sample| data type, ensure predictability. We have not proved the predictability property, but we have checked it using QuickCheck \cite{quickcheck}. We do not see any reason this property could not be proven more formally, but leave this task as future work.
 
 \section{Implementing |derive|}
 \label{sec:guess}
 
 This section covers the implementation of a |derive| function, as described in \S\ref{sec:scheme}. There are many ways to write a |derive| function, our approach is merely one option -- we hope that the scheme we have described provides ample opportunity for experimentation.
 
-Before implementing |derive| it is useful to think about which properties are desirable. It is easy to ensure correctness by filtering incorrect results (see \S\ref{sec:correctness}), but our method chooses to only generate correct results. We have shown that our DSL and sample input guarantee predictability without regard to the |derive| function, provided we meet the restrictions in \S\ref{sec:predictability}, which we obey. We want our |derive| function to terminate, and ideally terminate within a reasonable time bound. Finally, we would like the |derive| function to find an answer if one exists, i.e.:
+Before implementing |derive| it is useful to think about which properties are desirable. It is easy to ensure correctness by filtering incorrect results (see \S\ref{sec:correctness}), but our method chooses to only generate correct results. We follow all the restrictions in \S\ref{sec:predictability}, which we believe ensure predictability. We want our |derive| function to terminate, and ideally terminate within a reasonable time bound. Finally, we would like the |derive| function to find an answer if one exists, i.e.:
 
 \ignore\begin{code}
 forall o `elem` Output, d `elem` DSL `o` null (derive o) => apply d sample /= o
@@ -532,7 +532,7 @@ derive o = [d | Guess d <- guess o]
 guess :: Output -> [Guess]
 \end{code}
 
-Applying |guess (OString "First")| produces a guess of |GuessCtr 0 CtorName|. The |GuessCtr| and |GuessFld| guesses are paramterised by either constructors or fields, and can only occur within |MapCtor| or |MapField| respectively. The |Guess| guess is either parameterised by the entire data type, or is a constant which does not refer to the environment at all.
+Applying |guess (OString "First")| produces a guess of |GuessCtr 0 CtorName|. The |GuessCtr| and |GuessFld| guesses are parameterised by either constructors or fields, and can only occur within |MapCtor| or |MapField| respectively. The |Guess| guess is either parameterised by the entire data type, or is a constant which does not refer to the environment at all.
 
 To generate a guess for the entire output, we start by generating guesses for each leaf node of the |Output| value, then work upwards combining them. If at any point we see an opportunity to apply one of our custom rules (i.e. |Instance|), we do so. The important considerations are how we create guesses for the leaves, how we combine guesses together, and where we apply our custom rules. We require that all generated guesses are correct, defined by:
 
@@ -632,7 +632,7 @@ The sequence rule introduces either |MapField| or |MapCtor| from a list of guess
     = GuessCtr 1 (MapField d_1)
 \end{code}
 
-It is important that the fields are in the correct order, one of the DSL values (in this case |d_1|) is applicable to both problems, and the resultant guess is paramterised by the |Second| constructor (which has two fields). We also permit sequences in reverse order, which we generate by reversing the list before, and inserting a |Reverse| afterwards.
+It is important that the fields are in the correct order, one of the DSL values (in this case |d_1|) is applicable to both problems, and the resultant guess is parameterised by the |Second| constructor (which has two fields). We also permit sequences in reverse order, which we generate by reversing the list before, and inserting a |Reverse| afterwards.
 
 The sequence construction for fields can be extended to constructors by demanding three guesses parameterised by consecutive constructors. For constructors we only check using the DSL relating to the |Second| constructor, as this DSL is the only one that could have a |MapField| construct within it. Because we only test against the |Second| DSL, we can avoid generating |CtorArity| and |CtorIndex| guesses for the other constructors. We also require that when creating a |MapCtor| the guess contains a |CtorName|, to ensure the restrictions from \S\ref{sec:predictability} are met.
 
@@ -806,7 +806,7 @@ Some instances treat infix constructors differently, for example the |Show| inst
 
 \begin{code}
 instance Show PrefixConstructor where
-    show (Prefix x y) = "Foo " ++ show x ++ " " ++ show y
+    show (Prefix x y) = "Prefix " ++ show x ++ " " ++ show y
 \end{code}
 
 \noindent But using an infix constructor:
@@ -843,7 +843,7 @@ Record fields are not present in our |Sample| type, but could be added. The diff
 
 Our |Sample| data type has a simple type structure, and our |DSL| does not allow decisions to be made on the basis of type -- these restrictions means some type classes can't be defined. For example, a |Monoid| instance processes items of the same type using |mappend|, but items of a different type using |mempty|. Several other type classes require type specific behaviour, including |Functor|, |Traversable| and |Uniplate|.
 
-The lack type information has other consequences. For example, we can write the definition:
+The lack of type information has other consequences. For example, we can write the definition:
 
 \begin{code}
 fromFirst   (First            ) = const (braces First)   $ tuple0
@@ -851,17 +851,17 @@ fromSecond  (Second  x_1 x_2  ) = const (braces Second)  $ tuple2  x_1 x_2
 fromThird   (Third   x_1      ) = const (braces Third)   $ tuple1  x_1
 \end{code}
 
-\noindent This function returns the elements contained within a constructor, generalising operations such |fromJust|, and has seen extensive use in the Yhc compiler \cite{yhc}. When compiled with GHC this code generates a warning that no top-level type signatures have been given. These type signatures can be inferred, but the Haddock documentation tool \cite{haddock} won't include functions lacking type signatures. Without type information in |Input|, we can't generate appropriate type signatures.
+\noindent This function returns the elements contained within a constructor, generalising operations such as |fromJust|, and has seen extensive use in the Yhc compiler \cite{yhc}. When compiled with GHC this code generates a warning that no top-level type signatures have been given. These type signatures can be inferred, but the Haddock documentation tool \cite{haddock} won't include functions lacking type signatures. Without type information in |Input|, we can't generate appropriate type signatures.
 
-We see no easy way to include type information in our derivation scheme -- types have too much variety, and different type classes make use of different type information. It may be possible to identify some restricted type information that could be used for a subset of type-based instances, but we have not done so.
+We see no easy way to include type information in our derivation scheme -- types are varied, and different type classes make use of different type information. It may be possible to identify some restricted type information that could be used for a subset of type-based instances, but we have not done so.
 
 \subsection{Practical Experiences}
 
-This section describes our experiences of specifying instances in a form suitable for derivation. Ideally, we would write all instances in a natural way, but sometimes we need to make concessions to our derivation algorithm. Using the techniques given here, it seems possible to write most instances which are based on information included in the |Input| type.
+This section describes our experiences with specifying instances in a form suitable for derivation. Ideally, we would write all instances in a natural way, but sometimes we need to make concessions to our derivation algorithm. Using the techniques given here, it seems possible to write most instances which are based on information included in the |Input| type.
 
 \subsubsection{Brackets Matter}
 
-The original \derive{} program used Template Haskell, which include brackets in the abstract syntax tree. For example, the expressions |(First)| and |First| are considered equal. However, using haskell-src-exts, brackets are explicit and care must be taken to ensure every constructor has the same level of bracketing. Examples of otherwise unnecessary brackets can be seen with |fromFirst| in \S\ref{sec:fromCtorName}, where the constructor |First| is bracketed.
+The original \derive{} program used Template Haskell, which does not include brackets in the abstract syntax tree. For example, the expressions |(First)| and |First| are considered equal. However, using haskell-src-exts, brackets are explicit and care must be taken to ensure every constructor has the same level of bracketing. Examples of otherwise unnecessary brackets can be seen with |fromFirst| in \S\ref{sec:fromCtorName}, where the constructor |First| is bracketed. This restriction could be lifted if all brackets were removed before processing, then minimal brackets were added back afterwards.
 
 %Currently some redundant brackets are removed by the transformations described in \S\ref{sec:output_simplify}.
 
@@ -968,7 +968,7 @@ Computers are ideally suited to applying a relationship using new parameters, bu
 
 \subsection*{Acknowledgements}
 
-Thanks to Stefan O'Rear for help writing the first version of the \derive{} tool. Thanks to Niklas Broberg for the excellent haskell-src-exts library. Thanks to Hongseok Yang for fruitful discussions on the original instance generation work. Thanks to Mike Dodds for constructive criticism on earlier drafts.
+Thanks to Stefan O'Rear for help writing the first version of the \derive{} tool. Thanks to Niklas Broberg for the excellent haskell-src-exts library. Thanks to Hongseok Yang for fruitful discussions on the original instance generation work. Thanks to Mike Dodds and the anonymous referees for useful feedback on earlier drafts.
 
 %if 0
 \appendix
