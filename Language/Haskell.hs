@@ -23,7 +23,7 @@ tyApps x [] = x
 tyApps x (y:ys) = tyApps (TyApp x y) ys
 
 
-fromTyApps (TyTuple _ xs) = (tyCon $ "(" ++ replicate (length xs) ',' ++ ")", xs)
+fromTyApps (TyTuple _ xs) = (tyCon $ "(" ++ replicate (length xs - 1) ',' ++ ")", xs)
 fromTyApps (TyApp x y) = let (a,b) = fromTyApps x in (a, b ++ [y])
 fromTyApps (TyList x) = (TyCon $ Special ListCon, [x])
 fromTyApps x = (x, [])
@@ -102,6 +102,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
             where x2 = Var $ UnQual x
         fExp (App (Paren (Lambda _ [PWildCard] x)) _) = x
         fExp (Lambda s ps x) = Lambda s (minPat x ps) x
+        fExp (Con x) = Con $ rename x
         fExp x = x
 
         fTyp (TyApp x y) | x ~= "[]" = TyList y
@@ -114,7 +115,10 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
 
         fPat (PParen x@(PApp _ [])) = x
         fPat (PParen (PParen x)) = PParen x
-        fPat (PApp nam xs) = PApp (rename nam) xs
+        fPat (PApp nam xs) = case rename nam of
+            Special (TupleCon Boxed _) -> PTuple xs
+            nam -> PApp nam xs
+        fPat (PParen (PTuple xs)) = PTuple xs
         fPat x = x
 
         fMatch (Match sl nam pat sig (GuardedRhss [GuardedRhs _ [Qualifier x] bod]) decls)
@@ -158,7 +162,9 @@ isGuardFalse (Match sl nam pat sig (GuardedRhss [GuardedRhs _ [Qualifier x] bod]
 isGuardFalse _ = False
 
 
-rename (UnQual (Ident ('(':xs))) | head xs `notElem` ",)" = UnQual $ Symbol $ init xs
+rename (UnQual (Ident ('(':xs@(x:_))))
+    | x == ',' = Special $ TupleCon Boxed $ length xs
+    | x /= ')' = UnQual $ Symbol $ init xs
 rename x = x
 
 
