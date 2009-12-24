@@ -167,6 +167,7 @@ knownCtors = map (fromParseResult . parseDecl)
     ,"data Float = Float"
     ,"data Integer = Integer"
     ,"data Maybe a = Nothing | Just a"
+    ,"data Either a b = Left a | Right b"
     ,"type Rational = Ratio Integer"
     ,"data (Integral a) => Ratio a = !a :% !a"
     ,"type String = [Char]"
