@@ -17,6 +17,12 @@ module Data.Derive.PlateDirect(makePlateDirect) where
 {-
 import "uniplate" Data.Generics.PlateDirect
 
+
+-- test tuples
+test :: PlateDirect ((), Maybe ()) ()
+instance Biplate ((), Maybe ()) () where
+    biplate (x1, x2) = plate (,) |* x1 |+ x2
+
 test :: PlateDirect (Sample Int)
 instance Uniplate (Sample Int) where
     uniplate x = plate x
@@ -44,7 +50,6 @@ test :: PlateDirect (Assoced (Maybe Bool)) Char
 instance Biplate (Assoced (Maybe Bool)) Char where
     biplate (Assoced x1 x2) = plate (Assoced x1) ||* x2
 
-
 -- test following external declarations
 test :: PlateDirect (Either Bool Computer) Int
 instance Biplate (Either Bool Computer) Int where
@@ -55,7 +60,6 @@ instance Biplate (Either Bool Computer) Int where
 test :: PlateDirect (List Int) Bool
 instance Biplate (List Int) Bool where
     biplate x = plate x
-
 -}
 
 import Language.Haskell
@@ -68,7 +72,7 @@ import Control.Monad.State
 
 
 makePlateDirect :: Derivation
-makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) ->
+makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) -> simplify $
     let known = map (declName &&& id) knownCtors
         grab2 x = fromMaybe (grab x) $ lookup x known
     in case args of
@@ -187,5 +191,5 @@ listCtor = DataDecl sl  DataType [] (Ident "[]") [UnkindedVar $ Ident "a"]
 
 tupleDefn :: Int -> Decl
 tupleDefn n = DataDecl sl DataType [] (Ident s) (map (UnkindedVar . Ident) vars) [QualConDecl sl [] [] $ ConDecl (Ident s) (map (UnBangedTy . tyVar) vars)] []
-    where s = "(" ++ replicate n ',' ++ ")"
+    where s = "(" ++ replicate (n - 1) ',' ++ ")"
           vars = ['v':show i | i <- [1..n]]
