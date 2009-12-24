@@ -31,6 +31,10 @@ test :: PlateDirect Computer
 instance Uniplate Computer where
     uniplate x = plate x
 
+test :: PlateDirect Computer Computer
+instance Biplate Computer Computer where
+    biplate = plateSelf
+
 test :: PlateDirect Computer Double
 instance Biplate Computer Double where
     biplate (Laptop x1 x2) = plate Laptop |* x1 |- x2
@@ -77,11 +81,13 @@ makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) ->
         
 
 make :: Bool -> (String -> DataDecl) -> Type -> Type -> Either String [Decl]
-make uni grab from to = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni]) [InsDecl $ FunBind ms]]
+make uni grab from to = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni]) [InsDecl ms]]
     where
         ty = grab $ tyRoot from
         match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) (BDecls [])
-        ms = map (uncurry match) (catMaybes bods) ++ [match (pVar "x") (var "plate" `App` var "x") | any isNothing bods]
+        ms = if uni || from /= to
+             then FunBind $ map (uncurry match) (catMaybes bods) ++ [match (pVar "x") (var "plate" `App` var "x") | any isNothing bods]
+             else PatBind sl (pVar "biplate") Nothing (UnGuardedRhs $ var "plateSelf") (BDecls [])
         bods = run (fromTyParens to) $ mapM (make1 grab) $ substData from ty
 
 
