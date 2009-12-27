@@ -105,7 +105,7 @@ make1 grab (name,tys) = do
     return $ if all (== "|-") ops then Nothing else Just (pat,bod)
 
 
-data Ans = Hit | Miss | Try | ListHit | ListTry
+data Ans = Hit | Miss | Try | ListHit | ListTry deriving Eq
 
 instance Show Ans where
     show Hit = "|*"
@@ -135,10 +135,16 @@ operator grab from = do
     case Map.lookup from mp of
         Just y -> return y
         Nothing -> do
-            modify $ Map.insert from Miss
-            ans <- operator2 grab from
+            fix Miss
+    where
+        fix ans = do
+            s <- get
             modify $ Map.insert from ans
-            return ans
+            ans2 <- operator2 grab from
+            if ans == ans2
+                then return ans
+                else put s >> fix ans2
+
 
 operator2 :: (String -> DataDecl) -> Type -> S Ans
 operator2 grab from
