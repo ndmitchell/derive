@@ -51,9 +51,6 @@ Library
         Data.Derive.Instance.Arities
         Data.Derive.Class.Arities
         Data.Derive.Class.Default
-        Data.Derive.Internal.Derivation
-        Data.Derive.Internal.Instance
-        Data.Derive.Internal.Traversal
         Language.Haskell
         Language.Haskell.Convert
         Language.Haskell.TH.All
@@ -97,3 +94,8 @@ Library
         Data.Derive.UniplateTypeable
         Data.Derive.Update
 -- GENERATED STOP
+
+    Other-Modules:
+        Data.Derive.Internal.Derivation
+        Data.Derive.Internal.Instance
+        Data.Derive.Internal.Traversal
