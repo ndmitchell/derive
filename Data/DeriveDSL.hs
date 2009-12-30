@@ -7,7 +7,6 @@ import Data.Derive.DSL.DSL
 import Data.Derive.DSL.HSE
 import Data.Derive.DSL.SYB
 import Data.Maybe
-import Data.Generics.PlateData
 
 
 deriveDSL :: [Decl] -> Maybe DSL
