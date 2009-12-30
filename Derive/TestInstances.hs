@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -w #-}
 
 module Derive.TestInstances where
@@ -8,6 +8,7 @@ import Data.Monoid
 import Data.Binary
 import Data.Binary.Defer
 import Control.Parallel.Strategies
+import Data.Generics.Uniplate.Typeable
 
 instance Bounded Double
 instance Bounded a => Bounded [a]
@@ -27,3 +28,5 @@ instance Binary (a -> b)
 instance Eq (a -> b)
 instance Read (a -> b)
 instance BinaryDefer (a -> b)
+
+instance PlateAll (a -> (a,b)) c

@@ -22,8 +22,8 @@ import Data.Derive.Internal.Derivation
 overlap = ["BinaryDefer","EnumCyclic","LazySet","DataAbstract"]
 
 -- REASONS:
--- PlateTypeable, PlateDirect: I use PlateData internally meaning the Data instance is in scope, and these overlap
-exclude = ["ArbitraryOld","UniplateTypeable","UniplateDirect","Ref","Serial"]
+-- UniplateDirect: Doesn't work through Template Haskell
+exclude = ["ArbitraryOld","UniplateDirect","Ref","Serial"]
 
 -- These must be first and in every set
 priority = ["Eq","Typeable"]

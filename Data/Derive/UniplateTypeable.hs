@@ -1,7 +1,6 @@
 module Data.Derive.UniplateTypeable where
 {-
-import "uniplate" Data.Generics.Uniplate.Typeable(PlateAll)
-import Data.Generics.PlateTypeable
+import "uniplate" Data.Generics.Uniplate.Typeable
 
 example :: Custom
 
