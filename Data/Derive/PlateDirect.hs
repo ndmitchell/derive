@@ -21,44 +21,53 @@ import "uniplate" Data.Generics.PlateDirect
 -- test tuples
 test :: PlateDirect ((), Maybe ()) ()
 instance Biplate ((), Maybe ()) () where
+    {-# INLINE biplate #-}
     biplate (x1, x2) = plate (,) |* x1 |+ x2
 
 test :: PlateDirect (Sample Int)
 instance Uniplate (Sample Int) where
+    {-# INLINE uniplate #-}
     uniplate x = plate x
 
 test :: PlateDirect (Sample Int) Int
 instance Biplate (Sample Int) Int where
+    {-# INLINE biplate #-}
     biplate (Second x1 x2) = plate Second |* x1 |* x2
     biplate (Third x1) = plate Third |* x1
     biplate x = plate x
 
 test :: PlateDirect Computer
 instance Uniplate Computer where
+    {-# INLINE uniplate #-}
     uniplate x = plate x
 
 test :: PlateDirect Computer Computer
 instance Biplate Computer Computer where
+    {-# INLINE biplate #-}
     biplate = plateSelf
 
 test :: PlateDirect Computer Double
 instance Biplate Computer Double where
+    {-# INLINE biplate #-}
     biplate (Laptop x1 x2) = plate Laptop |* x1 |- x2
     biplate x = plate x
 
 test :: PlateDirect (Assoced (Maybe Bool)) Char
 instance Biplate (Assoced (Maybe Bool)) Char where
+    {-# INLINE biplate #-}
     biplate (Assoced x1 x2) = plate (Assoced x1) ||* x2
 
 -- test following external declarations
 test :: PlateDirect (Either Bool Computer) Int
 instance Biplate (Either Bool Computer) Int where
+    {-# INLINE biplate #-}
     biplate (Right x1) = plate Right |+ x1
     biplate x = plate x
 
 -- test recursive bits
 test :: PlateDirect (List Int) Bool
 instance Biplate (List Int) Bool where
+    {-# INLINE biplate #-}
     biplate x = plate x
 -}
 
@@ -85,7 +94,8 @@ makePlateDirect = derivationParams "PlateDirect" $ \args grab (_,ty) -> simplify
         
 
 make :: Bool -> (String -> DataDecl) -> Type -> Type -> Either String [Decl]
-make uni grab from to = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni]) [InsDecl ms]]
+make uni grab from to = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni])
+        [InsInline sl True AlwaysActive (qname $ if uni then "uniplate" else "biplate"), InsDecl ms]]
     where
         ty = grab $ tyRoot from
         match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) (BDecls [])
