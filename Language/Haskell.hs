@@ -3,7 +3,7 @@ module Language.Haskell(module Language.Haskell, module Language.Haskell.Exts) w
 
 import Language.Haskell.Exts hiding (var,app,binds,paren)
 import Data.List
-import Data.Generics.PlateData
+import Data.Generics.Uniplate.Data
 import Data.Data
 import Data.Char
 

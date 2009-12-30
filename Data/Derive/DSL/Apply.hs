@@ -7,7 +7,7 @@ import Data.Derive.DSL.HSE
 import Data.Derive.DSL.DSL
 import Data.Maybe
 import Data.List
-import Data.Generics.PlateData
+import Data.Generics.Uniplate.Data
 
 
 apply :: DSL -> Input -> Out

@@ -76,7 +76,7 @@ instance Biplate (List Int) Bool where
 -}
 
 import Language.Haskell
-import Data.Generics.PlateData
+import Data.Generics.Uniplate.Data
 import Data.Derive.Internal.Derivation
 import Data.Maybe
 import qualified Data.Map as Map

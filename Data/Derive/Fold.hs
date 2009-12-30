@@ -39,7 +39,7 @@ foldBool _ f True = f
 import Language.Haskell
 import Data.Derive.Internal.Derivation
 import Data.List
-import Data.Generics.PlateData
+import Data.Generics.Uniplate.Data
 
 
 makeFold :: Derivation

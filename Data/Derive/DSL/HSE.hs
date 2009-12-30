@@ -5,7 +5,7 @@ module Data.Derive.DSL.HSE(module Data.Derive.DSL.HSE, module Language.Haskell) 
 import Language.Haskell hiding (List, App, String, Int)
 import qualified Language.Haskell.Exts as H
 import Data.Data
-import Data.Generics.PlateData
+import Data.Generics.Uniplate.Data
 import Data.Maybe
 import Data.List
 import Data.Function
