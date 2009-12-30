@@ -86,8 +86,6 @@ Library
         Data.Derive.Monoid
         Data.Derive.NFData
         Data.Derive.Ord
-        Data.Derive.PlateDirect
-        Data.Derive.PlateTypeable
         Data.Derive.Read
         Data.Derive.Ref
         Data.Derive.Serial
@@ -95,5 +93,7 @@ Library
         Data.Derive.Show
         Data.Derive.Traversable
         Data.Derive.Typeable
+        Data.Derive.UniplateDirect
+        Data.Derive.UniplateTypeable
         Data.Derive.Update
 -- GENERATED STOP

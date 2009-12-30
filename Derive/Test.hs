@@ -23,7 +23,7 @@ overlap = ["BinaryDefer","EnumCyclic","LazySet","DataAbstract"]
 
 -- REASONS:
 -- PlateTypeable, PlateDirect: I use PlateData internally meaning the Data instance is in scope, and these overlap
-exclude = ["ArbitraryOld","PlateTypeable","PlateDirect","Ref","Serial"]
+exclude = ["ArbitraryOld","UniplateTypeable","UniplateDirect","Ref","Serial"]
 
 -- These must be first and in every set
 priority = ["Eq","Typeable"]
