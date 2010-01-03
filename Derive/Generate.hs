@@ -18,7 +18,7 @@ evil = words $ "TTypeable Uniplate"
 generate :: IO ()
 generate = do
     xs <- getDirectoryContents "Data/Derive"
-    xs <- return [x | x <- xs, takeExtension x == ".hs", x /= "All.hs", takeBaseName x `notElem` evil]
+    xs <- return $ sort [x | x <- xs, takeExtension x == ".hs", x /= "All.hs", takeBaseName x `notElem` evil]
     lis <- mapM generateFile $ map ("Data/Derive" </>) xs
     let names = map dropExtension xs
         n = maximum $ map length names
