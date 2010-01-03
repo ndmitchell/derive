@@ -2,11 +2,11 @@
 
 module Language.Haskell.TH.SYB where
 
+#ifdef TH_SYB
 import Data.Generics hiding (Fixity)
 import Language.Haskell.TH.Syntax
 import Data.PackedString
 
-#ifdef TH_SYB
 instance Data PackedString where gfoldl k z x = z x
 
 
