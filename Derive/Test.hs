@@ -86,7 +86,7 @@ detailedNeq as bs = "Mismatch on line " ++ show i ++ "\n" ++ show a ++ "\n" ++ s
 autoTest :: String -> [DataDecl] -> [(Derivation,Src)] -> IO ()
 autoTest name ts ds =
     writeFile (name++".hs") $ unlines $
-        ["{-# LANGUAGE TemplateHaskell,FlexibleInstances,MultiParamTypeClasses #-}"
+        ["{-# LANGUAGE TemplateHaskell,FlexibleInstances,MultiParamTypeClasses,TypeOperators #-}"
         ,"{-# OPTIONS_GHC -Wall -fno-warn-missing-fields -fno-warn-unused-imports #-}"
         ,"module " ++ name ++ " where"
         ,"import Prelude"
