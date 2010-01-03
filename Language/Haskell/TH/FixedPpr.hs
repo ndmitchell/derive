@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, CPP #-}
 -- TH.Ppr contains a prettyprinter for the
 -- Template Haskell datatypes
 
@@ -384,3 +384,20 @@ where_clause ds = nest nestDepth $ text "where" <+> vcat (map ppr ds)
 
 showtextl :: Show a => a -> Doc
 showtextl = text . map toLower . show
+
+
+#if __GLASGOW_HASKELL__ >= 612
+
+instance Ppr TyVarBndr where
+    ppr (PlainTV v) = ppr v
+    ppr (KindedTV v k) = parens $ ppr v <+> text "::" <+> ppr k
+
+instance Ppr Kind where
+    ppr StarK = text "*"
+    ppr (ArrowK j k) = ppr j <+> text "->" <+> ppr k
+
+instance Ppr Pred where
+    ppr (ClassP n ts) = ppr n <+> hsep (map ppr ts)
+    ppr (EqualP t u ) = ppr t <+> text "~" <+> ppr u
+
+#endif

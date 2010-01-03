@@ -10,6 +10,7 @@ import Data.Char
 
 import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Data
+import Language.Haskell.TH.Compat
 
 
 
@@ -60,7 +61,7 @@ instance_context req cls dat defs = InstanceD ctx hed defs
     where
         vrs = vars 't' (dataArity dat)
         hed = l1 cls (lK (dataName dat) vrs)
-        ctx = [l1 r v | r <- req, v <- vrs]
+        ctx = [typeToPred $ l1 r v | r <- req, v <- vrs]
 
 
 -- | Build an instance of a class for a data type, using the heuristic
@@ -74,7 +75,7 @@ generic_instance cls dat ctxTypes defs = [InstanceD ctx hed defs]
     where
         vrs = vars 't' (dataArity dat)
         hed = l1 cls (lK (dataName dat) vrs)
-        ctx = map (l1 cls) ctxTypes
+        ctx = map (typeToPred . l1 cls) ctxTypes
 
 -- | Build a type signature declaration with a string name
 sigN :: String -> Type -> Dec

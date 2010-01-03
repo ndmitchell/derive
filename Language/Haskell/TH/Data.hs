@@ -1,3 +1,4 @@
+
 -- | The core module of the Data.Derive system.  This module contains
 -- the data types used for communication between the extractors and
 -- the derivors.
@@ -8,6 +9,7 @@ import Data.Char
 import Data.Generics
 
 import Language.Haskell.TH.Syntax
+import Language.Haskell.TH.Compat
 import Language.Haskell.TH.SYB
 
 
@@ -30,8 +32,8 @@ dataArity (DataD    _ _ xs _ _) = length xs
 dataArity (NewtypeD _ _ xs _ _) = length xs
 
 dataArgs :: DataDef -> [Name]
-dataArgs (DataD _cx name args cons _derv) = args
-dataArgs (NewtypeD cx name args con derv) = args
+dataArgs = dataDefinitionTypeArgs
+
 
 dataCtors :: DataDef -> [CtorDef]
 dataCtors (DataD    _ _ _ xs _) = xs

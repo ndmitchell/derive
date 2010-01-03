@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE CPP, ScopedTypeVariables, MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances #-}
 
 module Language.Haskell.Convert(Convert, convert) where
 
@@ -206,3 +206,30 @@ instance Convert HS.GuardedAlts TH.Body where
 
 instance Convert HS.GuardedAlt (TH.Guard, TH.Exp) where
     conv (GuardedAlt _ x y) = (PatG (c x), c y)
+
+
+#if __GLASGOW_HASKELL__ >= 612
+instance Convert TH.TyVarBndr HS.TyVarBind where
+    conv (PlainTV x) = UnkindedVar $ c x
+    conv (KindedTV x y) = KindedVar (c x) $ c y
+
+instance Convert TH.Kind HS.Kind where
+    conv StarK = KindStar
+    conv (ArrowK x y) = KindFn (c x) $ c y
+
+instance Convert TH.Pred HS.Asst where
+    conv (ClassP x y) = ClassA (UnQual $ c x) $ c y
+    conv (TH.EqualP x y) = HS.EqualP (c x) $ c y
+
+instance Convert HS.Asst TH.Pred where
+    conv (ClassA x y) = ClassP (c x) $ c y
+    conv (HS.EqualP x y) = TH.EqualP (c x) $ c y
+
+instance Convert HS.TyVarBind TH.TyVarBndr where
+    conv (UnkindedVar x) = PlainTV $ c x
+    conv (KindedVar x y) = KindedTV (c x) $ c y
+
+instance Convert HS.Kind TH.Kind where
+    conv KindStar = StarK
+    conv (KindFn x y) = ArrowK (c x) $ c y
+#endif

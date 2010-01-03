@@ -6,6 +6,7 @@
 module Language.Haskell.TH.ExpandSynonym (expandData) where
 
 import Language.Haskell.TH
+import Language.Haskell.TH.Compat
 import Language.Haskell.TH.Data
 import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.SYB
@@ -33,7 +34,7 @@ expandSyn name args = recover (return Nothing) $ do
             info <- reify name
             case info of
                    TyConI (TySynD _ synArgs t) | length args >= length synArgs
-                        -> return $ Just (substitute synArgs argsInst t, argsMore) -- instantiate type synonym
+                        -> return $ Just (substitute (map fromTyVar synArgs) argsInst t, argsMore) -- instantiate type synonym
                              where (argsInst,argsMore) = splitAt (length synArgs) args
                    _    -> return Nothing
       -- `recover` return Nothing
@@ -41,7 +42,7 @@ expandSyn name args = recover (return Nothing) $ do
 -- Substitute names for types in a type
 substitute :: [Name] -> [Type] -> Type -> Type
 substitute ns ts = subst (zip ns ts)
-  where subst s (ForallT ns ctx t) = ForallT ns ctx (subst (filter ((`notElem` ns) . fst) s) t)
+  where subst s (ForallT ns ctx t) = ForallT ns ctx (subst (filter ((`notElem` (map fromTyVar ns)) . fst) s) t)
         subst s (VarT n)
            | Just t' <- lookup n s = t'
         subst s (AppT a b)         = AppT (subst s a) (subst s b)
