@@ -54,6 +54,7 @@ Library
         Language.Haskell
         Language.Haskell.Convert
         Language.Haskell.TH.All
+        Language.Haskell.TH.Compat
         Language.Haskell.TH.Data
         Language.Haskell.TH.ExpandSynonym
         Language.Haskell.TH.FixedPpr
