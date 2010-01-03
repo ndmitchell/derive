@@ -5,7 +5,7 @@ module Data.Derive.DSL.DSL where
 import Data.Derive.DSL.HSE
 import Data.List
 import Data.Data
-import Data.Generics.Uniplate.Data
+import Data.Generics.Uniplate.DataOnly
 
 data DSL = App String DSL{-List-}
          | Concat DSL

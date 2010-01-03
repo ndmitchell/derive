@@ -7,7 +7,7 @@ module Data.Derive.Internal.Derivation(
 
 import Data.DeriveDSL
 import Data.Derive.DSL.HSE
-import Data.Generics.Uniplate.Data
+import Data.Generics.Uniplate.DataOnly
 
 
 data Derivation = Derivation

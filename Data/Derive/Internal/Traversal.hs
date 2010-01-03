@@ -25,7 +25,7 @@ import Data.List
 import qualified Data.Set as S
 import Control.Monad.Writer
 import Control.Applicative
-import Data.Generics.Uniplate.Data
+import Data.Generics.Uniplate.DataOnly
 import Data.Maybe
 
 ---------------------------------------------------------------------------------
