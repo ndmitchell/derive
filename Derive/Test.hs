@@ -20,7 +20,8 @@ import Data.Derive.Internal.Derivation
 
 -- These overlap with other derivations
 overlaps =
-    [["BinaryDefer","EnumCyclic","LazySet","DataAbstract"]]
+    [["BinaryDefer","EnumCyclic","LazySet","DataAbstract"]
+    ,["Serialize"]]
 
 -- REASONS:
 -- UniplateDirect: Doesn't work through Template Haskell

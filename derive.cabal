@@ -87,6 +87,7 @@ Library
         Data.Derive.Read
         Data.Derive.Ref
         Data.Derive.Serial
+        Data.Derive.Serialize
         Data.Derive.Set
         Data.Derive.Show
         Data.Derive.Traversable

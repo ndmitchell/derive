@@ -6,6 +6,7 @@ module Derive.TestInstances where
 import Data.Derive.Class.Default
 import Data.Monoid
 import Data.Binary
+import Data.Serialize
 import Data.Binary.Defer
 import Control.Parallel.Strategies
 import Data.Generics.Uniplate.Typeable
@@ -25,6 +26,7 @@ instance NFData (a -> b)
 instance Ord (a -> b)
 instance Bounded (a -> b)
 instance Binary (a -> b)
+instance Serialize (a -> b)
 instance Eq (a -> b)
 instance Read (a -> b)
 instance BinaryDefer (a -> b)

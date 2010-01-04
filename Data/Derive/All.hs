@@ -30,6 +30,7 @@ import Data.Derive.Ord                 as D
 import Data.Derive.Read                as D
 import Data.Derive.Ref                 as D
 import Data.Derive.Serial              as D
+import Data.Derive.Serialize           as D
 import Data.Derive.Set                 as D
 import Data.Derive.Show                as D
 import Data.Derive.Traversable         as D
@@ -38,5 +39,5 @@ import Data.Derive.UniplateDirect      as D
 import Data.Derive.UniplateTypeable    as D
 import Data.Derive.Update              as D
 derivations :: [Derivation]
-derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDataAbstract,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFold,makeFoldable,makeFrom,makeFunctor,makeHas,makeIs,makeLazySet,makeMonoid,makeNFData,makeOrd,makeRead,makeRef,makeSerial,makeSet,makeShow,makeTraversable,makeTypeable,makeUniplateDirect,makeUniplateTypeable,makeUpdate]
+derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDataAbstract,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFold,makeFoldable,makeFrom,makeFunctor,makeHas,makeIs,makeLazySet,makeMonoid,makeNFData,makeOrd,makeRead,makeRef,makeSerial,makeSerialize,makeSet,makeShow,makeTraversable,makeTypeable,makeUniplateDirect,makeUniplateTypeable,makeUpdate]
 -- GENERATED STOP
