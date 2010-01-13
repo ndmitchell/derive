@@ -89,15 +89,13 @@ writeDerive file modu flags xs = do
     let append = Append `elem` flags
     let output = [x | Output x <- flags]
 
-    let pre = take 1 ["module " ++ x ++ " where" | Modu x <- flags] ++
-              ["import " ++ if null i then prettyPrint modu else i | Import i <- flags]
+    let ans = take 1 ["module " ++ x ++ " where" | Modu x <- flags] ++
+              ["import " ++ if null i then prettyPrint modu else i | Import i <- flags] ++
+              xs
 
     when append $ do
         src <- readFile' file
-        writeGenerated file xs
+        writeGenerated file ans
 
-    forM output $ \o ->
-        writeFile o $ unlines $ pre ++ xs
-
-    when (not append && null output) $
-        putStr $ unlines xs
+    forM output $ \o -> writeFile o $ unlines ans
+    when (not append && null output) $ putStr $ unlines ans
