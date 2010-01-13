@@ -89,7 +89,7 @@ writeDerive file modu flags xs = do
     let append = Append `elem` flags
     let output = [x | Output x <- flags]
 
-    let ans = take 1 ["module " ++ x ++ " where" | Modu x <- flags] ++
+    let ans = take 1 ["module " ++ x ++ " where" | Modu x <- reverse flags] ++
               ["import " ++ if null i then prettyPrint modu else i | Import i <- flags] ++
               xs
 
