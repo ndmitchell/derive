@@ -97,7 +97,9 @@ Library
         Data.Derive.Update
 -- GENERATED STOP
 
-    Other-Modules:
+        -- Mainly internal but some still people use them
+        -- to implement derivations outside
         Data.Derive.Internal.Derivation
+    Other-Modules:
         Data.Derive.Internal.Instance
         Data.Derive.Internal.Traversal
