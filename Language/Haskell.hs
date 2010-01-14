@@ -252,6 +252,10 @@ dataDeclSrcLoc :: DataDecl -> SrcLoc
 dataDeclSrcLoc (DataDecl sl _ _ _ _ _ _) = sl
 dataDeclSrcLoc (GDataDecl sl _ _ _ _ _ _ _) = sl
 
+dataDeclContext :: DataDecl -> Context
+dataDeclContext (DataDecl _ _ ctx _ _ _ _) = ctx
+dataDeclContext _ = error "dataDeclContext: not a DataDecl"
+
 dataDeclName :: DataDecl -> String
 dataDeclName (DataDecl _ _ _ name _ _ _) = prettyPrint name
 dataDeclName (GDataDecl _ _ _ name _ _ _ _) = prettyPrint name
