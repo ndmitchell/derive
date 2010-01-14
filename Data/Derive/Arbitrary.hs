@@ -76,8 +76,8 @@ custom = customContext context
 -- Fix the context
 -- C a b => Arbitrary a, Arbitrary b
 -- a -> b => CoArbitrary a, Arbitrary b
-context :: FullDataDecl -> Context
-context (_,d) = nub $ concatMap (f True . fromBangType . snd) $ concatMap ctorDeclFields $ dataDeclCtors d
+context :: FullDataDecl -> Context -> Context
+context (_,d) _ = nub $ concatMap (f True . fromBangType . snd) $ concatMap ctorDeclFields $ dataDeclCtors d
     where
         f b (TyVar x) = [ClassA (qname $ b ? "Arbitrary" $ "CoArbitrary") [TyVar x]]
         f b (TyFun x y) = f (not b) x ++ f b y

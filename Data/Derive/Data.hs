@@ -151,5 +151,5 @@ splice d (H.App x (H.Lit (H.Int y)))
     | x ~= "ctorFixity" = Con (UnQual (Ident "Prefix"))
     where ctor = dataDeclCtors (snd d) !! fromInteger y
 
-context :: FullDataDecl -> Context
-context d = [ClassA (qname t) [tyVar x] | x <- dataDeclVars $ snd d, t <- ["Typeable","Data"]]
+context :: FullDataDecl -> Context -> Context
+context d _ = [ClassA (qname t) [tyVar x] | x <- dataDeclVars $ snd d, t <- ["Typeable","Data"]]
