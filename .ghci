@@ -1,0 +1,4 @@
+:set -fwarn-unused-binds -fwarn-unused-imports
+:load Main
+
+:def test const $ return ":main --generate\n:r\n:main --test"
