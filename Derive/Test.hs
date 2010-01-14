@@ -2,14 +2,11 @@
 module Derive.Test(test) where
 
 import Derive.Utils
-import Language.Haskell.Exts
 import Data.Derive.DSL.HSE
-import Data.DeriveDSL
 import Control.Monad
 import Data.Maybe
 import Data.List
 import System.FilePath
-import System.Directory
 import System.Cmd
 import System.Exit
 import Control.Arrow

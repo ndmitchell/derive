@@ -5,7 +5,6 @@ module Data.Derive.DSL.Apply(apply, applyEnv, env, Env(..)) where
 
 import Data.Derive.DSL.HSE
 import Data.Derive.DSL.DSL
-import Data.Maybe
 import Data.List
 import Data.Generics.Uniplate.DataOnly
 
@@ -29,8 +28,6 @@ data Env = Env  {envInput :: Input
 applyEnv :: DSL -> Env -> Output
 applyEnv dsl env@(Env input ctor field fold) = f dsl
     where
-    vars = dataDeclVars input
-
     f (Instance ctx hd body) =
         OApp "InstDecl"
             [out

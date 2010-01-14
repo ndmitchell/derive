@@ -6,7 +6,6 @@ module Data.Derive.DSL.SYB(dslSYB) where
 import Data.Derive.DSL.HSE
 import qualified Language.Haskell.Exts as H
 import Data.Derive.DSL.DSL
-import Control.Monad
 import Control.Monad.State hiding (lift)
 import Data.Generics
 import Data.Maybe
@@ -60,10 +59,6 @@ dapp x = do
                 case syb x of
                     Nothing -> do put (False,xs) ; return undefined
                     Just y -> do put (b,xs) ; return y
-
-
-derr :: Data a => DSL -> Maybe a
-derr x = error $ "Couldn't dslSYB on: " ++ show x
 
 
 dsimple :: Data a => DSL -> Maybe a

@@ -9,7 +9,6 @@ import Data.Generics.Uniplate.DataOnly
 import Data.Maybe
 import Data.List
 import Data.Function
-import Unsafe.Coerce
 import Control.Monad.State
 
 
@@ -92,7 +91,6 @@ fromOutput (OList xs) = res
           f [] = fromConstr $ readCon dat "[]"
           f (x:xs) = fromConstrB (g x (f xs `asTypeOf` res)) $ readCon dat "(:)"
           dat = dataTypeOf res
-          typ = typeOf res
           
           g :: (Data a, Data b) => Output -> a -> b
           g x xs = r2 where r2 = if typeOf r2 == typeOf xs then coerce xs else fromOutput x

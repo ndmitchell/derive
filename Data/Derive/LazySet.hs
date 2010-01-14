@@ -21,7 +21,6 @@ test :: Sample
 
 import Language.Haskell
 import Data.Derive.Internal.Derivation
-import Data.Maybe
 
 
 makeLazySet :: Derivation

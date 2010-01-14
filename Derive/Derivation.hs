@@ -6,7 +6,6 @@ import System.IO.Unsafe
 import Language.Haskell
 import Control.Arrow
 import Control.Monad
-import Data.Maybe
 import Data.List
 import Derive.Utils
 import Derive.Flags
