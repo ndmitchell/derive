@@ -80,6 +80,7 @@ Library
         Data.Derive.Functor
         Data.Derive.Has
         Data.Derive.Is
+        Data.Derive.JSON
         Data.Derive.LazySet
         Data.Derive.Monoid
         Data.Derive.NFData

@@ -10,6 +10,7 @@ import Data.Serialize
 import Data.Binary.Defer
 import Control.Parallel.Strategies
 import Data.Generics.Uniplate.Typeable
+import Text.JSON
 
 instance Bounded Double
 instance Bounded a => Bounded [a]
@@ -30,5 +31,6 @@ instance Serialize (a -> b)
 instance Eq (a -> b)
 instance Read (a -> b)
 instance BinaryDefer (a -> b)
+instance JSON (a -> b)
 
 instance PlateAll (a -> (a,b)) c
