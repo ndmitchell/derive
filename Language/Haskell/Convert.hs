@@ -88,6 +88,27 @@ instance Convert HS.Decl TH.Dec where
     conv (FunBind ms@(HS.Match _ nam _ _ _ _:_)) = FunD (c nam) (c ms)
     conv (PatBind _ p _ bod ds) = ValD (c p) (c bod) (c ds)
     conv (TypeSig _ [nam] typ) = SigD (c nam) (c $ foralls typ)
+    conv (DataDecl _ DataType ctx nam typ cs ds) =
+      DataD (c ctx) (c nam) (c typ) (c cs) (c (map fst ds))
+    conv (DataDecl _ NewType ctx nam typ [con] ds) =
+      NewtypeD (c ctx) (c nam) (c typ) (c con) (c (map fst ds))
+
+instance Convert HS.QualConDecl TH.Con where
+    conv (QualConDecl _ [] [] con) = c con
+    conv (QualConDecl _ vs cx con) = ForallC (c vs) (c cx) (c con)
+
+instance Convert HS.ConDecl TH.Con where
+    conv (ConDecl nam typ) = NormalC (c nam) (c typ)
+    conv (InfixConDecl l nam r) = InfixC (c l) (c nam) (c r)
+    conv (RecDecl nam fs) = RecC (c nam) (concatMap c fs)
+
+instance Convert HS.BangType TH.StrictType where
+    conv (BangedTy t) = (IsStrict,c t)
+    conv (UnBangedTy t) = (NotStrict,c t)
+
+instance Convert ([HS.Name],HS.BangType) [TH.VarStrictType] where
+    conv (names,bt) = [(c name,s,t) | name <- names]
+     where (s,t) = c bt
 
 instance Convert HS.Asst TH.Type where
     conv (InfixA x y z) = c $ ClassA y [x,z]
