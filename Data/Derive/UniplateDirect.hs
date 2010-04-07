@@ -99,7 +99,7 @@ makeUniplateDirect = derivationParams "UniplateDirect" $ \args grab (_,ty) -> si
 
 make :: Bool -> (String -> DataDecl) -> Type -> Type -> Either String [Decl]
 make uni grab from to = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni])
-        [InsInline sl True AlwaysActive (qname $ if uni then "uniplate" else "biplate"), InsDecl ms]]
+        [InsDecl $ InlineSig sl True AlwaysActive (qname $ if uni then "uniplate" else "biplate"), InsDecl ms]]
     where
         ty = grab $ tyRoot from
         match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) (BDecls [])
