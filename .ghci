@@ -2,3 +2,5 @@
 :load Main
 
 :def test const $ return ":main --generate\n:r\n:main --test"
+
+:def safe const $ return ":load Derive.Generate\ngenerate\n:load Main"
