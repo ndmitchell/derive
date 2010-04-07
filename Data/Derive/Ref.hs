@@ -23,8 +23,6 @@ refWeight = Ref {select = weight, update = \f v -> v{weight = f (weight v)}}
 
 import Language.Haskell
 import Data.Derive.Internal.Derivation
-import Data.List
-import Data.Char
 
 
 makeRef :: Derivation

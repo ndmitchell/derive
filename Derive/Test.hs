@@ -10,7 +10,6 @@ import System.FilePath
 import System.Cmd
 import System.Exit
 import Control.Arrow
-import Data.Char
 import Data.Derive.All
 import Data.Derive.Internal.Derivation
 

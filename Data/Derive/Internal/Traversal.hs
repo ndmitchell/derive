@@ -71,8 +71,8 @@ defaultTraversalType = TraveralType
         }
 
 data RequiredInstance = RequiredInstance
-        { requiredDataArg  :: String -- ^ What argument of the current data type?
-        , requiredPosition :: Int    -- ^ What argument position of that type?
+        { _requiredDataArg  :: String -- ^ What argument of the current data type?
+        , _requiredPosition :: Int    -- ^ What argument position of that type?
         }
       deriving (Eq, Ord)
 

@@ -8,7 +8,6 @@ import System.Directory
 import System.IO
 import System.FilePath
 import Control.Monad
-import Data.Char
 import Data.Maybe
 
 

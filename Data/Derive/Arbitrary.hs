@@ -23,7 +23,6 @@ instance (CoArbitrary s, Arbitrary s, Arbitrary a) => Arbitrary (State s a) wher
 -}
 
 import Data.Derive.DSL.HSE
-import qualified Language.Haskell as H
 import Data.List
 import Data.Generics.Uniplate.DataOnly
 

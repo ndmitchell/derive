@@ -71,7 +71,6 @@ instance (Read a, Read b) => Read ((:*:) a b) where
             , (x2, r3) <- readsPrec 11 r2]) r
 
 -}
-import Data.List
 import Data.Derive.DSL.HSE
 import qualified Language.Haskell as H
 

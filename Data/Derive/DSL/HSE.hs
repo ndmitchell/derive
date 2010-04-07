@@ -3,7 +3,6 @@
 module Data.Derive.DSL.HSE(module Data.Derive.DSL.HSE, module Language.Haskell) where
 
 import Language.Haskell hiding (List, App, String, Int)
-import qualified Language.Haskell.Exts as H
 import Data.Data
 import Data.Generics.Uniplate.DataOnly
 import Data.Maybe
