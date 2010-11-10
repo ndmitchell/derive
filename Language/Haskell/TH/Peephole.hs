@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternGuards #-}
 
 module Language.Haskell.TH.Peephole(peephole, replaceVar, replaceVars) where
 
