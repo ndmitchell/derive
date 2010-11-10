@@ -5,7 +5,6 @@
 --   construction of abstranct syntax trees less tedious.
 module Language.Haskell.TH.Helper where
 
-import Data.List
 import Data.Char
 
 import Language.Haskell.TH.Syntax

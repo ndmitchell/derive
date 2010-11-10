@@ -4,7 +4,6 @@
 -- the derivors.
 module Language.Haskell.TH.Data where
 
-import Data.List
 import Data.Char
 import Data.Generics
 

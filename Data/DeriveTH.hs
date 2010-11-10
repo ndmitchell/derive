@@ -7,7 +7,6 @@
 -- @
 module Data.DeriveTH(derive, derives, deriveFromDec, module Data.Derive.All) where
 
-import Data.List
 import Control.Monad
 
 import Data.Derive.All
