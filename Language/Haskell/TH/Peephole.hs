@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -fglasgow-exts #-}
--- pattern bindings only
 
 module Language.Haskell.TH.Peephole(peephole, replaceVar, replaceVars) where
 
