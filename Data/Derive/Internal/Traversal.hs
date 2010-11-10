@@ -30,15 +30,6 @@ import Data.Generics.Uniplate.DataOnly
 import Data.Maybe
 
 ---------------------------------------------------------------------------------
--- Stuff that should be in a library
-
-#if __GLASGOW_HASKELL__ < 700
-instance Monoid w => Applicative (Writer w) where
-      pure = return
-      (<*>) = ap
-#endif
-
----------------------------------------------------------------------------------
 -- Information datatype, public interface
 
 -- | An expression representing a traversal of a subpart of the data

@@ -35,7 +35,7 @@ Executable derive
 
 Library
     Build-Depends:
-        haskell-src-exts == 1.9.*, filepath, mtl,
+        haskell-src-exts == 1.9.*, filepath, mtl == 2.0.*,
         base == 4.*, syb, template-haskell, uniplate == 1.5.*, containers,
         pretty
 
