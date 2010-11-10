@@ -11,7 +11,7 @@ import Data.List
 import Data.Maybe
 import Data.Generics
 import qualified Data.Map as Map
-import Control.Monad.State
+import Control.Monad.Trans.State
 import Debug.Trace
 
 

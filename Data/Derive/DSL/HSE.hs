@@ -8,7 +8,7 @@ import Data.Generics.Uniplate.DataOnly
 import Data.Maybe
 import Data.List
 import Data.Function
-import Control.Monad.State
+import Control.Monad.Trans.State
 
 
 ---------------------------------------------------------------------

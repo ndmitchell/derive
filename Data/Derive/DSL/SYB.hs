@@ -6,7 +6,8 @@ module Data.Derive.DSL.SYB(dslSYB) where
 import Data.Derive.DSL.HSE
 import qualified Language.Haskell.Exts as H
 import Data.Derive.DSL.DSL
-import Control.Monad.State hiding (lift)
+import Control.Monad.Trans.State
+import Control.Monad
 import Data.Generics
 import Data.Maybe
 

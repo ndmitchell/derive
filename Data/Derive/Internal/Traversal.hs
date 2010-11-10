@@ -24,7 +24,7 @@ import Language.Haskell
 import Data.Derive.Internal.Derivation
 import Data.List
 import qualified Data.Set as S
-import Control.Monad.Writer
+import Control.Monad.Trans.Writer
 import Control.Applicative
 import Data.Generics.Uniplate.DataOnly
 import Data.Maybe

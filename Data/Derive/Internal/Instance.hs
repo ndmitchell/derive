@@ -6,7 +6,7 @@ module Data.Derive.Internal.Instance(
 
 import Data.Data
 import Control.Monad
-import Control.Monad.State
+import Control.Monad.Trans.State
 
 
 data Ctor = Ctor

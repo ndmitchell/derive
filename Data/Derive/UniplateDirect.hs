@@ -81,7 +81,7 @@ import Data.Derive.Internal.Derivation
 import Data.Maybe
 import qualified Data.Map as Map
 import Control.Arrow
-import Control.Monad.State
+import Control.Monad.Trans.State
 
 
 makeUniplateDirect :: Derivation

@@ -35,9 +35,11 @@ Executable derive
 
 Library
     Build-Depends:
-        haskell-src-exts == 1.9.*, filepath, mtl == 2.0.*,
-        base == 4.*, syb, template-haskell, uniplate >= 1.5 && < 1.7, containers,
-        pretty
+        base == 4.*,
+        filepath, syb, template-haskell, containers, pretty,
+        haskell-src-exts == 1.9.*,
+        transformers == 0.2.*,
+        uniplate >= 1.5 && < 1.7
 
     Exposed-Modules:
         Data.DeriveTH
