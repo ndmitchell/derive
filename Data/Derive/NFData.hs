@@ -1,6 +1,6 @@
 module Data.Derive.NFData where
 {-
-import "parallel" Control.Parallel.Strategies(NFData, rnf)
+import "deepseq" Control.DeepSeq(NFData, rnf)
 
 example :: Sample
 instance NFData a => NFData (Sample a) where

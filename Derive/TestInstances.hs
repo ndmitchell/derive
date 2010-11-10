@@ -8,7 +8,7 @@ import Data.Monoid
 import Data.Binary
 import Data.Serialize
 import Data.Binary.Defer
-import Control.Parallel.Strategies
+import Control.DeepSeq
 import Data.Generics.Uniplate.Typeable
 import Text.JSON
 
