@@ -60,7 +60,6 @@ Library
         Language.Haskell.TH.FixedPpr
         Language.Haskell.TH.Helper
         Language.Haskell.TH.Peephole
-        Language.Haskell.TH.SYB
 -- GENERATED START
         Data.Derive.Arbitrary
         Data.Derive.ArbitraryOld

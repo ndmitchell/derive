@@ -10,7 +10,6 @@ import Data.Generics
 
 import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Compat
-import Language.Haskell.TH.SYB
 
 
 -- must be one of DataD or NewtypeD

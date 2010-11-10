@@ -8,8 +8,6 @@ module Language.Haskell.TH.ExpandSynonym (expandData) where
 import Language.Haskell.TH
 import Language.Haskell.TH.Compat
 import Language.Haskell.TH.Data
-import Language.Haskell.TH.Syntax
-import Language.Haskell.TH.SYB
 import Data.Generics
 
 -- | Expand type synonyms in a data declaration

@@ -3,7 +3,6 @@ module Language.Haskell.TH.Peephole(peephole, replaceVar, replaceVars) where
 
 import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Helper
-import Language.Haskell.TH.SYB
 import Data.Generics
 import Data.Maybe
 import Data.List
