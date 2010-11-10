@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
     This module is not written/maintained by the usual Data.Derive author.
 
@@ -31,9 +32,11 @@ import Data.Maybe
 ---------------------------------------------------------------------------------
 -- Stuff that should be in a library
 
+#if __GLASGOW_HASKELL__ < 700
 instance Monoid w => Applicative (Writer w) where
       pure = return
       (<*>) = ap
+#endif
 
 ---------------------------------------------------------------------------------
 -- Information datatype, public interface

@@ -70,7 +70,11 @@ instance Ppr Name where
 
 ------------------------------
 instance Ppr Info where
+#if __GLASGOW_HASKELL__ >= 700
+    ppr (ClassI d _) = ppr d
+#else
     ppr (ClassI d) = ppr d
+#endif
     ppr (TyConI d) = ppr d
     ppr (PrimTyConI name arity is_unlifted) 
       = text "Primitive"
