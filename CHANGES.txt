@@ -1,3 +1,4 @@
 Changelog for Derive
 
+    Relax the dependency on haskell-src-exts to < 1.11
     Start of changelog

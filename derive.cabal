@@ -37,7 +37,7 @@ Library
     Build-Depends:
         base == 4.*,
         filepath, syb, template-haskell, containers, pretty,
-        haskell-src-exts == 1.9.*,
+        haskell-src-exts >= 1.9 && < 1.11,
         transformers == 0.2.*,
         uniplate >= 1.5 && < 1.7
 
