@@ -1,7 +1,7 @@
 Cabal-Version:  >= 1.6
 Build-Type:     Default
 Name:           derive
-Version:        2.4.1
+Version:        2.4.2
 build-type:     Simple
 Copyright:      2006-2011, Neil Mitchell
 Maintainer:     ndmitchell@gmail.com
