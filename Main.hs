@@ -2,6 +2,7 @@
 module Main(main) where
 
 import Language.Haskell
+import Data.Derive.All
 import Derive.Derivation
 import Derive.Generate
 import Derive.Test
@@ -31,7 +32,7 @@ mainFile flags file = do
         mine = parse $ uncomment src
     flags <- return $ foldl addFlags flags
         [(sl,words x) | OptionsPragma sl (Just (UnknownTool "DERIVE")) x <- modulePragmas mine]
-    let res = performDerive mine $ wantDerive flags real mine
+    let res = performDerive derivations mine $ wantDerive flags real mine
     writeDerive file (moduleName mine) flags res
 
 

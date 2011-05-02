@@ -9,7 +9,6 @@ import Control.Monad
 import Data.List
 import Derive.Utils
 import Derive.Flags
-import Data.Derive.All
 import Data.Derive.Internal.Derivation
 import qualified Data.Map as Map
 
@@ -45,16 +44,17 @@ moduleDerives = concatMap f . moduleDecls
 ---------------------------------------------------------------------
 -- ACTUALLY DERIVE IT
 
-performDerive :: Module -> [Type] -> [String]
-performDerive modu = concatMap ((:) "" . f)
+performDerive :: [Derivation] -> Module -> [Type] -> [String]
+performDerive derivations modu = concatMap ((:) "" . f)
     where
         grab = getDecl modu
 
+        g = getDerivation derivations
         f ty = case d ty grab (moduleName modu, grab typ1Name) of
                 Left x -> unsafePerformIO $ let res = msg x in hPutStrLn stderr res >> return ["-- " ++ res]
                 Right x -> concatMap (lines . prettyPrint) x
             where
-                d = derivationOp $ getDerivation clsName
+                d = derivationOp $ g clsName
                 (cls,typ1:_) = fromTyApps ty
                 clsName = prettyPrint cls
                 typ1Name = tyRoot typ1
@@ -71,8 +71,8 @@ getDecl modu = \name -> Map.findWithDefault (error $ "Can't find data type defin
         f _ = []
 
 
-getDerivation :: String -> Derivation
-getDerivation = \name -> Map.findWithDefault (error $ "Don't know how to derive type class: " ++ name) name mp
+getDerivation :: [Derivation] -> String -> Derivation
+getDerivation derivations = \name -> Map.findWithDefault (error $ "Don't know how to derive type class: " ++ name) name mp
     where
         mp = Map.fromList $ map (derivationName &&& id) derivations
 
