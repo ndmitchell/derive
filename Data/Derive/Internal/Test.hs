@@ -24,7 +24,7 @@ data a :*: b = a :*: b
 
 data Assoced typ = Assoced typ String
 
-data FailList e a = Zoro | Fail e | Const a (FailList e a)
+data FailList e a = Zoro | Fial e | Const a (FailList e a)
 
 data State s a = StateT (s -> (s, a))
 

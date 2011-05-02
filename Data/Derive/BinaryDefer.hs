@@ -14,7 +14,7 @@ test :: FailList
 
 instance (BinaryDefer e, BinaryDefer a) => BinaryDefer (FailList e a) where
     bothDefer = defer [\ ~(o@Zoro) -> unit Zoro <<! o
-                      ,\ ~(Fail x1) -> unit Fail << x1
+                      ,\ ~(Fial x1) -> unit Fial << x1
                       ,\ ~(Const x1 x2) -> unit Const << x1 << x2
                       ]
 

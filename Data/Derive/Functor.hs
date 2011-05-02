@@ -20,7 +20,7 @@ import Prelude
 test :: FailList
 instance Functor (FailList t1) where
     fmap _  Zoro = Zoro
-    fmap _  (Fail a1) = Fail a1
+    fmap _  (Fial a1) = Fial a1
     fmap _f (Const a1 a2) = Const (_f a1) (fmap _f a2)
 
 test :: State

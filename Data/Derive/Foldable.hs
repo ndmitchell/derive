@@ -17,7 +17,7 @@ import qualified Data.Foldable(foldr)
 test :: FailList
 instance Foldable (FailList t1) where
     foldr _  b Zoro = b
-    foldr _  b (Fail _) = b
+    foldr _  b (Fial _) = b
     foldr _f b (Const a1 a2) = _f a1 (Data.Foldable.foldr _f b a2)
 
 test :: Sample
