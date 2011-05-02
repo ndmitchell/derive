@@ -23,25 +23,17 @@ Extra-Source-Files:
 Executable derive
     Main-Is: Main.hs
 
-    Other-Modules:
-        Derive.Derivation
-        Derive.Flags
-        Derive.Generate
-        Derive.Test
-        Derive.Utils
-
-    Build-Depends:
-        directory, process, bytestring
-
 Library
     Build-Depends:
         base == 4.*,
         filepath, syb, template-haskell, containers, pretty,
+        directory, process, bytestring,
         haskell-src-exts >= 1.9 && < 1.11,
         transformers == 0.2.*,
         uniplate >= 1.5 && < 1.7
 
     Exposed-Modules:
+        Data.DeriveMain
         Data.DeriveTH
         Data.DeriveDSL
         Data.Derive.All
@@ -105,3 +97,9 @@ Library
     Other-Modules:
         Data.Derive.Internal.Instance
         Data.Derive.Internal.Traversal
+        Derive.Main
+        Derive.Derivation
+        Derive.Flags
+        Derive.Generate
+        Derive.Test
+        Derive.Utils
