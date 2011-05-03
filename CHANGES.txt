@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.1
     Improve documentation for deriveMain
 2.5
     #257, add Data.DeriveMain.deriveMain, to allow user derivations
