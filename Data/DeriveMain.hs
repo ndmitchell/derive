@@ -4,8 +4,8 @@
 --   As an example:
 --
 -- @
---   import Data.DeriveMain
---   import Data.Derive.All        (derivations)
+--   import "Data.DeriveMain"        ('deriveMain')
+--   import "Data.Derive.All"        ('derivations')
 --   import MyProject.MyDerivation (myDerivation)
 -- @
 --
