@@ -2,7 +2,7 @@ Changelog for Derive
 
     Improve documentation for deriveMain
 2.5
-    Create Data.DeriveMain.deriveMain, to allow user derivations
+    #257, add Data.DeriveMain.deriveMain, to allow user derivations
 2.4.2
     Relax the dependency on haskell-src-exts to < 1.11
     Start of changelog
