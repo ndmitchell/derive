@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.3
     GHC 7.2 compatibility
 2.5.2
     Relax the dependency on haskell-src-exts to < 1.12
