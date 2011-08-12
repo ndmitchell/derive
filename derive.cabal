@@ -1,30 +1,30 @@
-Cabal-Version:  >= 1.6
-Build-Type:     Default
-Name:           derive
-Version:        2.5.2
-Build-type:     Simple
-Copyright:      Neil Mitchell 2006-2011
-Author:         Neil Mitchell <ndmitchell@gmail.com>
-Maintainer:     Neil Mitchell <ndmitchell@gmail.com>
-Homepage:       http://community.haskell.org/~ndm/derive/
-License:        BSD3
-License-File:   LICENSE
-Synopsis:       A program and library to derive instances for data types
-Category:       Development
-Description:
+cabal-version:  >= 1.6
+build-type:     Default
+name:           derive
+version:        2.5.2
+build-type:     Simple
+copyright:      Neil Mitchell 2006-2011
+author:         Neil Mitchell <ndmitchell@gmail.com>
+maintainer:     Neil Mitchell <ndmitchell@gmail.com>
+homepage:       http://community.haskell.org/~ndm/derive/
+license:        BSD3
+license-file:   LICENSE
+synopsis:       A program and library to derive instances for data types
+category:       Development
+description:
     Data.Derive is a library and a tool for deriving instances for Haskell programs.
     It is designed to work with custom derivations, SYB and Template Haskell mechanisms.
     The tool requires GHC, but the generated code is portable to all compilers.
     We see this tool as a competitor to DrIFT.
 
-Extra-Source-Files:
+extra-source-files:
     derive.htm
 
-Executable derive
+executable derive
     Main-Is: Main.hs
 
-Library
-    Build-Depends:
+library
+    build-depends:
         base == 4.*,
         filepath, syb, template-haskell, containers, pretty,
         directory, process, bytestring,
@@ -32,7 +32,7 @@ Library
         transformers == 0.2.*,
         uniplate >= 1.5 && < 1.7
 
-    Exposed-Modules:
+    exposed-modules:
         Data.DeriveMain
         Data.DeriveTH
         Data.DeriveDSL
@@ -94,7 +94,7 @@ Library
         -- Mainly internal but some still people use them
         -- to implement derivations outside
         Data.Derive.Internal.Derivation
-    Other-Modules:
+    other-modules:
         Data.Derive.Internal.Instance
         Data.Derive.Internal.Traversal
         Derive.Main
