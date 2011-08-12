@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 
 
 -- | These small short-named functions are intended to make the
