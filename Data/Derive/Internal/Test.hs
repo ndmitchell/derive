@@ -29,4 +29,6 @@ data FailList e a = Zoro | Fial e | Const a (FailList e a)
 data State s a = StateT (s -> (s, a))
 
 data TwoParam a b = TwoParam b
+
+data AAA = BBB
 -}

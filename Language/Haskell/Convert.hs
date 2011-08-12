@@ -196,6 +196,9 @@ instance Convert HS.Literal TH.Lit where
 instance Convert HS.QName TH.Name where
     conv (UnQual x) = c x
     conv (Qual m x) = c (Ident $ prettyPrint m ++ "." ++ prettyPrint x)
+    -- work around GHC bug #5409
+    conv (Special (TupleCon Boxed 0)) = Name (mkOccName "()") (NameG DataName (mkPkgName "ghc-prim") (mkModName "GHC.Unit"))
+    conv (Special (TupleCon Boxed i)) = tupleDataName i
 
 instance Convert HS.PatField TH.FieldPat where
     conv = undefined
