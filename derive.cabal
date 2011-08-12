@@ -20,6 +20,10 @@ description:
 extra-source-files:
     derive.htm
 
+source-repository head
+    type:     darcs
+    location: http://community.haskell.org/~ndm/darcs/derive/
+
 executable derive
     Main-Is: Main.hs
 
