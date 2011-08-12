@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.4
     #394, allow tuple names in more places
     Fix error when deriving Binary on "data A = B"
 2.5.3
