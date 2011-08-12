@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    Fix error when deriving Binary on "data A = B"
 2.5.3
     GHC 7.2 compatibility
 2.5.2
