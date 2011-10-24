@@ -14,7 +14,7 @@
 --
 --   This will generate the instances @Uniplate (Foo Int)@,
 --   @Biplate (Bool, Int) Int@ and @Biplate (Foo Int) Int@.
---   Generally, start with the instance you are after (e.g. @Uniplate (Foo Int)@),
+--   Generally, start with the instance you are after (e.g. @UniplateDirect (Foo Int)@),
 --   try to compile and add further instances as necessary. @UniplateDirect@ with
 --   one argument derives Uniplate, and with two arguments derives Biplate.
 --
