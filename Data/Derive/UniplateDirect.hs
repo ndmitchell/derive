@@ -2,19 +2,24 @@
 -- NOTE: Cannot be guessed as it relies on type information
 
 -- | Derive Uniplate and Biplate using the Direct combinators.
---   You must specific monomorphic instances, i.e:
+--   You must request monomorphic instances, i.e:
 --
--- > data Foo a = Foo a Int
+-- > data Foo a = Foo a (Bool, a)
 -- >
 -- > {-!
 -- > deriving instance UniplateDirect (Foo Int)
+-- > deriving instance UniplateDirect (Bool, Int) Int
 -- > deriving instance UniplateDirect (Foo Int) Int
 -- > !-}
 --
---   All types referred to must be in scope at the time.
+--   This will generate the instances @Uniplate (Foo Int)@,
+--   @Biplate (Bool, Int) Int@ and @Biplate (Foo Int) Int@.
+--   Generally, start with the instance you are after (e.g. @Uniplate (Foo Int)@),
+--   try to compile and add further instances as necessary. @UniplateDirect@ with
+--   one argument derives Uniplate, and with two arguments derives Biplate.
 --
---   @deriving UniplateDirect@ with no arguments will be assumed to derive the Uniplate
---   instance on all types being unit.
+--   @deriving UniplateDirect@ on a data type with no arguments derives Uniplate
+--   with all type parameters defaulting to @()@.
 module Data.Derive.UniplateDirect(makeUniplateDirect) where
 
 
