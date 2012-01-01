@@ -11,7 +11,7 @@ import Data.Maybe
 
 
 data Flag = Version | Help | Output String | Import String | Modu String
-          | Append | Derive [String] | NoOpts | Test | Generate
+          | Append | Derive [String] | NoOpts | Preprocessor | Test | Generate
             deriving (Eq, Show)
 
 
@@ -25,6 +25,7 @@ options =
     ,Option "a"  ["append"]   (NoArg Append)           "append the result to the file"
     ,Option "d"  ["derive"]   (ReqArg splt "DERIVES")  "things to derive for all types"
     ,Option "n"  ["no-opts"]  (NoArg NoOpts)           "ignore the file options"
+    ,Option "F"  ["preprocessor"] (NoArg Preprocessor) "operate as a GHC preprocessor with -pgmF"
     ,Option ""   ["test"]     (NoArg Test)             "run the test suite"
     ,Option ""   ["generate"] (NoArg Generate)         "perform code generation"
     ]
@@ -40,6 +41,7 @@ getFlags = do
     case getOpt Permute options args of
         (o,n,[]  ) | Version `elem` o -> putStrLn "Derive 2.4.* (C) Neil Mitchell 2006-2011" >> exitSuccess
                    | Help `elem` o    -> putStr flagInfo >> exitSuccess
+                   | Preprocessor `elem` o -> return (o,n)
                    | otherwise        -> do files <- mapM pickFile n; return (o, files)
         (_,_,errs) -> hPutStr stderr (concat errs ++ flagInfo) >> exitFailure
     where

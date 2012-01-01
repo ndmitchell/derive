@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    #513, allow derive to be run as a preprocessor
     Improve the documentation for UniplateDirect
 2.5.4
     #394, allow tuple names in more places

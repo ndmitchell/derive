@@ -8,6 +8,7 @@ import Derive.Generate
 import Derive.Test
 import Derive.Flags
 import Data.List
+import System.Directory
 
 
 deriveMain :: [Derivation] -> IO ()
@@ -17,6 +18,13 @@ deriveMain derivations = do
         test
      else if Generate `elem` flags then
         generate
+     else if Preprocessor `elem` flags then
+        (if length files /= 3 then
+            error $ "Expected to be invoked as a GHC preprocessor with 3 files, but got " ++ show (length files)
+         else do
+            copyFile (files !! 1) (files !! 2)
+            mainFile derivations (Append:flags) (files !! 2)
+         )
      else if null files then
         putStr $ "No files specified\n" ++ flagInfo
      else

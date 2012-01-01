@@ -167,6 +167,18 @@ deriving instance Binary Color
 	One way is to append the text to the bottom of the module, this can be done by passing the <tt>--append</tt> flag. If this is done, Derive will generate the required instances and place them at the bottom of the file, along with a checksum. Do not modify these instances.
 </p>
 
+<h3>As a GHC preprocessor</h3>
+
+<p>
+	To use Derive as a GHC preprocessor, add the following line at the top of the source file:
+</p>
+<pre>
+{-# OPTIONS_GHC -F -pgmFderive -optF-F #-}
+</pre>
+<p>
+	This instructs GHC to apply a preprocessor (<tt>-F</tt>), and to use the preprocessor <tt>derive -F</tt>.
+</p>
+
 <h3>Using CPP</h3>
 
 <p>
