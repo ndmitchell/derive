@@ -1,7 +1,7 @@
 cabal-version:  >= 1.6
 build-type:     Default
 name:           derive
-version:        2.5.4
+version:        2.5.5
 build-type:     Simple
 copyright:      Neil Mitchell 2006-2011
 author:         Neil Mitchell <ndmitchell@gmail.com>
