@@ -32,7 +32,7 @@ library
         base == 4.*,
         filepath, syb, template-haskell, containers, pretty,
         directory, process, bytestring,
-        haskell-src-exts >= 1.9 && < 1.12,
+        haskell-src-exts >= 1.9 && < 1.13,
         transformers >= 0.2 && < 0.4,
         uniplate >= 1.5 && < 1.7
 
