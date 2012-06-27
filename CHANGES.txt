@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    Support the Template Haskell Unpacked constructor
 2.5.8
     Allow haskell-src-exts-1.13.*
 2.5.7

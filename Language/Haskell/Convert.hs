@@ -63,6 +63,9 @@ instance Convert TH.Con HS.ConDecl where
 instance Convert TH.StrictType HS.BangType where
     conv (IsStrict, x) = BangedTy $ c x
     conv (NotStrict, x) = UnBangedTy $ c x
+#if __GLASGOW_HASKELL__ >= 704
+    conv (Unpacked, x) = BangedTy $ c x
+#endif
 
 instance Convert TH.Type HS.Type where
     conv (ForallT xs cxt t) = TyForall (Just $ c xs) (c cxt) (c t)
