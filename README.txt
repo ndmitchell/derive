@@ -8,7 +8,7 @@ The standard sequence for testing derive is:
 
 $ ghci Main.hs
 > :main --generate
-> :r
+> :reload
 > :main --test
 
 The --generate option will automatically generate DSL's for derivations derived by example.
