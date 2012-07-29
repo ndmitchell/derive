@@ -14,13 +14,13 @@ import Data.Typeable
 
 test :: Bool
 typename_Bool :: TyCon
-typename_Bool = mkTyCon "Example.Bool"
+typename_Bool = mkTyCon3 "package" "Example" "Bool"
 instance Typeable Bool where
     typeOf _ = mkTyConApp typename_Bool []
 
 test :: Sample
 typename_Sample :: TyCon
-typename_Sample = mkTyCon "Example.Sample"
+typename_Sample = mkTyCon3 "package" "Example" "Sample"
 instance Typeable1 Sample where
     typeOf1 _ = mkTyConApp typename_Sample []
 instance Typeable a => Typeable (Sample a) where
@@ -28,7 +28,7 @@ instance Typeable a => Typeable (Sample a) where
 
 test :: Either
 typename_Either :: TyCon
-typename_Either = mkTyCon "Example.Either"
+typename_Either = mkTyCon3 "package" "Example" "Either"
 instance Typeable2 Either where
     typeOf2 _ = mkTyConApp typename_Either []
 instance Typeable a => Typeable1 (Either a) where
@@ -77,7 +77,7 @@ mkTypeable :: String -> DataDecl -> [Decl]
 mkTypeable modu d =
     [TypeSig sl [name fun] (tyCon "TyCon")] ++
     [PatBind sl (pVar fun) Nothing (UnGuardedRhs bod) (BDecls []) |
-        let bod = App (var "mkTyCon") (Lit $ String $ modu ++ "." ++ nam)] ++
+        let bod = apps (var "mkTyCon3") [Lit $ String "package", Lit $ String modu, Lit $ String nam]] ++
     [inst [] (showN n) [tyCon nam] [PWildCard] $ apps (var "mkTyConApp") [var fun, List []]] ++
     [inst [ClassA (qname "Typeable") [v] | v <- tvs] i [TyParen $ tyApp (tyCon nam) tvs] [] $ var $ "typeOf" ++ i ++ "Default"
         | (vs,i) <- zip (tail $ inits $ dataDeclVars d) $ map showN [n-1,n-2..]

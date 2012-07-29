@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    Modify the Typeable derivation to use mkTyCon3
 2.5.9
     Support the Template Haskell Unpacked constructor
 2.5.8
