@@ -26,7 +26,9 @@ instance Default (a -> b)
 instance Ord (a -> b)
 instance Bounded (a -> b)
 instance Binary (a -> b)
-instance Serialize (a -> b)
+instance Serialize (a -> b) where
+    put = undefined
+    get = undefined
 instance Eq (a -> b)
 instance Read (a -> b)
 instance BinaryDefer (a -> b)
