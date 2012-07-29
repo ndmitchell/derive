@@ -23,7 +23,6 @@ instance BinaryDefer Double
 
 instance Show (a -> b)
 instance Default (a -> b)
-instance NFData (a -> b)
 instance Ord (a -> b)
 instance Bounded (a -> b)
 instance Binary (a -> b)
