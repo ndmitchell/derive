@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    Add derivation for Lens
     Modify the Typeable derivation to use mkTyCon3
 2.5.9
     Support the Template Haskell Unpacked constructor

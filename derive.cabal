@@ -79,6 +79,7 @@ library
         Data.Derive.Is
         Data.Derive.JSON
         Data.Derive.LazySet
+        Data.Derive.Lens
         Data.Derive.Monoid
         Data.Derive.NFData
         Data.Derive.Ord
