@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    Support GHC 7.6
 2.5.10
     Add derivation for Lens
     Modify the Typeable derivation to use mkTyCon3

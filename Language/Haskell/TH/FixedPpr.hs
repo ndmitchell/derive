@@ -349,6 +349,9 @@ instance Ppr Type where
     ppr (ForallT tvars ctxt ty) = 
         text "forall" <+> hsep (map ppr tvars) <+> text "."
                       <+> pprCxt ctxt <+> ppr ty
+#if __GLASGOW_HASKELL__ >= 706
+    ppr StarT = text "*"
+#endif
     ppr ty = pprTyApp (split ty)
 
 pprTyApp :: (Type, [Type]) -> Doc
@@ -396,9 +399,11 @@ instance Ppr TyVarBndr where
     ppr (PlainTV v) = ppr v
     ppr (KindedTV v k) = parens $ ppr v <+> text "::" <+> ppr k
 
+#if __GLASGOW_HASKELL__ < 706
 instance Ppr Kind where
     ppr StarK = text "*"
     ppr (ArrowK j k) = ppr j <+> text "->" <+> ppr k
+#endif
 
 instance Ppr Pred where
     ppr (ClassP n ts) = ppr n <+> hsep (map ppr ts)
