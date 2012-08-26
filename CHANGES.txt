@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.11
     Support GHC 7.6
 2.5.10
     Add derivation for Lens
