@@ -86,7 +86,7 @@ mkShow d y = let
     mkFields = if hasFields then mkShowRecordFields else mkShowPlainFields
   in
     mkJSObject $ H.List
-        [H.Tuple [strE (ctorDeclName c), mkFields (ctorDeclFields c)]]
+        [H.Tuple H.Boxed [strE (ctorDeclName c), mkFields (ctorDeclFields c)]]
 
 mkShowPlainFields :: FieldDecl -> Exp
 mkShowPlainFields fs = mkJSArray $ H.List
@@ -94,7 +94,7 @@ mkShowPlainFields fs = mkJSArray $ H.List
 
 mkShowRecordFields :: FieldDecl -> Exp
 mkShowRecordFields fs = mkJSObject $ H.List
-    [ H.Tuple [strE fn, var "showJSON" `H.App` xi]
+    [ H.Tuple H.Boxed [strE fn, var "showJSON" `H.App` xi]
     | ((fn, _), xi) <- zip fs (vars "x" fs)]
 
 ------------------------------------------------------------------------------
@@ -116,7 +116,7 @@ mkReadCtor c = let
     body | hasFields = mkReadRecord cn fs
          | otherwise = mkReadPlain cn fs
   in
-    H.Alt sl (H.PList [H.PTuple [strP cn, pVar "y"]])
+    H.Alt sl (H.PList [H.PTuple H.Boxed [strP cn, pVar "y"]])
          (H.UnGuardedAlt body) (H.BDecls [])
 
 mkReadRecord :: String -> FieldDecl -> Exp

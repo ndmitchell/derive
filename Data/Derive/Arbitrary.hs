@@ -39,27 +39,27 @@ makeArbitrary = derivationCustomDSL "Arbitrary" custom $
     App "Do" (List [List [App "Generator" (List [App "PVar" (List [App
     "Ident" (List [String "x"])]),App "App" (List [App "Var" (List [
     App "UnQual" (List [App "Ident" (List [String "choose"])])]),App
-    "Tuple" (List [List [App "ExpTypeSig" (List [App "Lit" (List [App
-    "Int" (List [Int 0])]),App "TyCon" (List [App "UnQual" (List [App
-    "Ident" (List [String "Int"])])])]),App "InfixApp" (List [App
-    "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
-    List [String "length"])])]),App "List" (List [MapCtor (App
-    "RecConstr" (List [App "UnQual" (List [App "Ident" (List [CtorName
-    ])]),List []]))])]),App "QVarOp" (List [App "UnQual" (List [App
-    "Symbol" (List [String "-"])])]),App "Lit" (List [App "Int" (List
-    [Int 1])])])]])])]),App "Qualifier" (List [App "Case" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String "x"])])
-    ]),Concat (List [MapCtor (App "Alt" (List [App "PLit" (List [App
-    "Int" (List [CtorIndex])]),App "UnGuardedAlt" (List [App "Do" (
-    List [Concat (List [MapField (App "Generator" (List [App "PVar" (
-    List [App "Ident" (List [Concat (List [String "x",ShowInt
-    FieldIndex])])]),App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "arbitrary"])])])])),List [App "Qualifier" (List [
-    App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "return"])])]),App "Paren" (List [Application (
-    Concat (List [List [App "Con" (List [App "UnQual" (List [App
-    "Ident" (List [CtorName])])])],MapField (App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [Concat (List [String "x",
+    "Tuple" (List [App "Boxed" (List []),List [App "ExpTypeSig" (List
+    [App "Lit" (List [App "Int" (List [Int 0])]),App "TyCon" (List [
+    App "UnQual" (List [App "Ident" (List [String "Int"])])])]),App
+    "InfixApp" (List [App "App" (List [App "Var" (List [App "UnQual" (
+    List [App "Ident" (List [String "length"])])]),App "List" (List [
+    MapCtor (App "RecConstr" (List [App "UnQual" (List [App "Ident" (
+    List [CtorName])]),List []]))])]),App "QVarOp" (List [App "UnQual"
+    (List [App "Symbol" (List [String "-"])])]),App "Lit" (List [App
+    "Int" (List [Int 1])])])]])])]),App "Qualifier" (List [App "Case"
+    (List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    String "x"])])]),Concat (List [MapCtor (App "Alt" (List [App
+    "PLit" (List [App "Int" (List [CtorIndex])]),App "UnGuardedAlt" (
+    List [App "Do" (List [Concat (List [MapField (App "Generator" (
+    List [App "PVar" (List [App "Ident" (List [Concat (List [String
+    "x",ShowInt FieldIndex])])]),App "Var" (List [App "UnQual" (List [
+    App "Ident" (List [String "arbitrary"])])])])),List [App
+    "Qualifier" (List [App "App" (List [App "Var" (List [App "UnQual"
+    (List [App "Ident" (List [String "return"])])]),App "Paren" (List
+    [Application (Concat (List [List [App "Con" (List [App "UnQual" (
+    List [App "Ident" (List [CtorName])])])],MapField (App "Var" (List
+    [App "UnQual" (List [App "Ident" (List [Concat (List [String "x",
     ShowInt FieldIndex])])])]))]))])])])]])])]),App "BDecls" (List [
     List []])])),List [App "Alt" (List [App "PWildCard" (List []),App
     "UnGuardedAlt" (List [App "App" (List [App "Var" (List [App

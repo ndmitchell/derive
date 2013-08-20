@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    Upgrade to haskell-src-exts-1.14.*
 2.5.11
     Support GHC 7.6
 2.5.10

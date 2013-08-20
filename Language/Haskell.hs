@@ -78,7 +78,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fExp (App op x) | op ~= "id" = x
         fExp (App (App flp con) x) | flp ~= "flip" && con ~= "const" = var "id"
         fExp (App (App con x) y) | con ~= "const" = x
-        fExp (App choose (Tuple [x@(ExpTypeSig _ y _),z])) | choose ~= "choose" && y == z = fExp $ App (var "return") x
+        fExp (App choose (Tuple _ [x@(ExpTypeSig _ y _),z])) | choose ~= "choose" && y == z = fExp $ App (var "return") x
         fExp (App op x) | op ~= "id" = x
         fExp (InfixApp (App when true) dot res)
             | when ~= "when" && true ~= "True" = res
@@ -116,9 +116,9 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fPat (PParen x@(PApp _ [])) = x
         fPat (PParen (PParen x)) = PParen x
         fPat (PApp nam xs) = case rename nam of
-            Special (TupleCon Boxed _) -> PTuple xs
+            Special (TupleCon Boxed _) -> PTuple Boxed xs
             nam -> PApp nam xs
-        fPat (PParen (PTuple xs)) = PTuple xs
+        fPat (PParen (PTuple l xs)) = PTuple l xs
         fPat x = x
 
         fMatch (Match sl nam pat sig (GuardedRhss [GuardedRhs _ [Qualifier x] bod]) decls)

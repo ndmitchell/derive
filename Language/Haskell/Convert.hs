@@ -150,7 +150,7 @@ instance Convert HS.Exp TH.Exp where
     conv (LeftSection x y) = InfixE (Just $ c x) (c y) Nothing
     conv (RightSection y z) = InfixE Nothing (c y) (Just $ c z)
     conv (Lambda _ x y) = LamE (c x) (c y)
-    conv (Tuple x) = TupE (c x)
+    conv (Tuple _ x) = TupE (c x)
     conv (If x y z) = CondE (c x) (c y) (c z)
     conv (Let x y) = LetE (c x) (c y)
     conv (Case x y) = CaseE (c x) (c y)
@@ -175,7 +175,7 @@ instance Convert HS.Binds [TH.Dec] where
 instance Convert HS.Pat TH.Pat where
     conv (PParen x) = c x
     conv (PLit x) = LitP (c x)
-    conv (PTuple x) = TupP (c x)
+    conv (PTuple _ x) = TupP (c x)
     conv (PApp x y) = ConP (c x) (c y)
     conv (PVar x) = VarP (c x)
     conv (PInfixApp x y z) = InfixP (c x) (c y) (c z)

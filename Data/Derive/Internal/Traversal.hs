@@ -59,7 +59,7 @@ defaultTraversalType = TraveralType
         , traversalFunc   = \x y -> appP (Var x) y
         , traversalPlus   = \x y -> apps (Con $ Special Cons) [paren x, paren y]
         , traverseArrow   = Nothing
-        , traverseTuple   = Tuple
+        , traverseTuple   = Tuple Boxed
         , traverseCtor    = \x y -> apps (con x) (map paren y)
         , traverseFunc    = undefined
         }
@@ -161,7 +161,7 @@ deriveTraversalApp tt ap tycon@TyTuple{} args = do -- (a,b,c)
            if (all (== traversalId tt) tArgs) then
              traversalId tt
            else
-             Lambda sl [PTuple (vars pVar 't' (length args))]
+             Lambda sl [PTuple Boxed (vars pVar 't' (length args))]
                   (traverseTuple tt $ zipWith App tArgs (vars var 't' (length args)))
 deriveTraversalApp tt ap tycon args = do -- T a b c
          tCon  <- deriveTraversalType tt ap tycon

@@ -123,10 +123,10 @@ splice d (H.App (H.App x (H.Lit (H.Int y))) _) | x ~= "comp" =
 
 readCtor :: CtorDecl -> Exp
 readCtor c =
-    ListComp (Tuple [cpat, var ('r':show (cn+1))]) $
+    ListComp (Tuple Boxed [cpat, var ('r':show (cn+1))]) $
         matchStr (ctorDeclName c) 0 :
         [QualStmt $ Generator sl
-            (PTuple [pVar $ v 'x' 0, pVar $ v 'r' 1])
+            (PTuple Boxed [pVar $ v 'x' 0, pVar $ v 'r' 1])
             (apps (var "readsPrec") [H.Lit $ H.Int 11, var $ v 'r' 0])
             | i <- [1..cn], let v c j = c : show (i+j)]
     where
@@ -136,14 +136,14 @@ readCtor c =
 
 readFields :: CtorDecl -> Exp
 readFields c =
-    ListComp (Tuple [cpat, var $ 'r':show ((cn*4)+2)]) $
+    ListComp (Tuple Boxed [cpat, var $ 'r':show ((cn*4)+2)]) $
         matchStr (ctorDeclName c) 0 :
         concat [
             matchStr (r == 1 ? "{" $ ",") r :
             matchStr fld (r+1) :
             matchStr "=" (r+2) :
             QualStmt (Generator sl
-                (PTuple [pVar $ 'x':show i, pVar $ 'r':show (r+4)])
+                (PTuple Boxed [pVar $ 'x':show i, pVar $ 'r':show (r+4)])
                 (apps (var "readsPrec") [H.Lit $ H.Int 0, var $ 'r':show (r+3)]))
             : []
             | (i,r,(fld,_)) <- zip3 [1..] [1,5..] (ctorDeclFields c)
@@ -155,7 +155,7 @@ readFields c =
 
 
 matchStr :: String -> Int -> QualStmt
-matchStr s i = QualStmt $ Generator sl (PTuple [PLit $ H.String s, pVar $ 'r':show (i+1)]) (var "lex" `H.App` var ('r':show i))
+matchStr s i = QualStmt $ Generator sl (PTuple Boxed [PLit $ H.String s, pVar $ 'r':show (i+1)]) (var "lex" `H.App` var ('r':show i))
 
 
 

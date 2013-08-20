@@ -35,7 +35,7 @@ mainFile :: [Derivation] -> [Flag] -> FilePath -> IO ()
 mainFile derivations flags file = do
     src <- readFile file
     src <- return $ unlines $ filter (not . isPrefixOf "#") $ lines src
-    let parse = fromParseResult . parseFileContentsWithMode defaultParseMode{parseFilename=file,extensions=extension}
+    let parse = fromParseResult . parseFileContentsWithMode defaultParseMode{parseFilename=file,extensions=map EnableExtension extension}
         real = parse src
         mine = parse $ uncomment src
     flags <- return $ foldl addFlags flags

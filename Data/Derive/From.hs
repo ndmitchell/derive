@@ -61,4 +61,4 @@ tyTuple xs = TyTuple Boxed xs
 
 valTuple [] = Con $ Special UnitCon
 valTuple [x] = x
-valTuple xs = Tuple xs
+valTuple xs = Tuple Boxed xs
