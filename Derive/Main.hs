@@ -54,11 +54,11 @@ uncomment [] = []
 -- Taken from HLint, update occasionally
 extension =
     [OverlappingInstances,UndecidableInstances,IncoherentInstances,RecursiveDo
-    ,ParallelListComp,MultiParamTypeClasses,NoMonomorphismRestriction,FunctionalDependencies
+    ,ParallelListComp,MultiParamTypeClasses,FunctionalDependencies
     ,Rank2Types,RankNTypes,PolymorphicComponents,ExistentialQuantification,ScopedTypeVariables
     ,ImplicitParams,FlexibleContexts,FlexibleInstances,EmptyDataDecls
     ,KindSignatures,BangPatterns,TypeSynonymInstances,TemplateHaskell
-    ,ForeignFunctionInterface,Generics,NoImplicitPrelude,NamedFieldPuns,PatternGuards
+    ,ForeignFunctionInterface,Generics,NamedFieldPuns,PatternGuards
     ,GeneralizedNewtypeDeriving,ExtensibleRecords,RestrictedTypeSynonyms,HereDocuments
     ,MagicHash,TypeFamilies,StandaloneDeriving,UnicodeSyntax,PatternSignatures,UnliftedFFITypes
     ,LiberalTypeSynonyms,TypeOperators,RecordWildCards,RecordPuns,DisambiguateRecordFields
