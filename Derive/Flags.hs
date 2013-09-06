@@ -39,7 +39,7 @@ getFlags :: IO ([Flag], [String])
 getFlags = do
     args <- getArgs
     case getOpt Permute options args of
-        (o,n,[]  ) | Version `elem` o -> putStrLn "Derive 2.4.* (C) Neil Mitchell 2006-2011" >> exitSuccess
+        (o,n,[]  ) | Version `elem` o -> putStrLn "Derive 2.5.* (C) Neil Mitchell 2006-2013" >> exitSuccess
                    | Help `elem` o    -> putStr flagInfo >> exitSuccess
                    | Preprocessor `elem` o -> return (o,n)
                    | otherwise        -> do files <- mapM pickFile n; return (o, files)
