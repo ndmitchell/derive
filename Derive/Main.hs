@@ -35,7 +35,7 @@ mainFile :: [Derivation] -> [Flag] -> FilePath -> IO ()
 mainFile derivations flags file = do
     src <- readFile file
     src <- return $ unlines $ filter (not . isPrefixOf "#") $ lines src
-    let parse = fromParseResult . parseFileContentsWithMode defaultParseMode{parseFilename=file,extensions=map EnableExtension extension}
+    let parse = fromParseResult . parseFileContentsWithMode defaultParseMode{parseFilename=file,extensions=defaultExtensions}
         real = parse src
         mine = parse $ uncomment src
     flags <- return $ foldl addFlags flags
@@ -52,16 +52,12 @@ uncomment [] = []
 
 
 -- Taken from HLint, update occasionally
-extension =
-    [OverlappingInstances,UndecidableInstances,IncoherentInstances,RecursiveDo
-    ,ParallelListComp,MultiParamTypeClasses,FunctionalDependencies
-    ,Rank2Types,RankNTypes,PolymorphicComponents,ExistentialQuantification,ScopedTypeVariables
-    ,ImplicitParams,FlexibleContexts,FlexibleInstances,EmptyDataDecls
-    ,KindSignatures,BangPatterns,TypeSynonymInstances,TemplateHaskell
-    ,ForeignFunctionInterface,Generics,NamedFieldPuns,PatternGuards
-    ,GeneralizedNewtypeDeriving,ExtensibleRecords,RestrictedTypeSynonyms,HereDocuments
-    ,MagicHash,TypeFamilies,StandaloneDeriving,UnicodeSyntax,PatternSignatures,UnliftedFFITypes
-    ,LiberalTypeSynonyms,TypeOperators,RecordWildCards,RecordPuns,DisambiguateRecordFields
-    ,OverloadedStrings,GADTs,MonoPatBinds,RelaxedPolyRec,ExtendedDefaultRules,UnboxedTuples
-    ,DeriveDataTypeable,ConstrainedClassMethods,PackageImports,ImpredicativeTypes
-    ,NewQualifiedOperators,PostfixOperators,QuasiQuotes,ViewPatterns]
+defaultExtensions :: [Extension]
+defaultExtensions = [e | e@EnableExtension{} <- knownExtensions] \\ map EnableExtension badExtensions
+
+badExtensions =
+    [Arrows -- steals proc
+    ,TransformListComp -- steals the group keyword
+    ,XmlSyntax, RegularPatterns -- steals a-b
+    ]
+
