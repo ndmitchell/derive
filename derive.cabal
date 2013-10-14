@@ -25,7 +25,7 @@ source-repository head
     location: http://community.haskell.org/~ndm/darcs/derive/
 
 executable derive
-    Main-Is: Main.hs
+    main-is: Main.hs
 
 library
     build-depends:
