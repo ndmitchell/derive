@@ -21,8 +21,8 @@ extra-source-files:
     derive.htm
 
 source-repository head
-    type:     darcs
-    location: http://community.haskell.org/~ndm/darcs/derive/
+    type:     git
+    location: https://github.com/ndmitchell/derive.git
 
 executable derive
     main-is: Main.hs
