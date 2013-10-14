@@ -1,8 +1,0 @@
-Given "class Functor DataName where", where DataName is being used as a kind * -> *, the guess will be wrong. If a non-kind * is used in a guess, should error message.
-
-Guess should use a DSL, possibly with additional power so custom traversals (same-type, first-kind-type etc) can be encoded.
-
-From a guessed DSL, generate a SYB instance (if possible)
-
-Add UniplateStr generators
-
