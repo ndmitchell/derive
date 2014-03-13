@@ -405,8 +405,10 @@ instance Ppr Kind where
     ppr (ArrowK j k) = ppr j <+> text "->" <+> ppr k
 #endif
 
+#if __GLASGOW_HASKELL__ < 709
 instance Ppr Pred where
     ppr (ClassP n ts) = ppr n <+> hsep (map ppr ts)
     ppr (EqualP t u ) = ppr t <+> text "~" <+> ppr u
+#endif
 
 #endif
