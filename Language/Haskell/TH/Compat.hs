@@ -25,8 +25,7 @@ dataDefinitionTypeArgs (DataD _cx name args cons _derv) = args
 dataDefinitionTypeArgs (NewtypeD cx name args con derv) = args
 #endif
 
-
-#if __GLASGOW_HASKELL__ >= 612
+#if __GLASGOW_HASKELL__ >= 612 && __GLASGOW_HASKELL__ < 709
 typeToPred :: Type -> Pred
 typeToPred (ConT v) = ClassP v []
 typeToPred (AppT x y) = ClassP v (t++[y])
