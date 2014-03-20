@@ -5,7 +5,7 @@ import System.Exit
 
 
 main = do
-    cmd "cabal install cereal json binarydefer data-lens QuickCheck"
+    cmd "cabal install cereal json binarydefer data-lens QuickCheck --verbose"
     cmd "runhaskell Main --generate"
     cmd "runhaskell Main --test"
 
