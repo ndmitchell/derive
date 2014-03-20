@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.14
     #3, support GHC 7.9
 2.5.13
     #622, turn on more Haskell extensions
