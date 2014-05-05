@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.16
     Allow transformers-0.4 and above
 2.5.15
     Allow haskell-src-exts-1.15.*
