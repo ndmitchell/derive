@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    Remove GHC 7.2 support
 2.5.16
     Allow transformers-0.4 and above
 2.5.15
