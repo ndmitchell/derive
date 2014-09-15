@@ -43,7 +43,7 @@ customSplice custom d = transformBi f
 
 
 customContext :: (FullDataDecl -> Context -> Context) -> (FullDataDecl -> [Decl] -> [Decl])
-customContext custom d = map f
+customContext custom ds = map f
     where
-        f (InstDecl sl ctx a b c) = InstDecl sl (custom d ctx) a b c
+        f (InstDecl sl a b ctx c d e) = InstDecl sl a b (custom ds ctx) c d e
         f x = x

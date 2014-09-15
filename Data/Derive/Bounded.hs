@@ -20,25 +20,24 @@ makeBounded = derivationDSL "Bounded" dslBounded
 dslBounded =
     List [Instance ["Bounded"] "Bounded" (List [App "InsDecl" (List [
     App "PatBind" (List [App "PVar" (List [App "Ident" (List [String
-    "minBound"])]),App "Nothing" (List []),App "UnGuardedRhs" (List [
-    App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "head"])])]),App "List" (List [MapCtor (Application
-    (Concat (List [List [App "Con" (List [App "UnQual" (List [App
+    "minBound"])]),App "UnGuardedRhs" (List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "head"]
+    )])]),App "List" (List [MapCtor (Application (Concat (List [List [
+    App "Con" (List [App "UnQual" (List [App "Ident" (List [CtorName])
+    ])])],MapField (App "Paren" (List [Application (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "const"])])]),
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "minBound"])])]),App "Lit" (List [App "Int" (List [FieldIndex])])]
+    )]))])))])])]),App "BDecls" (List [List []])])]),App "InsDecl" (
+    List [App "PatBind" (List [App "PVar" (List [App "Ident" (List [
+    String "maxBound"])]),App "UnGuardedRhs" (List [App "App" (List [
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "head"])])]),App "List" (List [Reverse (MapCtor (Application (
+    Concat (List [List [App "Con" (List [App "UnQual" (List [App
     "Ident" (List [CtorName])])])],MapField (App "Paren" (List [
     Application (List [App "Var" (List [App "UnQual" (List [App
     "Ident" (List [String "const"])])]),App "Var" (List [App "UnQual"
-    (List [App "Ident" (List [String "minBound"])])]),App "Lit" (List
-    [App "Int" (List [FieldIndex])])])]))])))])])]),App "BDecls" (List
-    [List []])])]),App "InsDecl" (List [App "PatBind" (List [App
-    "PVar" (List [App "Ident" (List [String "maxBound"])]),App
-    "Nothing" (List []),App "UnGuardedRhs" (List [App "App" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String "head"]
-    )])]),App "List" (List [Reverse (MapCtor (Application (Concat (
-    List [List [App "Con" (List [App "UnQual" (List [App "Ident" (List
-    [CtorName])])])],MapField (App "Paren" (List [Application (List [
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "const"])])]),App "Var" (List [App "UnQual" (List [App "Ident" (
-    List [String "maxBound"])])]),App "Lit" (List [App "Int" (List [
-    FieldIndex])])])]))]))))])])]),App "BDecls" (List [List []])])])])
-    ]
+    (List [App "Ident" (List [String "maxBound"])])]),App "Lit" (List
+    [App "Int" (List [FieldIndex])])])]))]))))])])]),App "BDecls" (
+    List [List []])])])])]
 -- GENERATED STOP

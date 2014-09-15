@@ -44,4 +44,4 @@ makeUpdateField d field =
         set = field ++ "_s"
         upd = field ++ "_u"
         typR = dataDeclType d `TyFun` dataDeclType d
-        typF = fromBangType $ fromJust $ lookup field $ concatMap ctorDeclFields $ dataDeclCtors d
+        typF = fromJust $ lookup field $ concatMap ctorDeclFields $ dataDeclCtors d

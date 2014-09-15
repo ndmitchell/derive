@@ -30,21 +30,23 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
     where
     f (Instance ctx hd body) =
         OApp "InstDecl"
-            [out
+            [out (Nothing :: Maybe Overlap)
+            ,out ([] :: [TyVarBind])
+            ,out
                 [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
                 | let seen = [x | TyVar (Ident x) <- universeBi $ concatMap ctorDeclFields $ dataCtors input]
                 , v <- dataDeclVars input `intersect` seen
                 , c <- ctx]
-            , out $ UnQual $ Ident hd
-            , out [TyParen $ foldl TyApp
+            ,out $ UnQual $ Ident hd
+            ,out [TyParen $ foldl TyApp
                 (TyCon $ UnQual $ Ident $ dataName input)
                 (map tyVar $ dataDeclVars input)]
-            , f body]
+            ,f body]
 
     f (Application (f -> OList xs)) =
         foldl1 (\a b -> OApp "App" [a,b]) xs
 
-    f (MapCtor dsl) = OList  [  applyEnv dsl env{envCtor=c}
+    f (MapCtor dsl) = OList  [applyEnv dsl env{envCtor=c}
          |  c <- dataCtors input]
     f (MapField dsl) = OList [applyEnv dsl env{envField=i}
          | i <- [1.. fromIntegral $ ctorArity ctor]]

@@ -33,7 +33,7 @@ makeLensField :: DataDecl -> String -> [Decl]
 makeLensField d field = [TypeSig sl [name ref] typ, bind ref [] bod]
     where
         ref = "lens" ++ title field
-        typ = tyApps (tyCon "Lens") [dataDeclType d, fromBangType t]
+        typ = tyApps (tyCon "Lens") [dataDeclType d, t]
         Just t = lookup field $ concatMap ctorDeclFields $ dataDeclCtors d
 
         bod = apps (var "lens")

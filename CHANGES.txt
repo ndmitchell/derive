@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    Upgrade to haskell-src-exts-1.16
     Remove GHC 7.2 support
 2.5.16
     Allow transformers-0.4 and above

@@ -35,6 +35,6 @@ makeSetField d field = [TypeSig sl [name set] typ, bind set [pVar "v",pVar "x"] 
     where
         set = "set" ++ title field
         typ = typField `TyFun` (dataDeclType d `TyFun` dataDeclType d)
-        typField = fromBangType $ fromJust $ lookup field $ concatMap ctorDeclFields $ dataDeclCtors d
+        typField = fromJust $ lookup field $ concatMap ctorDeclFields $ dataDeclCtors d
 
         bod = RecUpdate (var "x") [FieldUpdate (qname field) (var "v")]

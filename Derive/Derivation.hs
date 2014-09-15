@@ -34,7 +34,7 @@ moduleDerives = concatMap f . moduleDecls
     where
         f (DataDecl _ _ _ name vars _ deriv) = g name vars deriv
         f (GDataDecl _ _ _ name vars _ _ deriv) = g name vars deriv
-        f (DerivDecl _ _ name args) = [TyCon name `tyApps` args]
+        f (DerivDecl _ _ _ _ name args) = [TyCon name `tyApps` args]
         f _ = []
 
         g name vars deriv = [TyCon a `tyApps` (b:bs) | (a,bs) <- deriv]

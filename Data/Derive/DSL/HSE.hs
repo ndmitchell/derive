@@ -26,7 +26,7 @@ sample :: Input
 sample = DataDecl sl DataType [] (name "Sample") [tyVarBind "a"] ctrs []
     where
         ctrs = [ctr "First" 0, ctr "Second" 2, ctr "Third" 1]
-        ctr s i = QualConDecl sl [] [] $ ConDecl (name s) $ replicate i $ UnBangedTy $ tyVar "a"
+        ctr s i = QualConDecl sl [] [] $ ConDecl (name s) $ replicate i $ tyVar "a"
 
 
 ---------------------------------------------------------------------

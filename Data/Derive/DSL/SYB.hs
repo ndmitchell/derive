@@ -70,7 +70,7 @@ dinstance :: DSL -> Maybe Decl
 dinstance x = do
     Instance _ name bod <- return x
     bod <- syb bod
-    return $ InstDecl sl
+    return $ InstDecl sl Nothing []
         [ClassA (UnQual $ Ident "Data") [TyVar $ Ident "d_type"]]
         (UnQual $ Ident name) [TyVar $ Ident "d_type"]
         bod

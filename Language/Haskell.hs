@@ -91,7 +91,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
             where x2 = Var $ UnQual x
         fExp (Case (ExpTypeSig _ x@Lit{} _) alts) = fExp $ Case x alts
         fExp (Case (Lit x) alts) | good /= [] = head good
-            where good = [z | Alt _ (PLit y) (UnGuardedAlt z) (BDecls []) <- alts, y == x]
+            where good = [z | Alt _ (PLit Signless y) (UnGuardedRhs z) (BDecls []) <- alts, y == x]
         fExp (If x t f)
             | x ~= "True" = t
             | x ~= "False" = f
@@ -123,18 +123,18 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
 
         fMatch (Match sl nam pat sig (GuardedRhss [GuardedRhs _ [Qualifier x] bod]) decls)
             | x ~= "True" = fMatch $ Match sl nam pat sig (UnGuardedRhs bod) decls
-        fMatch (Match sl nam [PVar x] sig (UnGuardedRhs (Case (Var (UnQual x2)) [Alt _ pat (UnGuardedAlt y) (BDecls [])])) decls)
+        fMatch (Match sl nam [PVar x] sig (UnGuardedRhs (Case (Var (UnQual x2)) [Alt _ pat (UnGuardedRhs y) (BDecls [])])) decls)
             | x == x2 = fMatch $ Match sl nam [PParen pat] sig (UnGuardedRhs y) decls
         fMatch o@(Match a b c d e bind) = fBinds (Match a b (minPat o c) d e) bind
 
-        fDecl (PatBind a b c d bind) = fBinds (PatBind a b c d) bind
+        fDecl (PatBind a b c bind) = fBinds (PatBind a b c) bind
         fDecl (FunBind xs) = FunBind $ filter (not . isGuardFalse) xs
         fDecl x = x
 
         fBinds context (BDecls bind) | inline /= [] =
                 simplify $ subst (Var $ UnQual from) to $ context $ BDecls $ take i bind ++ drop (i+1) bind
             where
-                f (PatBind _ (PVar x) Nothing (UnGuardedRhs bod) (BDecls [])) = [(x,bod)]
+                f (PatBind _ (PVar x) (UnGuardedRhs bod) (BDecls [])) = [(x,bod)]
                 f (FunBind [Match _ x [PVar v] Nothing (UnGuardedRhs (Paren (App bod (Var v2)))) (BDecls [])])
                     | UnQual v == v2 = [(x,bod)]
                 f (FunBind [Match sl x pat Nothing (UnGuardedRhs bod) (BDecls [])]) = [(x,Paren $ Lambda sl pat bod)]
@@ -203,7 +203,7 @@ dataDeclFields = sort . nub . filter (not . null) . map fst . concatMap ctorDecl
 -- A declaration that is either a DataDecl of GDataDecl
 type DataDecl = Decl
 type CtorDecl = Either QualConDecl GadtDecl
-type FieldDecl = [(String, BangType)]
+type FieldDecl = [(String, Type)]
 
 type FullDataDecl = (ModuleName, DataDecl)
 
@@ -233,13 +233,8 @@ bind :: String -> [Pat] -> Exp -> Decl
 bind s p e = binds s [(p,e)]
 
 binds :: String -> [([Pat], Exp)] -> Decl
-binds n [([],e)] = PatBind sl (pVar n) Nothing (UnGuardedRhs e) (BDecls [])
+binds n [([],e)] = PatBind sl (pVar n) (UnGuardedRhs e) (BDecls [])
 binds n xs = FunBind [Match sl (name n) p Nothing (UnGuardedRhs e) (BDecls []) | (p,e) <- xs]
-
-
-fromBangType (BangedTy x) = x
-fromBangType (UnBangedTy x) = x
-fromBangType (UnpackedTy x) = x
 
 
 isDataDecl :: Decl -> Bool

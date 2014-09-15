@@ -155,7 +155,7 @@ readFields c =
 
 
 matchStr :: String -> Int -> QualStmt
-matchStr s i = QualStmt $ Generator sl (PTuple Boxed [PLit $ H.String s, pVar $ 'r':show (i+1)]) (var "lex" `H.App` var ('r':show i))
+matchStr s i = QualStmt $ Generator sl (PTuple Boxed [PLit H.Signless $ H.String s, pVar $ 'r':show (i+1)]) (var "lex" `H.App` var ('r':show i))
 
 
 

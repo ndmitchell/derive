@@ -60,11 +60,11 @@ instance Convert TH.Con HS.ConDecl where
     conv (RecC n xs) = RecDecl (c n) [([c x], c (y,z)) | (x,y,z) <- xs]
     conv (InfixC x n y) = InfixConDecl (c x) (c n) (c y)
 
-instance Convert TH.StrictType HS.BangType where
-    conv (IsStrict, x) = BangedTy $ c x
-    conv (NotStrict, x) = UnBangedTy $ c x
+instance Convert TH.StrictType HS.Type where
+    conv (IsStrict, x) = TyBang BangedTy $ c x
+    conv (NotStrict, x) = c x
 #if __GLASGOW_HASKELL__ >= 704
-    conv (Unpacked, x) = BangedTy $ c x
+    conv (Unpacked, x) = TyBang UnpackedTy $ c x
 #endif
 
 instance Convert TH.Type HS.Type where
@@ -87,9 +87,9 @@ instance Convert TH.Type HS.Asst where
 
 
 instance Convert HS.Decl TH.Dec where
-    conv (InstDecl _ cxt nam typ ds) = InstanceD (c cxt) (c $ tyApp (TyCon nam) typ) [c d | InsDecl d <- ds]
+    conv (InstDecl _ _ _ cxt nam typ ds) = InstanceD (c cxt) (c $ tyApp (TyCon nam) typ) [c d | InsDecl d <- ds]
     conv (FunBind ms@(HS.Match _ nam _ _ _ _:_)) = FunD (c nam) (c ms)
-    conv (PatBind _ p _ bod ds) = ValD (c p) (c bod) (c ds)
+    conv (PatBind _ p bod ds) = ValD (c p) (c bod) (c ds)
     conv (TypeSig _ [nam] typ) = SigD (c nam) (c $ foralls typ)
     conv (DataDecl _ DataType ctx nam typ cs ds) =
       DataD (c ctx) (c nam) (c typ) (c cs) (c (map fst ds))
@@ -105,11 +105,16 @@ instance Convert HS.ConDecl TH.Con where
     conv (InfixConDecl l nam r) = InfixC (c l) (c nam) (c r)
     conv (RecDecl nam fs) = RecC (c nam) (concatMap c fs)
 
-instance Convert HS.BangType TH.StrictType where
-    conv (BangedTy t) = (IsStrict,c t)
-    conv (UnBangedTy t) = (NotStrict,c t)
+instance Convert HS.Type TH.StrictType where
+    conv (TyBang BangedTy t) = (IsStrict, c t)
+#if __GLASGOW_HASKELL__ >= 704
+    conv (TyBang UnpackedTy t) = (Unpacked, c t)
+#else
+    conv (TyBang UnpackedTy t) = (IsStrict, c t)
+#endif
+    conv t = (NotStrict, c t)
 
-instance Convert ([HS.Name],HS.BangType) [TH.VarStrictType] where
+instance Convert ([HS.Name],HS.Type) [TH.VarStrictType] where
     conv (names,bt) = [(c name,s,t) | name <- names]
      where (s,t) = c bt
 
@@ -174,7 +179,7 @@ instance Convert HS.Binds [TH.Dec] where
 
 instance Convert HS.Pat TH.Pat where
     conv (PParen x) = c x
-    conv (PLit x) = LitP (c x)
+    conv (PLit Signless x) = LitP (c x)
     conv (PTuple _ x) = TupP (c x)
     conv (PApp x y) = ConP (c x) (c y)
     conv (PVar x) = VarP (c x)
@@ -224,14 +229,6 @@ instance Convert HS.FieldUpdate TH.FieldExp where
 
 instance Convert HS.TyVarBind TH.Name where
     conv (UnkindedVar x) = c x
-
-instance Convert HS.GuardedAlts TH.Body where
-    conv (UnGuardedAlt x) = NormalB (c x)
-    conv (GuardedAlts x) = GuardedB (c x)
-
-instance Convert HS.GuardedAlt (TH.Guard, TH.Exp) where
-    conv (GuardedAlt _ x y) = (PatG (c x), c y)
-
 
 #if __GLASGOW_HASKELL__ >= 612
 instance Convert TH.TyVarBndr HS.TyVarBind where

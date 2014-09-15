@@ -21,7 +21,7 @@ overlaps =
 
 -- REASONS:
 -- UniplateDirect: Doesn't work through Template Haskell
-exclude = ["ArbitraryOld","UniplateDirect","Ref","Serial"]
+exclude = ["ArbitraryOld","UniplateDirect","Ref","Serial","Binary"]
 
 -- These must be first and in every set
 priority = ["Eq","Typeable"]
@@ -31,8 +31,8 @@ listType :: Decl
 listType = DataDecl sl DataType [] (Ident "[]") [UnkindedVar $ Ident "a"]
     [QualConDecl sl [] [] (ConDecl (Ident "[]") [])
     ,QualConDecl sl [] [] (ConDecl (Ident "Cons")
-        [UnBangedTy (TyVar (Ident "a"))
-        ,UnBangedTy (TyApp (TyCon (UnQual (Ident "List"))) (TyVar (Ident "a")))])]
+        [TyVar (Ident "a")
+        ,TyApp (TyCon (UnQual (Ident "List"))) (TyVar (Ident "a"))])]
     []
 
 

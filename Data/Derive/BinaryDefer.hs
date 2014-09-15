@@ -30,34 +30,34 @@ makeBinaryDefer = derivationDSL "BinaryDefer" dslBinaryDefer
 dslBinaryDefer =
     List [Instance ["BinaryDefer"] "BinaryDefer" (List [App "InsDecl"
     (List [App "PatBind" (List [App "PVar" (List [App "Ident" (List [
-    String "bothDefer"])]),App "Nothing" (List []),App "UnGuardedRhs"
-    (List [App "App" (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "defer"])])]),App "List" (List [MapCtor (App
-    "Lambda" (List [List [App "PIrrPat" (List [App "PParen" (List [App
-    "PAsPat" (List [App "Ident" (List [String "o"]),App "PParen" (List
-    [App "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName
-    ])]),MapField (App "PVar" (List [App "Ident" (List [Concat (List [
-    String "x",ShowInt FieldIndex])])]))])])])])])],App "If" (List [
-    App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "null"])])]),App "List" (List [MapField (Application
-    (List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
-    String "const"])])]),App "Con" (List [App "Special" (List [App
-    "UnitCon" (List [])])]),App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])])])
-    ]))])]),App "InfixApp" (List [App "App" (List [App "Var" (List [
-    App "UnQual" (List [App "Ident" (List [String "unit"])])]),App
-    "Paren" (List [Application (Concat (List [List [App "Con" (List [
-    App "UnQual" (List [App "Ident" (List [CtorName])])])],MapField (
+    String "bothDefer"])]),App "UnGuardedRhs" (List [App "App" (List [
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "defer"])])]),App "List" (List [MapCtor (App "Lambda" (List [List
+    [App "PIrrPat" (List [App "PParen" (List [App "PAsPat" (List [App
+    "Ident" (List [String "o"]),App "PParen" (List [App "PApp" (List [
+    App "UnQual" (List [App "Ident" (List [CtorName])]),MapField (App
+    "PVar" (List [App "Ident" (List [Concat (List [String "x",ShowInt
+    FieldIndex])])]))])])])])])],App "If" (List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "null"]
+    )])]),App "List" (List [MapField (Application (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "const"])])]),
+    App "Con" (List [App "Special" (List [App "UnitCon" (List [])])]),
     App "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (
-    List [String "x",ShowInt FieldIndex])])])]))]))])]),App "QVarOp" (
-    List [App "UnQual" (List [App "Symbol" (List [String "<<!"])])]),
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [String "o"
-    ])])])]),Fold (App "InfixApp" (List [Tail,App "QVarOp" (List [App
-    "UnQual" (List [App "Symbol" (List [String "<<"])])]),Head])) (
-    Concat (List [Reverse (MapField (App "Var" (List [App "UnQual" (
-    List [App "Ident" (List [Concat (List [String "x",ShowInt
-    FieldIndex])])])]))),List [App "App" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "unit"])])]),App "Con" (
-    List [App "UnQual" (List [App "Ident" (List [CtorName])])])])]]))]
-    )]))])])]),App "BDecls" (List [List []])])])])]
+    List [String "x",ShowInt FieldIndex])])])])]))])]),App "InfixApp"
+    (List [App "App" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "unit"])])]),App "Paren" (List [Application
+    (Concat (List [List [App "Con" (List [App "UnQual" (List [App
+    "Ident" (List [CtorName])])])],MapField (App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [Concat (List [String "x",
+    ShowInt FieldIndex])])])]))]))])]),App "QVarOp" (List [App
+    "UnQual" (List [App "Symbol" (List [String "<<!"])])]),App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "o"])])])]),
+    Fold (App "InfixApp" (List [Tail,App "QVarOp" (List [App "UnQual"
+    (List [App "Symbol" (List [String "<<"])])]),Head])) (Concat (List
+    [Reverse (MapField (App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])])])
+    )),List [App "App" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "unit"])])]),App "Con" (List [App "UnQual" (
+    List [App "Ident" (List [CtorName])])])])]]))])]))])])]),App
+    "BDecls" (List [List []])])])])]
 -- GENERATED STOP

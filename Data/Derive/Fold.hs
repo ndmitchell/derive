@@ -62,5 +62,5 @@ foldType d = tyFun $ map f (dataDeclCtors d) ++ [dt, v]
     where
         dt = dataDeclType d
         v = head $ map (tyVar . return) ['a'..] \\ universe dt
-        f c = TyParen $ tyFun $ map (fromBangType . snd) (ctorDeclFields c) ++ [v]
+        f c = TyParen $ tyFun $ map snd (ctorDeclFields c) ++ [v]
 

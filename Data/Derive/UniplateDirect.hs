@@ -103,14 +103,14 @@ makeUniplateDirect = derivationParams "UniplateDirect" $ \args grab (_,ty) -> si
         
 
 make :: Bool -> (String -> DataDecl) -> Type -> Type -> Either String [Decl]
-make uni grab from to = Right [InstDecl sl [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni])
+make uni grab from to = Right [InstDecl sl Nothing [] [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni])
         [InsDecl $ InlineSig sl True AlwaysActive (qname $ if uni then "uniplate" else "biplate"), InsDecl ms]]
     where
         ty = grab $ tyRoot from
         match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) (BDecls [])
         ms = if uni || from /= to
              then FunBind $ map (uncurry match) (catMaybes bods) ++ [match (pVar "x") (var "plate" `App` var "x") | any isNothing bods]
-             else PatBind sl (pVar "biplate") Nothing (UnGuardedRhs $ var "plateSelf") (BDecls [])
+             else PatBind sl (pVar "biplate") (UnGuardedRhs $ var "plateSelf") (BDecls [])
         bods = run (fromTyParens to) $ mapM (make1 grab) $ substData from ty
 
 
@@ -179,7 +179,7 @@ subst ty x@TypeDecl{} = Left $ substType ty x
 subst ty x = Right $ substData ty x
 
 substData :: Type -> Decl -> [(String,[Type])]
-substData ty dat = [(ctorDeclName x, map (fromTyParens . transform f . fromBangType . snd) $ ctorDeclFields x) | x <- dataDeclCtors dat]
+substData ty dat = [(ctorDeclName x, map (fromTyParens . transform f . snd) $ ctorDeclFields x) | x <- dataDeclCtors dat]
     where
         rep = zip (dataDeclVars dat) (snd $ fromTyApps $ fromTyParen ty)
         f (TyVar x) = fromMaybe (TyVar x) $ lookup (prettyPrint x) rep
@@ -212,9 +212,9 @@ knownCtors = map (fromParseResult . parseDecl)
 
 listCtor = DataDecl sl  DataType [] (Ident "[]") [UnkindedVar $ Ident "a"]
     [QualConDecl sl [] [] $ ConDecl (Ident "[]") []
-    ,QualConDecl sl [] [] $ ConDecl (Ident "(:)") [UnBangedTy $ tyVar "a", UnBangedTy $ TyList $ tyVar "a"]] []
+    ,QualConDecl sl [] [] $ ConDecl (Ident "(:)") [tyVar "a", TyList $ tyVar "a"]] []
 
 tupleDefn :: Int -> Decl
-tupleDefn n = DataDecl sl DataType [] (Ident s) (map (UnkindedVar . Ident) vars) [QualConDecl sl [] [] $ ConDecl (Ident s) (map (UnBangedTy . tyVar) vars)] []
+tupleDefn n = DataDecl sl DataType [] (Ident s) (map (UnkindedVar . Ident) vars) [QualConDecl sl [] [] $ ConDecl (Ident s) (map tyVar vars)] []
     where s = "(" ++ replicate (n - 1) ',' ++ ")"
           vars = ['v':show i | i <- [1..n]]

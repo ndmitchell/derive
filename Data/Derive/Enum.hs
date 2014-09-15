@@ -26,27 +26,28 @@ makeEnum = derivationDSL "Enum" dslEnum
 dslEnum =
     List [Instance [] "Enum" (List [App "InsDecl" (List [App "FunBind"
     (List [Concat (List [MapCtor (App "Match" (List [App "Ident" (List
-    [String "toEnum"]),List [App "PLit" (List [App "Int" (List [
-    CtorIndex])])],App "Nothing" (List []),App "UnGuardedRhs" (List [
-    App "RecConstr" (List [App "UnQual" (List [App "Ident" (List [
-    CtorName])]),List []])]),App "BDecls" (List [List []])])),List [
-    App "Match" (List [App "Ident" (List [String "toEnum"]),List [App
-    "PVar" (List [App "Ident" (List [String "n"])])],App "Nothing" (
-    List []),App "UnGuardedRhs" (List [App "InfixApp" (List [App "Var"
-    (List [App "UnQual" (List [App "Ident" (List [String "error"])])])
-    ,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
-    String "$"])])]),Fold (App "InfixApp" (List [Head,App "QVarOp" (
-    List [App "UnQual" (List [App "Symbol" (List [String "++"])])]),
-    Tail])) (List [App "Lit" (List [App "String" (List [String
-    "toEnum "])]),App "App" (List [App "Var" (List [App "UnQual" (List
-    [App "Ident" (List [String "show"])])]),App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "n"])])])]),App "Lit" (
-    List [App "String" (List [String ", not defined for "])]),App
-    "Lit" (List [App "String" (List [DataName])])])])]),App "BDecls" (
-    List [List []])])]])])]),App "InsDecl" (List [App "FunBind" (List
-    [MapCtor (App "Match" (List [App "Ident" (List [String "fromEnum"]
-    ),List [App "PParen" (List [App "PRec" (List [App "UnQual" (List [
-    App "Ident" (List [CtorName])]),List []])])],App "Nothing" (List [
-    ]),App "UnGuardedRhs" (List [App "Lit" (List [App "Int" (List [
-    CtorIndex])])]),App "BDecls" (List [List []])]))])])])]
+    [String "toEnum"]),List [App "PLit" (List [App "Signless" (List []
+    ),App "Int" (List [CtorIndex])])],App "Nothing" (List []),App
+    "UnGuardedRhs" (List [App "RecConstr" (List [App "UnQual" (List [
+    App "Ident" (List [CtorName])]),List []])]),App "BDecls" (List [
+    List []])])),List [App "Match" (List [App "Ident" (List [String
+    "toEnum"]),List [App "PVar" (List [App "Ident" (List [String "n"])
+    ])],App "Nothing" (List []),App "UnGuardedRhs" (List [App
+    "InfixApp" (List [App "Var" (List [App "UnQual" (List [App "Ident"
+    (List [String "error"])])]),App "QVarOp" (List [App "UnQual" (List
+    [App "Symbol" (List [String "$"])])]),Fold (App "InfixApp" (List [
+    Head,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
+    String "++"])])]),Tail])) (List [App "Lit" (List [App "String" (
+    List [String "toEnum "])]),App "App" (List [App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [String "show"])])]),App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "n"])])])]),
+    App "Lit" (List [App "String" (List [String ", not defined for "])
+    ]),App "Lit" (List [App "String" (List [DataName])])])])]),App
+    "BDecls" (List [List []])])]])])]),App "InsDecl" (List [App
+    "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List [
+    String "fromEnum"]),List [App "PParen" (List [App "PRec" (List [
+    App "UnQual" (List [App "Ident" (List [CtorName])]),List []])])],
+    App "Nothing" (List []),App "UnGuardedRhs" (List [App "Lit" (List
+    [App "Int" (List [CtorIndex])])]),App "BDecls" (List [List []])]))
+    ])])])]
 -- GENERATED STOP

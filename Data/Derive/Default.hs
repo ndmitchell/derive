@@ -20,14 +20,13 @@ makeDefault = derivationDSL "Default" dslDefault
 dslDefault =
     List [Instance ["Default"] "Default" (List [App "InsDecl" (List [
     App "PatBind" (List [App "PVar" (List [App "Ident" (List [String
-    "def"])]),App "Nothing" (List []),App "UnGuardedRhs" (List [App
-    "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
-    List [String "head"])])]),App "List" (List [MapCtor (Application (
-    Concat (List [List [App "Con" (List [App "UnQual" (List [App
-    "Ident" (List [CtorName])])])],MapField (App "Paren" (List [
-    Application (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "const"])])]),App "Var" (List [App "UnQual"
-    (List [App "Ident" (List [String "def"])])]),App "Lit" (List [App
-    "Int" (List [FieldIndex])])])]))])))])])]),App "BDecls" (List [
-    List []])])])])]
+    "def"])]),App "UnGuardedRhs" (List [App "App" (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "head"])])]),
+    App "List" (List [MapCtor (Application (Concat (List [List [App
+    "Con" (List [App "UnQual" (List [App "Ident" (List [CtorName])])])
+    ],MapField (App "Paren" (List [Application (List [App "Var" (List
+    [App "UnQual" (List [App "Ident" (List [String "const"])])]),App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "def"])
+    ])]),App "Lit" (List [App "Int" (List [FieldIndex])])])]))])))])])
+    ]),App "BDecls" (List [List []])])])])]
 -- GENERATED STOP

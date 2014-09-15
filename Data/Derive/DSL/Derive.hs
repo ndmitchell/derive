@@ -24,16 +24,17 @@ derive x = [simplifyDSL y | Guess y <- guess $ toOutput x]
 
 
 guess :: Output -> [Guess]
-
-guess (OApp "InstDecl" [OList ctxt,name,typ,bod])
+guess (OApp "InstDecl" [OApp "Nothing" [], OList [], OList ctxt,name,typ,bod])
     | OApp "UnQual" [OApp "Ident" [OString name]] <- name
     , OList [OApp "TyParen" [OApp "TyApp"
         [OApp "TyCon" [OApp "UnQual" [OApp "Ident" [OString nam]]]
         ,OApp "TyVar" [OApp "Ident" [OString var]]]]] <- typ
     , nam == dataName sample
-    , ctxt <- [x | OApp "ClassA" [OApp "UnQual" [OApp "Ident" [OString x]],_] <- ctxt]
+    , ctxt <- [x | OApp "ClassA" [OApp "UnQual" [OApp "Ident" [OString x]],_] <- map unparenA ctxt]
     = [Guess $ Instance ctxt name y | Guess y <- guess bod]
-
+    where
+        unparenA (OApp "ParenA" [x]) = unparenA x
+        unparenA x = x
 
 guess (OList xs) = guessList xs
 guess o@(OApp op xs) = gssFold o ++ gssApp o ++ map (lift (App op)) (guessList xs)

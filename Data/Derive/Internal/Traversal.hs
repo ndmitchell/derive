@@ -97,7 +97,7 @@ traversalInstance1 tt nm (_,dat)
 
 -- | Instance for a Traversable like class
 traversalInstance :: TraveralType -> String -> DataDecl -> [WithInstances Decl] -> [Decl]
-traversalInstance tt nameBase dat bodyM = [simplify $ InstDecl sl ctx nam args (map InsDecl body)]
+traversalInstance tt nameBase dat bodyM = [simplify $ InstDecl sl Nothing [] ctx nam args (map InsDecl body)]
     where
         (body, required) = runWriter (sequence bodyM)
         ctx  = [ ClassA (qname $ className p) (tyVar n : vars tyVar 's' (p - 1))
@@ -128,7 +128,7 @@ deriveTraversalCtor :: TraveralType -> ArgPositions -> CtorDecl -> WithInstances
 deriveTraversalCtor tt ap ctor = do
     let nam = ctorDeclName ctor
         arity = ctorDeclArity ctor
-    tTypes <- mapM (deriveTraversalType tt ap) (map (fromBangType . snd) $ ctorDeclFields ctor)
+    tTypes <- mapM (deriveTraversalType tt ap) (map snd $ ctorDeclFields ctor)
     return $ traverseFunc tt (PParen $ PApp (qname nam) (vars pVar 'a' arity))
            $ traverseCtor tt nam (zipWith App tTypes (vars var 'a' arity))
 

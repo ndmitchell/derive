@@ -115,5 +115,3 @@ lexeme ('\"':xs) = let (a,b) = f xs in ('\"':a,b)
           f (x:xs) = let (a,b) = f xs in (x:a,b)
           f [] = ([],[])
 lexeme (x:xs) = ([x], xs)
-
-

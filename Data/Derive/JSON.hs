@@ -17,7 +17,7 @@ module Data.Derive.JSON (makeJSON) where
 
 import qualified Language.Haskell as H
 import Language.Haskell (
-    Exp, Pat, Alt, CtorDecl, Decl, FullDataDecl, FieldDecl, BangType, Stmt,
+    Exp, Pat, Alt, CtorDecl, Decl, FullDataDecl, FieldDecl, Type, Stmt,
     (~=), var, pVar, con, strE, strP, apps, qname, sl,
     ctorDeclFields, ctorDeclName, dataDeclCtors)
 
@@ -106,7 +106,7 @@ mkRead (_, d) = let
   in
     H.Case (var "fromJSObject" `H.App` var "x") $
     map mkReadCtor (dataDeclCtors d) ++
-    [H.Alt H.sl H.PWildCard (H.UnGuardedAlt readError) (H.BDecls [])]
+    [H.Alt H.sl H.PWildCard (H.UnGuardedRhs readError) (H.BDecls [])]
 
 mkReadCtor :: CtorDecl -> Alt
 mkReadCtor c = let
@@ -117,19 +117,19 @@ mkReadCtor c = let
          | otherwise = mkReadPlain cn fs
   in
     H.Alt sl (H.PList [H.PTuple H.Boxed [strP cn, pVar "y"]])
-         (H.UnGuardedAlt body) (H.BDecls [])
+         (H.UnGuardedRhs body) (H.BDecls [])
 
 mkReadRecord :: String -> FieldDecl -> Exp
 mkReadRecord cn fs = H.Do $
     [H.Generator sl (H.PApp (qname "JSObject") [pVar "z"])
           (var "return" `H.App` var "y")] ++
-    [H.LetStmt $ H.BDecls [H.PatBind sl (pVar "d") Nothing
+    [H.LetStmt $ H.BDecls [H.PatBind sl (pVar "d")
           (H.UnGuardedRhs $ var "fromJSObject" `H.App` var "z")
           (H.BDecls [])]] ++
     zipWith (mkReadRecordField cn) (pVars "x" fs) fs ++
     mkReadTrailer cn fs
 
-mkReadRecordField :: String -> Pat -> (String, BangType) -> Stmt
+mkReadRecordField :: String -> Pat -> (String, Type) -> Stmt
 mkReadRecordField cn xi (fn, _) = H.Generator sl xi $
     apps (var "maybe") [
         var "fail" `H.App` strE (unwords ["readJSON: missing field", fn,
