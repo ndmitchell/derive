@@ -21,7 +21,7 @@ instance Read a => Read (Sample a) where
 test :: Sample
 instance Read a => Read (Sample a) where
     readsPrec p0 r =
-        readParen (p0 > 10) (\r0 ->
+        readParen False (\r0 ->
             [ (First, r1)
             | ("First", r1) <- lex r0]) r
         ++
@@ -111,8 +111,8 @@ getCtor d i = dataDeclCtors (snd d) !! fromIntegral i
 hasFields c = any ((/=) "" . fst) $ ctorDeclFields c
 
 splice :: FullDataDecl -> Exp -> Exp
-splice d (H.App x (H.Lit (H.Int y))) | x ~= "bracket" =
-    if hasFields $ getCtor d y
+splice d (H.App x (H.Lit (H.Int y))) | x ~= "bracket", let c = getCtor d y =
+    if hasFields c || null (ctorDeclFields c)
     then con "False"
     else Paren $ InfixApp (var "p0") (QVarOp $ UnQual $ Symbol ">") (H.Lit $ H.Int 10)
 
