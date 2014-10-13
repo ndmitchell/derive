@@ -7,7 +7,7 @@ import Control.Monad
 import Data.Maybe
 import Data.List
 import System.FilePath
-import System.Cmd
+import System.Process
 import System.Exit
 import Control.Arrow
 import Data.Derive.All
