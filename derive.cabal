@@ -18,7 +18,7 @@ description:
     The tool requires GHC, but the generated code is portable to all compilers.
     We see this tool as a competitor to DrIFT.
 extra-source-files:
-    derive.htm
+    README.md
     CHANGES.txt
 tested-with:        GHC==7.8.2, GHC==7.6.3, GHC==7.4.2
 
