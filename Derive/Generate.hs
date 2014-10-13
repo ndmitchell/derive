@@ -26,7 +26,7 @@ generate = do
         ["import Data.Derive." ++ x ++ replicate (4 + n - length x) ' ' ++ "as D" | x <- names] ++
         ["derivations :: [Derivation]"
         ,"derivations = [make" ++ concat (intersperse ",make" names) ++ "]"]
-    writeGenerated "derive.htm" $ ["-->"] ++ lis ++ ["<!--"]
+    writeGenerated "README.md" $ ["-->",""] ++ lis ++ ["","<!--"]
     writeGenerated "derive.cabal" $ map ("        Data.Derive."++) names
 
 
@@ -69,11 +69,9 @@ generateFile file = do
             error $ "Previously generated dynamic instance can not be regenerated, " ++ name
 
     let imp = listToMaybe $ srcImport src
-    return $ concat $
-        ["<li>"
-        ,"<b><a href='" ++ instUrl name imp ++ "'>" ++ name ++ "</a></b>"] ++
-        [" - from the library <a href='" ++ pkgUrl pkg ++ "'>" ++ pkg ++ "</a>" | Just imp <- [imp], let pkg = fromMaybe "base" $ importPkg imp] ++
-        ["</li>"]
+    return $
+        "* **[" ++ name ++ "](" ++ instUrl name imp ++ ")**" ++
+        concat [" - from the library [" ++ pkg ++ "](" ++ pkgUrl pkg ++ ")" | Just imp <- [imp], let pkg = fromMaybe "base" $ importPkg imp]
 
 pkgUrl x = "http://hackage.haskell.org/package/" ++ x
 
