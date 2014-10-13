@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternGuards #-}
 {-|
     Derives @Read@.  This is as defined by the Haskell report, except
     there is no support for infix constructors.  If you attempt to
