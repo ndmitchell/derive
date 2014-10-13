@@ -11,7 +11,6 @@ import Control.Monad.Trans.State
 
 data Ctor = Ctor
     {ctorType :: Box
-    ,ctorIndex :: Int
     ,ctorRep :: Constr}
 
 
@@ -31,5 +30,5 @@ d_ctorValue = error "TODO: d_ctorValue"
 d_dataCtors :: Data a => a -> [Ctor]
 d_dataCtors x
     | not $ isAlgType t = error "d_dataCtors only works on algebraic data types"
-    | otherwise = zipWith (Ctor $ Box x) [0..] $ dataTypeConstrs t
+    | otherwise = map (Ctor $ Box x) $ dataTypeConstrs t
     where t = dataTypeOf x
