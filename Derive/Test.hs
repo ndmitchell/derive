@@ -21,10 +21,11 @@ overlaps =
 
 -- REASONS:
 -- UniplateDirect: Doesn't work through Template Haskell
-exclude = ["ArbitraryOld","UniplateDirect","Ref","Serial","Binary"]
+-- Typeable cannot be separately derived in GHC 7.8
+exclude = ["ArbitraryOld","UniplateDirect","Ref","Serial","Binary","Typeable"]
 
 -- These must be first and in every set
-priority = ["Eq","Typeable"]
+priority = ["Eq"]
 
 
 listType :: Decl
