@@ -83,14 +83,15 @@ detailedNeq as bs = "Mismatch on line " ++ show i ++ "\n" ++ show a ++ "\n" ++ s
 autoTest :: String -> [DataDecl] -> [(Derivation,Src)] -> IO ()
 autoTest name ts ds =
     writeFile (name++".hs") $ unlines $
-        ["{-# LANGUAGE TemplateHaskell,FlexibleInstances,MultiParamTypeClasses,TypeOperators #-}"
+        ["{-# LANGUAGE TemplateHaskell,FlexibleInstances,MultiParamTypeClasses,TypeOperators,DeriveDataTypeable #-}"
         ,"{-# OPTIONS_GHC -Wall -fno-warn-missing-fields -fno-warn-unused-imports #-}"
         ,"module " ++ name ++ " where"
         ,"import Prelude"
         ,"import Data.DeriveTH"
+        ,"import Data.Typeable"
         ,"import Derive.TestInstances()"] ++
         [prettyPrint i | (_,s) <- ds, i <- srcImportStd s] ++
-        [prettyPrint t | t <- ts2] ++
+        [prettyPrint t ++ "\n  deriving Typeable" | t <- ts2] ++
         ["$(derives [make" ++ derivationName d ++ "] " ++ types ++ ")" | (d,_) <- ds]
     where
         types = "[" ++ intercalate "," ["''" ++ dataDeclName t | t <- ts2] ++ "]"
