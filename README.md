@@ -1,4 +1,4 @@
-# Derive [![Hackage version](https://img.shields.io/hackage/v/derive.svg?style=flat)](http://hackage.haskell.org/package/derive) [![Build Status](http://img.shields.io/travis/ndmitchell/derive.svg?style=flat)](https://travis-ci.org/ndmitchell/derive)
+# Derive [![Hackage version](https://img.shields.io/hackage/v/derive.svg?style=flat)](https://hackage.haskell.org/package/derive) [![Build Status](https://img.shields.io/travis/ndmitchell/derive.svg?style=flat)](https://travis-ci.org/ndmitchell/derive)
 
 
 Data.Derive is a library and a tool for deriving instances for Haskell programs. It is designed to work with custom derivations, SYB and Template Haskell mechanisms. The tool requires GHC, but the generated code is portable to all compilers. We see this tool as a competitor to <a href="http://repetae.net/~john/computer/haskell/DrIFT/">DrIFT</a>.
