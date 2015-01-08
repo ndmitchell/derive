@@ -39,6 +39,7 @@ instance Convert TH.Dec HS.Decl where
         DataD cxt n vs con ds -> f DataType cxt n vs con ds
         NewtypeD cxt n vs con ds -> f NewType cxt n vs [con] ds
         where
+            f :: DataOrNew -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> [TH.Name] -> HS.Decl
             f t cxt n vs con ds = DataDecl sl t (c cxt) (c n) (c vs) (c con) []
 
 instance Convert TH.Name HS.TyVarBind where
