@@ -24,6 +24,7 @@ convert a = unsafePerformIO $
 
 
 
+appT :: TH.Type -> [TH.Type] -> TH.Type
 appT = foldl AppT
 
 c mr = convert mr
