@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    Support GHC 7.10
 2.5.18
     #4, fix the read instance for nullary constructors
 2.5.17
