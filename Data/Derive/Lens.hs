@@ -30,7 +30,7 @@ makeLens = derivationCustom "Lens" $ \(_,d) -> Right $ concatMap (makeLensField 
 
 
 makeLensField :: DataDecl -> String -> [Decl]
-makeLensField d field = [TypeSig sl [name ref] typ, bind ref [] bod]
+makeLensField d field = if isIdent field then [TypeSig sl [name ref] typ, bind ref [] bod] else []
     where
         ref = "lens" ++ title field
         typ = tyApps (tyCon "Lens") [dataDeclType d, t]

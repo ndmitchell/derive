@@ -30,7 +30,7 @@ makeRef = derivationCustom "Ref" $ \(_,d) -> Right $ concatMap (makeRefField d) 
 
 
 makeRefField :: DataDecl -> String -> [Decl]
-makeRefField d field = [TypeSig sl [name ref] typ, bind ref [] bod]
+makeRefField d field = if isIdent field then [TypeSig sl [name ref] typ, bind ref [] bod] else []
     where
         ref = "ref" ++ title field
         typ = TyApp (tyCon "Ref") (dataDeclType d)

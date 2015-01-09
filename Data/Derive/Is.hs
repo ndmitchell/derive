@@ -23,7 +23,7 @@ makeIs = derivationCustom "Is" $ \(_,d) -> Right $ concatMap (makeIsCtor d) $ da
 
 
 makeIsCtor :: DataDecl -> CtorDecl -> [Decl]
-makeIsCtor d c =
+makeIsCtor d c = if not $ isIdent $ ctorDeclName c then [] else
         [TypeSig sl [name nam] (dataDeclType d `TyFun` tyCon "Bool")
         ,FunBind $ match : [defMatch | length (dataDeclCtors d) > 1]]
     where

@@ -37,7 +37,8 @@ makeFrom = derivationCustom "From" $ \(_,d) -> Right $ concatMap (makeFromCtor d
 
 
 makeFromCtor :: DataDecl -> CtorDecl -> [Decl]
-makeFromCtor d c = [TypeSig sl [name from] typ, FunBind $ match : [defMatch | length (dataDeclCtors d) > 1]]
+makeFromCtor d c | isIdent n = [TypeSig sl [name from] typ, FunBind $ match : [defMatch | length (dataDeclCtors d) > 1]]
+                 | otherwise = []
     where
         n = ctorDeclName c
         from = "from" ++ n

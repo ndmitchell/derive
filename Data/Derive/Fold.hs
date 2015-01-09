@@ -47,7 +47,8 @@ makeFold = derivationCustom "Fold" $ \(_,d) -> Right $ simplify $ mkFold d
 
 
 mkFold :: DataDecl -> [Decl]
-mkFold d = [TypeSig sl [name n] (foldType d), FunBind $ zipWith f [0..] $ dataDeclCtors d]
+mkFold d | isIdent $ dataDeclName d = [TypeSig sl [name n] (foldType d), FunBind $ zipWith f [0..] $ dataDeclCtors d]
+         | otherwise = []
     where
         n = "fold" ++ title (dataDeclName d)
         f i c = Match sl (name n) pat Nothing (UnGuardedRhs bod) (BDecls [])

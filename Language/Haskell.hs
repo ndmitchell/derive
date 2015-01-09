@@ -182,6 +182,7 @@ sl = SrcLoc "" 0 0
 noSl mr = transformBi (const sl) mr
 
 
+isIdent (x:xs) = isAlpha x || x == '_'
 title (x:xs) = toUpper x : xs
 
 qname = UnQual . name

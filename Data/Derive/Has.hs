@@ -29,7 +29,7 @@ makeHas = derivationCustom "Has" $ \(_,d) -> Right $ concatMap (makeHasField d) 
 
 
 makeHasField :: DataDecl -> String -> [Decl]
-makeHasField d field = [TypeSig sl [name has] typ, binds has ms]
+makeHasField d field = if isIdent field then [TypeSig sl [name has] typ, binds has ms] else []
     where
         has = "has" ++ title field
         typ = TyFun (dataDeclType d) (tyCon "Bool")

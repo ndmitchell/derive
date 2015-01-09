@@ -28,7 +28,7 @@ makeLazySet = derivationCustom "LazySet" $ \(_,d) -> Right $ concatMap (makeLazy
 
 
 makeLazySetField :: DataDecl -> String -> [Decl]
-makeLazySetField d field = [TypeSig sl [name fun] typ, bind fun [pVar "v",pVar "x"] bod]
+makeLazySetField d field = if isIdent field then [TypeSig sl [name fun] typ, bind fun [pVar "v",pVar "x"] bod] else []
     where
         fun = "set" ++ title field
         typ = t `TyFun` (dataDeclType d `TyFun` dataDeclType d)
