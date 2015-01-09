@@ -15,7 +15,8 @@ import Language.Haskell.TH.All as TH hiding (Derivation(..),toName)
 import qualified Language.Haskell.Exts as HSE
 import Language.Haskell as HS
 import Language.Haskell.Convert
-import Data.Generics.Uniplate.Data
+import Data.Generics
+
 
 -- | Derive an instance of some class. @derive@ only derives instances
 -- for the type of the argument.
@@ -35,14 +36,17 @@ derives xs ys = liftM concat $ sequence [derive x y | y <- ys, x <- xs]
 -- for the type of the argument.
 deriveFromDec :: Derivation -> Dec -> Q [Dec]
 deriveFromDec d x = do
-    x <- liftM normData $ expandData x
+    x <- fmap unkind $ liftM normData $ expandData x
     let unsup x = error $ "Derivation of " ++ derivationName d ++ " does not yet support Template Haskell, requires info for " ++ x
-    let f (HSE.KindedVar x _) = HSE.UnkindedVar x
-        f x = x
-    case derivationOp d (tyCon $ derivationName d) unsup $ transformBi f $ toFullDataDecl x of
+    case derivationOp d (tyCon $ derivationName d) unsup $ toFullDataDecl x of
         Left y -> runIO (putStrLn $ "Warning, couldn't derive: " ++ y) >> return []
         Right v -> return $ convert v
 
+unkind :: Dec -> Dec
+unkind = everywhere (mkT f)
+    where
+        f (KindedTV x _) = PlainTV x
+        f x = x
 
 toFullDataDecl :: Dec -> FullDataDecl
 toFullDataDecl x = (ModuleName "Todo", convert x)
