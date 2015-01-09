@@ -12,7 +12,6 @@ import Control.Monad
 import Data.Derive.All
 import Data.Derive.Internal.Derivation
 import Language.Haskell.TH.All as TH hiding (Derivation(..),toName)
-import qualified Language.Haskell.Exts as HSE
 import Language.Haskell as HS
 import Language.Haskell.Convert
 import Data.Generics
