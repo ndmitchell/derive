@@ -35,17 +35,11 @@ derives xs ys = liftM concat $ sequence [derive x y | y <- ys, x <- xs]
 -- for the type of the argument.
 deriveFromDec :: Derivation -> Dec -> Q [Dec]
 deriveFromDec d x = do
-    x <- fmap unkind $ liftM normData $ expandData x
+    x <- liftM normData $ expandData x
     let unsup x = error $ "Derivation of " ++ derivationName d ++ " does not yet support Template Haskell, requires info for " ++ x
     case derivationOp d (tyCon $ derivationName d) unsup $ toFullDataDecl x of
         Left y -> runIO (putStrLn $ "Warning, couldn't derive: " ++ y) >> return []
         Right v -> return $ convert v
-
-unkind :: Dec -> Dec
-unkind = everywhere (mkT f)
-    where
-        f (KindedTV x _) = PlainTV x
-        f x = x
 
 toFullDataDecl :: Dec -> FullDataDecl
 toFullDataDecl x = (ModuleName "Todo", convert x)
