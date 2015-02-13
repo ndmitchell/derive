@@ -6,6 +6,7 @@ import Data.List
 import Data.Generics.Uniplate.Data
 import Data.Data
 import Data.Char
+import Data.Maybe
 
 
 infix 1 ?
@@ -257,7 +258,15 @@ dataDeclName (DataDecl _ _ _ name _ _ _) = prettyPrint name
 dataDeclName (GDataDecl _ _ _ name _ _ _ _) = prettyPrint name
 
 dataDeclVars :: DataDecl -> [String]
-dataDeclVars (DataDecl _ _ _ _ vars _ _) = map prettyPrint vars
+dataDeclVars (DataDecl _ _ _ _ vars _ _) = map f vars
+    where f (KindedVar x _) = prettyPrint x
+          f (UnkindedVar x) = prettyPrint x
+
+dataDeclVarsStar :: DataDecl -> [String]
+dataDeclVarsStar (DataDecl _ _ _ _ vars _ _) = mapMaybe f vars
+    where f (UnkindedVar x) = Just $ prettyPrint x
+          f (KindedVar x KindStar) = Just $ prettyPrint x
+          f _ = Nothing
 
 dataDeclArity :: DataDecl -> Int
 dataDeclArity = length . dataDeclVars
