@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.20
     #5, fix regression with higher-kinded constructors becoming context
 2.5.19
     Support GHC 7.10
