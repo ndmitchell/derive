@@ -14,7 +14,6 @@ import Data.Derive.Internal.Derivation
 import Language.Haskell.TH.All as TH hiding (Derivation(..),toName)
 import Language.Haskell as HS
 import Language.Haskell.Convert
-import Data.Generics
 
 
 -- | Derive an instance of some class. @derive@ only derives instances
