@@ -35,7 +35,7 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
             ,out
                 [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
                 | let seen = [x | TyVar (Ident x) <- universeBi $ concatMap ctorDeclFields $ dataCtors input]
-                , v <- dataDeclVars input `intersect` seen
+                , v <- dataDeclVarsStar input `intersect` seen
                 , c <- ctx]
             ,out $ UnQual $ Ident hd
             ,out [TyParen $ foldl TyApp

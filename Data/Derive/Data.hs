@@ -152,4 +152,4 @@ splice d (H.App x (H.Lit (H.Int y)))
     where ctor = dataDeclCtors (snd d) !! fromInteger y
 
 context :: FullDataDecl -> Context -> Context
-context d _ = [ClassA (qname t) [tyVar x] | x <- dataDeclVars $ snd d, t <- ["Typeable","Data"]]
+context d _ = [ClassA (qname t) [tyVar x] | x <- dataDeclVarsStar $ snd d, t <- ["Typeable","Data"]]
