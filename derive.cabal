@@ -3,7 +3,7 @@ build-type:     Default
 name:           derive
 version:        2.5.19
 build-type:     Simple
-copyright:      Neil Mitchell 2006-2014
+copyright:      Neil Mitchell 2006-2015
 author:         Neil Mitchell <ndmitchell@gmail.com>
 maintainer:     Neil Mitchell <ndmitchell@gmail.com>
 homepage:       http://community.haskell.org/~ndm/derive/
