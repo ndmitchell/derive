@@ -75,6 +75,7 @@ instance Convert TH.Type HS.Type where
     conv (ConT x) | ',' `elem` show x = TyTuple Boxed []
                   | otherwise = TyCon $ c x
     conv (AppT (AppT ArrowT x) y) = TyFun (c x) (c y)
+    conv (ArrowT) = TyCon $ Special FunCon
     conv (AppT ListT x) = TyList $ c x
     conv (ListT) = TyCon $ Special ListCon
     conv (TupleT _) = TyTuple Boxed []
