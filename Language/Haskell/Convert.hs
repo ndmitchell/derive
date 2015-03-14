@@ -76,6 +76,7 @@ instance Convert TH.Type HS.Type where
                   | otherwise = TyCon $ c x
     conv (AppT (AppT ArrowT x) y) = TyFun (c x) (c y)
     conv (AppT ListT x) = TyList $ c x
+    conv (ListT) = TyCon $ Special ListCon
     conv (TupleT _) = TyTuple Boxed []
     conv (AppT x y) = case c x of
         TyTuple b xs -> TyTuple b $ xs ++ [c y]
