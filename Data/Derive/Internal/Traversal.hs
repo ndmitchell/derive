@@ -28,6 +28,7 @@ import Control.Monad.Trans.Writer
 import Control.Applicative
 import Data.Generics.Uniplate.DataOnly
 import Data.Maybe
+import Prelude
 
 ---------------------------------------------------------------------------------
 -- Information datatype, public interface
