@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.22
     #7, #8 convert more types from TemplateHaskell
 2.5.21
     Fix the homepage link
