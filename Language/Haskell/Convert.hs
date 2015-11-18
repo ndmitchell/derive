@@ -181,6 +181,10 @@ instance Convert HS.GuardedRhs (TH.Guard, TH.Exp) where
 instance Convert HS.Binds [TH.Dec] where
     conv (BDecls x) = c x
 
+instance Convert (Maybe HS.Binds) [TH.Dec] where
+    conv Nothing = []
+    conv (Just x) = c x
+
 instance Convert HS.Pat TH.Pat where
     conv (PParen x) = c x
     conv (PLit Signless x) = LitP (c x)
