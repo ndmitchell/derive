@@ -55,7 +55,7 @@ makeShow = derivationCustomDSL "Show" custom $
     "SpliceExp" (List [App "ParenSplice" (List [App "App" (List [App
     "Var" (List [App "UnQual" (List [App "Ident" (List [String "show"]
     )])]),App "Lit" (List [App "Int" (List [CtorIndex])])])])])]),App
-    "BDecls" (List [List []])]))])])])]
+    "Nothing" (List [])]))])])])]
 -- GENERATED STOP
 
 -- Left is a literal string, Right is a variable

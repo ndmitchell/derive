@@ -82,7 +82,7 @@ instUrl name (Just x) = "http://hackage.haskell.org/packages/archive/" ++ pkgNam
         pkgName = a
         pkgVersion = if null b then "latest" else tail b
         modu = reps '.' '-' $ prettyPrint $ importModule x
-        nam = case importSpecs x of Just (False,IAbs y:_) -> prettyPrint y ; _ -> name
+        nam = case importSpecs x of Just (False,IAbs _ y:_) -> prettyPrint y ; _ -> name
 
 
 wrap :: Int -> String -> [String]

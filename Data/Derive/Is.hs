@@ -29,5 +29,5 @@ makeIsCtor d c = if not $ isIdent $ ctorDeclName c then [] else
     where
         nam = "is" ++ ctorDeclName c
         
-        match = Match sl (name nam) [PParen $ PRec (qname $ ctorDeclName c) []] Nothing (UnGuardedRhs $ con "True") (BDecls [])
-        defMatch = Match sl (name nam) [PWildCard] Nothing (UnGuardedRhs $ con "False") (BDecls [])
+        match = Match sl (name nam) [PParen $ PRec (qname $ ctorDeclName c) []] Nothing (UnGuardedRhs $ con "True") Nothing
+        defMatch = Match sl (name nam) [PWildCard] Nothing (UnGuardedRhs $ con "False") Nothing

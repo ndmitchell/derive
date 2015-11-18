@@ -48,7 +48,7 @@ traverseTraversal = defaultTraversalType
         , traversalPlus  = fail "variable used in multiple positions in a data type"
         , traverseTuple  = \args -> liftAN (Con $ Special $ TupleCon Unboxed $ length args) args
         , traverseCtor   = \ctor -> liftAN (con ctor)
-        , traverseFunc   = \pat rhs -> Match sl (name "") [pVar "_f", pat] Nothing (UnGuardedRhs rhs) (BDecls [])
+        , traverseFunc   = \pat rhs -> Match sl (name "") [pVar "_f", pat] Nothing (UnGuardedRhs rhs) Nothing
         }
 
 liftAN :: Exp -> [Exp] -> Exp

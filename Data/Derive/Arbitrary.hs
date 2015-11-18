@@ -61,13 +61,12 @@ makeArbitrary = derivationCustomDSL "Arbitrary" custom $
     App "UnQual" (List [App "Ident" (List [CtorName])])])],MapField (
     App "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (
     List [String "x",ShowInt FieldIndex])])])]))]))])])])]])])]),App
-    "BDecls" (List [List []])])),List [App "Alt" (List [App
-    "PWildCard" (List []),App "UnGuardedRhs" (List [App "App" (List [
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "error"])])]),App "Lit" (List [App "String" (List [String
-    "FATAL ERROR: Arbitrary instance, logic bug"])])])]),App "BDecls"
-    (List [List []])])]])])])]])]),App "BDecls" (List [List []])])])])
-    ]
+    "Nothing" (List [])])),List [App "Alt" (List [App "PWildCard" (
+    List []),App "UnGuardedRhs" (List [App "App" (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "error"])])]),
+    App "Lit" (List [App "String" (List [String
+    "FATAL ERROR: Arbitrary instance, logic bug"])])])]),App "Nothing"
+    (List [])])]])])])]])]),App "Nothing" (List [])])])])]
 -- GENERATED STOP
 
 custom = customContext context

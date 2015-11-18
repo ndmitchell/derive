@@ -76,7 +76,7 @@ makeTypeable = derivationCustom "Typeable" $ \(ModuleName modu,x) -> Right $ mkT
 mkTypeable :: String -> DataDecl -> [Decl]
 mkTypeable modu d =
     [TypeSig sl [name fun] (tyCon "TyCon")] ++
-    [PatBind sl (pVar fun) (UnGuardedRhs bod) (BDecls []) |
+    [PatBind sl (pVar fun) (UnGuardedRhs bod) Nothing |
         let bod = apps (var "mkTyCon3") [Lit $ String "package", Lit $ String modu, Lit $ String nam]] ++
     [inst [] (showN n) [tyCon nam] [PWildCard] $ apps (var "mkTyConApp") [var fun, List []]] ++
     [inst [ClassA (qname "Typeable") [v] | v <- tvs] i [TyParen $ tyApp (tyCon nam) tvs] [] $ var $ "typeOf" ++ i ++ "Default"

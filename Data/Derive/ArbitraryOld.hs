@@ -55,20 +55,20 @@ dslArbitraryOld =
     List [App "UnQual" (List [App "Ident" (List [CtorName])])])],
     MapField (App "Var" (List [App "UnQual" (List [App "Ident" (List [
     Concat (List [String "x",ShowInt FieldIndex])])])]))]))])])])]])])
-    ]),App "BDecls" (List [List []])]))])])]])]),App "BDecls" (List [
-    List []])])]),App "InsDecl" (List [App "FunBind" (List [MapCtor (
-    App "Match" (List [App "Ident" (List [String "coarbitrary"]),List
-    [App "PParen" (List [App "PApp" (List [App "UnQual" (List [App
-    "Ident" (List [CtorName])]),MapField (App "PVar" (List [App
-    "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])]))]
-    )])],App "Nothing" (List []),App "UnGuardedRhs" (List [Fold (App
-    "InfixApp" (List [Head,App "QVarOp" (List [App "UnQual" (List [App
-    "Symbol" (List [String "."])])]),Tail])) (Concat (List [List [App
-    "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
-    List [String "variant"])])]),App "Lit" (List [App "Int" (List [
-    CtorIndex])])])],MapField (App "App" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "coarbitrary"])])]),App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (List [
-    String "x",ShowInt FieldIndex])])])])]))]))]),App "BDecls" (List [
-    List []])]))])])])]
+    ]),App "Nothing" (List [])]))])])]])]),App "Nothing" (List [])])])
+    ,App "InsDecl" (List [App "FunBind" (List [MapCtor (App "Match" (
+    List [App "Ident" (List [String "coarbitrary"]),List [App "PParen"
+    (List [App "PApp" (List [App "UnQual" (List [App "Ident" (List [
+    CtorName])]),MapField (App "PVar" (List [App "Ident" (List [Concat
+    (List [String "x",ShowInt FieldIndex])])]))])])],App "Nothing" (
+    List []),App "UnGuardedRhs" (List [Fold (App "InfixApp" (List [
+    Head,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
+    String "."])])]),Tail])) (Concat (List [List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String
+    "variant"])])]),App "Lit" (List [App "Int" (List [CtorIndex])])])]
+    ,MapField (App "App" (List [App "Var" (List [App "UnQual" (List [
+    App "Ident" (List [String "coarbitrary"])])]),App "Var" (List [App
+    "UnQual" (List [App "Ident" (List [Concat (List [String "x",
+    ShowInt FieldIndex])])])])]))]))]),App "Nothing" (List [])]))])])]
+    )]
 -- GENERATED STOP

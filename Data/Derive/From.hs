@@ -46,12 +46,12 @@ makeFromCtor d c | isIdent n = [TypeSig sl [name from] typ, FunBind $ match : [d
         typ = TyFun (dataDeclType d)
             (tyTuple $ map snd $ ctorDeclFields c)
 
-        match = Match sl (name from) [pat] Nothing (UnGuardedRhs rhs) (BDecls [])
+        match = Match sl (name from) [pat] Nothing (UnGuardedRhs rhs) Nothing
         pat = (length vars == 0 ? id $ PParen) $ PApp (qname n) (map pVar vars)
         vars = take (length $ ctorDeclFields c) $ map ((:) 'x' . show) [1..]
         rhs = valTuple $ map var vars
 
-        defMatch = Match sl (name from) [PWildCard] Nothing (UnGuardedRhs err) (BDecls [])
+        defMatch = Match sl (name from) [PWildCard] Nothing (UnGuardedRhs err) Nothing
         err = App (var "error") $ Lit $ String $ from ++ " failed, not a " ++ n
 
 

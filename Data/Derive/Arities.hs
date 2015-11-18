@@ -39,6 +39,6 @@ dslArities =
     Application (List [App "Var" (List [App "UnQual" (List [App
     "Ident" (List [String "const"])])]),App "Lit" (List [App "Int" (
     List [CtorArity])]),App "RecConstr" (List [App "UnQual" (List [App
-    "Ident" (List [CtorName])]),List []])]))])]),App "BDecls" (List [
-    List []])])]])])])]
+    "Ident" (List [CtorName])]),List []])]))])]),App "Nothing" (List [
+    ])])]])])])]
 -- GENERATED STOP

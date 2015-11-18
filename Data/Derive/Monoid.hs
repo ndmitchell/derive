@@ -35,11 +35,11 @@ dslMonoid =
     [App "UnQual" (List [App "Ident" (List [String "const"])])]),App
     "Var" (List [App "UnQual" (List [App "Ident" (List [String
     "mempty"])])]),App "Lit" (List [App "Int" (List [FieldIndex])])])]
-    ))])))])])]),App "BDecls" (List [List []])])]),App "InsDecl" (List
-    [App "FunBind" (List [Concat (List [MapCtor (App "Match" (List [
-    App "Ident" (List [String "mappend"]),List [App "PParen" (List [
-    App "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName]
-    )]),MapField (App "PVar" (List [App "Ident" (List [Concat (List [
+    ))])))])])]),App "Nothing" (List [])])]),App "InsDecl" (List [App
+    "FunBind" (List [Concat (List [MapCtor (App "Match" (List [App
+    "Ident" (List [String "mappend"]),List [App "PParen" (List [App
+    "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName])]),
+    MapField (App "PVar" (List [App "Ident" (List [Concat (List [
     String "x",ShowInt FieldIndex])])]))])]),App "PParen" (List [App
     "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName])]),
     MapField (App "PVar" (List [App "Ident" (List [Concat (List [
@@ -51,9 +51,9 @@ dslMonoid =
     "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (List [
     String "x",ShowInt FieldIndex])])])]),App "Var" (List [App
     "UnQual" (List [App "Ident" (List [Concat (List [String "y",
-    ShowInt FieldIndex])])])])])]))]))]),App "BDecls" (List [List []])
-    ])),List [App "Match" (List [App "Ident" (List [String "mappend"])
-    ,List [App "PWildCard" (List []),App "PWildCard" (List [])],App
+    ShowInt FieldIndex])])])])])]))]))]),App "Nothing" (List [])])),
+    List [App "Match" (List [App "Ident" (List [String "mappend"]),
+    List [App "PWildCard" (List []),App "PWildCard" (List [])],App
     "Nothing" (List []),App "GuardedRhss" (List [List [App
     "GuardedRhs" (List [List [App "Qualifier" (List [App "InfixApp" (
     List [App "App" (List [App "Var" (List [App "UnQual" (List [App
@@ -65,5 +65,5 @@ dslMonoid =
     "UnQual" (List [App "Ident" (List [String "error"])])]),App "Lit"
     (List [App "String" (List [Concat (List [String
     "Monoid.mappend: Different constructors for ",DataName])])])])])]]
-    ),App "BDecls" (List [List []])])]])])])])]
+    ),App "Nothing" (List [])])]])])])])]
 -- GENERATED STOP

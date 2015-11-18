@@ -28,5 +28,5 @@ dslDefault =
     [App "UnQual" (List [App "Ident" (List [String "const"])])]),App
     "Var" (List [App "UnQual" (List [App "Ident" (List [String "def"])
     ])]),App "Lit" (List [App "Int" (List [FieldIndex])])])]))])))])])
-    ]),App "BDecls" (List [List []])])])])]
+    ]),App "Nothing" (List [])])])])]
 -- GENERATED STOP

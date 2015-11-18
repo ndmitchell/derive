@@ -32,25 +32,25 @@ makeDataAbstract = derivationCustomDSL "DataAbstract" custom $
     "Nothing" (List []),App "UnGuardedRhs" (List [App "App" (List [App
     "Var" (List [App "UnQual" (List [App "Ident" (List [String "r"])])
     ]),App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "x"])])])])]),App "BDecls" (List [List []])])]])]),App "InsDecl" (
-    List [App "PatBind" (List [App "PVar" (List [App "Ident" (List [
-    String "gunfold"])]),App "UnGuardedRhs" (List [App "App" (List [
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "error"])])]),App "Lit" (List [App "String" (List [Concat (List [
-    String "Data.gunfold not implemented on abstract data type: ",
-    DataName])])])])]),App "BDecls" (List [List []])])]),App "InsDecl"
-    (List [App "PatBind" (List [App "PVar" (List [App "Ident" (List [
-    String "toConstr"])]),App "UnGuardedRhs" (List [App "App" (List [
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "error"])])]),App "Lit" (List [App "String" (List [Concat (List [
-    String "Data.gunfold not implemented on abstract data type: ",
-    DataName])])])])]),App "BDecls" (List [List []])])]),App "InsDecl"
-    (List [App "PatBind" (List [App "PVar" (List [App "Ident" (List [
-    String "dataTypeOf"])]),App "UnGuardedRhs" (List [App "App" (List
-    [App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "error"])])]),App "Lit" (List [App "String" (List [Concat (List [
-    String "Data.gunfold not implemented on abstract data type: ",
-    DataName])])])])]),App "BDecls" (List [List []])])])])]
+    "x"])])])])]),App "Nothing" (List [])])]])]),App "InsDecl" (List [
+    App "PatBind" (List [App "PVar" (List [App "Ident" (List [String
+    "gunfold"])]),App "UnGuardedRhs" (List [App "App" (List [App "Var"
+    (List [App "UnQual" (List [App "Ident" (List [String "error"])])])
+    ,App "Lit" (List [App "String" (List [Concat (List [String
+    "Data.gunfold not implemented on abstract data type: ",DataName])]
+    )])])]),App "Nothing" (List [])])]),App "InsDecl" (List [App
+    "PatBind" (List [App "PVar" (List [App "Ident" (List [String
+    "toConstr"])]),App "UnGuardedRhs" (List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "error"
+    ])])]),App "Lit" (List [App "String" (List [Concat (List [String
+    "Data.gunfold not implemented on abstract data type: ",DataName])]
+    )])])]),App "Nothing" (List [])])]),App "InsDecl" (List [App
+    "PatBind" (List [App "PVar" (List [App "Ident" (List [String
+    "dataTypeOf"])]),App "UnGuardedRhs" (List [App "App" (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "error"
+    ])])]),App "Lit" (List [App "String" (List [Concat (List [String
+    "Data.gunfold not implemented on abstract data type: ",DataName])]
+    )])])]),App "Nothing" (List [])])])])]
 -- GENERATED STOP
 
 custom = customContext context

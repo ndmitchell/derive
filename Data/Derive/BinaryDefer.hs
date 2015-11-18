@@ -59,5 +59,5 @@ dslBinaryDefer =
     )),List [App "App" (List [App "Var" (List [App "UnQual" (List [App
     "Ident" (List [String "unit"])])]),App "Con" (List [App "UnQual" (
     List [App "Ident" (List [CtorName])])])])]]))])]))])])]),App
-    "BDecls" (List [List []])])])])]
+    "Nothing" (List [])])])])]
 -- GENERATED STOP

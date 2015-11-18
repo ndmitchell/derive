@@ -59,8 +59,8 @@ makeUniplateTypeable = derivationCustomDSL "UniplateTypeable" custom $
     Concat (List [String "x",ShowInt FieldIndex])])])]))),List [App
     "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
     List [String "plate"])])]),App "Con" (List [App "UnQual" (List [
-    App "Ident" (List [CtorName])])])])]]))]),App "BDecls" (List [List
-    []])]))])])]])]
+    App "Ident" (List [CtorName])])])])]]))]),App "Nothing" (List [])]
+    ))])])]])]
 -- GENERATED STOP
 
 

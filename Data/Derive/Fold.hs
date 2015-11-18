@@ -51,7 +51,7 @@ mkFold d | isIdent $ dataDeclName d = [TypeSig sl [name n] (foldType d), FunBind
          | otherwise = []
     where
         n = "fold" ++ title (dataDeclName d)
-        f i c = Match sl (name n) pat Nothing (UnGuardedRhs bod) (BDecls [])
+        f i c = Match sl (name n) pat Nothing (UnGuardedRhs bod) Nothing
             where pat = replicate i PWildCard ++ [pVar "f"] ++ replicate (length (dataDeclCtors d) - i - 1) PWildCard ++
                         [PParen $ PApp (qname $ ctorDeclName c) (map pVar vars)]
                   bod = apps (var "f") (map var vars)

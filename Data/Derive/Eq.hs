@@ -45,8 +45,8 @@ dslEq =
     "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (List [
     String "y",ShowInt FieldIndex])])])])])),List [App "Con" (List [
     App "UnQual" (List [App "Ident" (List [String "True"])])])]]))]),
-    App "BDecls" (List [List []])])),List [App "Match" (List [App
-    "Symbol" (List [String "=="]),List [App "PWildCard" (List []),App
+    App "Nothing" (List [])])),List [App "Match" (List [App "Symbol" (
+    List [String "=="]),List [App "PWildCard" (List []),App
     "PWildCard" (List [])],App "Nothing" (List []),App "GuardedRhss" (
     List [List [App "GuardedRhs" (List [List [App "Qualifier" (List [
     App "InfixApp" (List [App "App" (List [App "Var" (List [App
@@ -56,5 +56,5 @@ dslEq =
     [App "UnQual" (List [App "Symbol" (List [String ">"])])]),App
     "Lit" (List [App "Int" (List [Int 1])])])])],App "Con" (List [App
     "UnQual" (List [App "Ident" (List [String "False"])])])])]]),App
-    "BDecls" (List [List []])])]])])])])]
+    "Nothing" (List [])])]])])])])]
 -- GENERATED STOP

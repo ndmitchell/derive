@@ -30,6 +30,6 @@ dslNFData =
     "UnQual" (List [App "Ident" (List [String "rnf"])])]),App "Var" (
     List [App "UnQual" (List [App "Ident" (List [Concat (List [String
     "x",ShowInt FieldIndex])])])])])),List [App "Con" (List [App
-    "Special" (List [App "UnitCon" (List [])])])]]))]),App "BDecls" (
-    List [List []])]))])])])]
+    "Special" (List [App "UnitCon" (List [])])])]]))]),App "Nothing" (
+    List [])]))])])])]
 -- GENERATED STOP

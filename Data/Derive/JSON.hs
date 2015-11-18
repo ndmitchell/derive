@@ -48,22 +48,22 @@ makeJSON = derivationCustomDSL "JSON" custom $
     [App "PVar" (List [App "Ident" (List [String "x"])])]])])],App
     "Nothing" (List []),App "UnGuardedRhs" (List [App "SpliceExp" (
     List [App "ParenSplice" (List [App "Var" (List [App "UnQual" (List
-    [App "Ident" (List [String "readJSON"])])])])])]),App "BDecls" (
-    List [List []])]),App "Match" (List [App "Ident" (List [String
-    "readJSON"]),List [App "PWildCard" (List [])],App "Nothing" (List
-    []),App "UnGuardedRhs" (List [App "App" (List [App "Con" (List [
-    App "UnQual" (List [App "Ident" (List [String "Error"])])]),App
-    "Lit" (List [App "String" (List [String "..."])])])]),App "BDecls"
-    (List [List []])])]])]),App "InsDecl" (List [App "FunBind" (List [
-    MapCtor (App "Match" (List [App "Ident" (List [String "showJSON"])
-    ,List [App "PParen" (List [App "PApp" (List [App "UnQual" (List [
-    App "Ident" (List [CtorName])]),MapField (App "PVar" (List [App
+    [App "Ident" (List [String "readJSON"])])])])])]),App "Nothing" (
+    List [])]),App "Match" (List [App "Ident" (List [String "readJSON"
+    ]),List [App "PWildCard" (List [])],App "Nothing" (List []),App
+    "UnGuardedRhs" (List [App "App" (List [App "Con" (List [App
+    "UnQual" (List [App "Ident" (List [String "Error"])])]),App "Lit"
+    (List [App "String" (List [String "..."])])])]),App "Nothing" (
+    List [])])]])]),App "InsDecl" (List [App "FunBind" (List [MapCtor
+    (App "Match" (List [App "Ident" (List [String "showJSON"]),List [
+    App "PParen" (List [App "PApp" (List [App "UnQual" (List [App
+    "Ident" (List [CtorName])]),MapField (App "PVar" (List [App
     "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])]))]
     )])],App "Nothing" (List []),App "UnGuardedRhs" (List [App
     "SpliceExp" (List [App "ParenSplice" (List [App "App" (List [App
     "Var" (List [App "UnQual" (List [App "Ident" (List [String
     "showJSON"])])]),App "Lit" (List [App "Int" (List [CtorIndex])])])
-    ])])]),App "BDecls" (List [List []])]))])])])]
+    ])])]),App "Nothing" (List [])]))])])])]
 -- GENERATED STOP
 
 -- ^ 'Derivation' for 'JSON'
@@ -106,7 +106,7 @@ mkRead (_, d) = let
   in
     H.Case (var "fromJSObject" `H.App` var "x") $
     map mkReadCtor (dataDeclCtors d) ++
-    [H.Alt H.sl H.PWildCard (H.UnGuardedRhs readError) (H.BDecls [])]
+    [H.Alt H.sl H.PWildCard (H.UnGuardedRhs readError) Nothing]
 
 mkReadCtor :: CtorDecl -> Alt
 mkReadCtor c = let
@@ -117,7 +117,7 @@ mkReadCtor c = let
          | otherwise = mkReadPlain cn fs
   in
     H.Alt sl (H.PList [H.PTuple H.Boxed [strP cn, pVar "y"]])
-         (H.UnGuardedRhs body) (H.BDecls [])
+         (H.UnGuardedRhs body) Nothing
 
 mkReadRecord :: String -> FieldDecl -> Exp
 mkReadRecord cn fs = H.Do $
@@ -125,7 +125,7 @@ mkReadRecord cn fs = H.Do $
           (var "return" `H.App` var "y")] ++
     [H.LetStmt $ H.BDecls [H.PatBind sl (pVar "d")
           (H.UnGuardedRhs $ var "fromJSObject" `H.App` var "z")
-          (H.BDecls [])]] ++
+          Nothing]] ++
     zipWith (mkReadRecordField cn) (pVars "x" fs) fs ++
     mkReadTrailer cn fs
 

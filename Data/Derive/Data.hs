@@ -67,49 +67,48 @@ makeData = derivationCustomDSL "Data" custom $
     Concat (List [String "x",ShowInt FieldIndex])])])]))),List [App
     "App" (List [App "Var" (List [App "UnQual" (List [App "Ident" (
     List [String "r"])])]),App "Con" (List [App "UnQual" (List [App
-    "Ident" (List [CtorName])])])])]]))]),App "BDecls" (List [List []]
-    )]))])]),App "InsDecl" (List [App "FunBind" (List [List [App
-    "Match" (List [App "Ident" (List [String "gunfold"]),List [App
-    "PVar" (List [App "Ident" (List [String "k"])]),App "PVar" (List [
-    App "Ident" (List [String "z"])]),App "PVar" (List [App "Ident" (
-    List [String "c"])])],App "Nothing" (List []),App "UnGuardedRhs" (
-    List [App "Case" (List [App "InfixApp" (List [App "App" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "constrIndex"])])]),App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "c"])])])]),App "QVarOp" (List [App "UnQual"
-    (List [App "Symbol" (List [String "-"])])]),App "Lit" (List [App
-    "Int" (List [Int 1])])]),Concat (List [MapCtor (App "Alt" (List [
-    App "PLit" (List [App "Signless" (List []),App "Int" (List [
-    CtorIndex])]),App "UnGuardedRhs" (List [Fold (App "InfixApp" (List
-    [Head,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
-    String "$"])])]),Tail])) (Concat (List [MapField (Application (
+    "Ident" (List [CtorName])])])])]]))]),App "Nothing" (List [])]))])
+    ]),App "InsDecl" (List [App "FunBind" (List [List [App "Match" (
+    List [App "Ident" (List [String "gunfold"]),List [App "PVar" (List
+    [App "Ident" (List [String "k"])]),App "PVar" (List [App "Ident" (
+    List [String "z"])]),App "PVar" (List [App "Ident" (List [String
+    "c"])])],App "Nothing" (List []),App "UnGuardedRhs" (List [App
+    "Case" (List [App "InfixApp" (List [App "App" (List [App "Var" (
+    List [App "UnQual" (List [App "Ident" (List [String "constrIndex"]
+    )])]),App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    String "c"])])])]),App "QVarOp" (List [App "UnQual" (List [App
+    "Symbol" (List [String "-"])])]),App "Lit" (List [App "Int" (List
+    [Int 1])])]),Concat (List [MapCtor (App "Alt" (List [App "PLit" (
+    List [App "Signless" (List []),App "Int" (List [CtorIndex])]),App
+    "UnGuardedRhs" (List [Fold (App "InfixApp" (List [Head,App
+    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String "$"
+    ])])]),Tail])) (Concat (List [MapField (Application (List [App
+    "Var" (List [App "UnQual" (List [App "Ident" (List [String "const"
+    ])])]),App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    String "k"])])]),App "Lit" (List [App "Int" (List [FieldIndex])])]
+    )),List [App "App" (List [App "Var" (List [App "UnQual" (List [App
+    "Ident" (List [String "z"])])]),App "Con" (List [App "UnQual" (
+    List [App "Ident" (List [CtorName])])])])]]))]),App "Nothing" (
+    List [])])),List [App "Alt" (List [App "PVar" (List [App "Ident" (
+    List [String "i"])]),App "UnGuardedRhs" (List [App "InfixApp" (
     List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
-    String "const"])])]),App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "k"])])]),App "Lit" (List [App "Int" (List [
-    FieldIndex])])])),List [App "App" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "z"])])]),App "Con" (
-    List [App "UnQual" (List [App "Ident" (List [CtorName])])])])]]))]
-    ),App "BDecls" (List [List []])])),List [App "Alt" (List [App
-    "PVar" (List [App "Ident" (List [String "i"])]),App "UnGuardedRhs"
-    (List [App "InfixApp" (List [App "Var" (List [App "UnQual" (List [
-    App "Ident" (List [String "error"])])]),App "QVarOp" (List [App
-    "UnQual" (List [App "Symbol" (List [String "$"])])]),App
-    "InfixApp" (List [App "Paren" (List [App "InfixApp" (List [App
-    "Lit" (List [App "String" (List [Concat (List [String
-    "Data.gunfold for ",DataName])])]),App "QVarOp" (List [App
-    "UnQual" (List [App "Symbol" (List [String "++"])])]),App "Lit" (
-    List [App "String" (List [String ", unknown index: "])])])]),App
+    String "error"])])]),App "QVarOp" (List [App "UnQual" (List [App
+    "Symbol" (List [String "$"])])]),App "InfixApp" (List [App "Paren"
+    (List [App "InfixApp" (List [App "Lit" (List [App "String" (List [
+    Concat (List [String "Data.gunfold for ",DataName])])]),App
     "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String
-    "++"])])]),App "App" (List [App "Var" (List [App "UnQual" (List [
-    App "Ident" (List [String "show"])])]),App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "i"])])])])])])]),App
-    "BDecls" (List [List []])])]])])]),App "BDecls" (List [List []])])
-    ]])]),App "InsDecl" (List [App "FunBind" (List [MapCtor (App
-    "Match" (List [App "Ident" (List [String "toConstr"]),List [App
-    "PAsPat" (List [App "Ident" (List [String "x"]),App "PRec" (List [
-    App "UnQual" (List [App "Ident" (List [CtorName])]),List []])])],
-    App "Nothing" (List []),App "UnGuardedRhs" (List [Application (
-    List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
+    "++"])])]),App "Lit" (List [App "String" (List [String
+    ", unknown index: "])])])]),App "QVarOp" (List [App "UnQual" (List
+    [App "Symbol" (List [String "++"])])]),App "App" (List [App "Var"
+    (List [App "UnQual" (List [App "Ident" (List [String "show"])])]),
+    App "Var" (List [App "UnQual" (List [App "Ident" (List [String "i"
+    ])])])])])])]),App "Nothing" (List [])])]])])]),App "Nothing" (
+    List [])])]])]),App "InsDecl" (List [App "FunBind" (List [MapCtor
+    (App "Match" (List [App "Ident" (List [String "toConstr"]),List [
+    App "PAsPat" (List [App "Ident" (List [String "x"]),App "PRec" (
+    List [App "UnQual" (List [App "Ident" (List [CtorName])]),List []]
+    )])],App "Nothing" (List []),App "UnGuardedRhs" (List [Application
+    (List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
     String "indexConstr"])])]),App "Paren" (List [App "App" (List [App
     "Var" (List [App "UnQual" (List [App "Ident" (List [String
     "dataTypeOf"])])]),App "Var" (List [App "UnQual" (List [App
@@ -117,11 +116,11 @@ makeData = derivationCustomDSL "Data" custom $
     "InfixApp" (List [App "Lit" (List [App "Int" (List [CtorIndex])]),
     App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String
     "+"])])]),App "Lit" (List [App "Int" (List [Int 1])])])])])]),App
-    "BDecls" (List [List []])]))])]),App "InsDecl" (List [App
-    "FunBind" (List [List [App "Match" (List [App "Ident" (List [
-    String "dataTypeOf"]),List [App "PWildCard" (List [])],App
-    "Nothing" (List []),App "UnGuardedRhs" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "ty"])])])]),App
+    "Nothing" (List [])]))])]),App "InsDecl" (List [App "FunBind" (
+    List [List [App "Match" (List [App "Ident" (List [String
+    "dataTypeOf"]),List [App "PWildCard" (List [])],App "Nothing" (
+    List []),App "UnGuardedRhs" (List [App "Var" (List [App "UnQual" (
+    List [App "Ident" (List [String "ty"])])])]),App "Just" (List [App
     "BDecls" (List [List [App "PatBind" (List [App "PVar" (List [App
     "Ident" (List [String "ty"])]),App "UnGuardedRhs" (List [
     Application (List [App "Var" (List [App "UnQual" (List [App
@@ -138,7 +137,7 @@ makeData = derivationCustomDSL "Data" custom $
     (List [App "ParenSplice" (List [App "App" (List [App "Var" (List [
     App "UnQual" (List [App "Ident" (List [String "ctorFixity"])])]),
     App "Lit" (List [App "Int" (List [CtorIndex])])])])])]))])])]),App
-    "BDecls" (List [List []])])]])])]])])])]
+    "Nothing" (List [])])]])])])]])])])]
 -- GENERATED STOP
 
 

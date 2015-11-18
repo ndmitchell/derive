@@ -102,8 +102,7 @@ makeRead = derivationCustomDSL "Read" custom $
     List [CtorIndex])]),App "Con" (List [App "UnQual" (List [App
     "Ident" (List [CtorName])])])])])])])]),App "Var" (List [App
     "UnQual" (List [App "Ident" (List [String "r"])])])])),List [App
-    "List" (List [List []])]]))]),App "BDecls" (List [List []])])]])])
-    ])]
+    "List" (List [List []])]]))]),App "Nothing" (List [])])]])])])]
 -- GENERATED STOP
 
 custom = customSplice splice

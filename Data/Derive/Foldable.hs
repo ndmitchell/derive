@@ -50,6 +50,6 @@ foldrTraversal = defaultTraversalType
         , traversalId     = App (var "flip") (var "const")
         , traverseTuple   =         foldr (.:) $ var "id"
         , traverseCtor    = const $ foldr (.:) $ var "id"
-        , traverseFunc    = \pat rhs -> Match sl (name "") [pVar "_f", pVar "b", pat] Nothing (UnGuardedRhs $ appP rhs (var "b")) (BDecls [])
+        , traverseFunc    = \pat rhs -> Match sl (name "") [pVar "_f", pVar "b", pat] Nothing (UnGuardedRhs $ appP rhs (var "b")) Nothing
         }
     where a .: b = InfixApp (paren a) (qvop ".") (paren b)

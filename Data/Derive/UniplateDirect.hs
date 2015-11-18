@@ -107,10 +107,10 @@ make uni grab from to = Right [InstDecl sl Nothing [] [] (UnQual $ Ident $ if un
         [InsDecl $ InlineSig sl True AlwaysActive (qname $ if uni then "uniplate" else "biplate"), InsDecl ms]]
     where
         ty = grab $ tyRoot from
-        match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) (BDecls [])
+        match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) Nothing
         ms = if uni || from /= to
              then FunBind $ map (uncurry match) (catMaybes bods) ++ [match (pVar "x") (var "plate" `App` var "x") | any isNothing bods]
-             else PatBind sl (pVar "biplate") (UnGuardedRhs $ var "plateSelf") (BDecls [])
+             else PatBind sl (pVar "biplate") (UnGuardedRhs $ var "plateSelf") Nothing
         bods = run (fromTyParens to) $ mapM (make1 grab) $ substData from ty
 
 
