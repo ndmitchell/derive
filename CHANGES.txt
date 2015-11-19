@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.23
     Require haskell-src-exts-1.17
 2.5.22
     #7, #8 convert more types from TemplateHaskell
