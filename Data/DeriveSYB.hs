@@ -21,7 +21,6 @@ import Data.List
 import Data.Maybe
 
 import Language.Haskell.TH.Syntax
-import Language.Haskell.TH.FixedPpr
 
 
 -- | Derive an instance of some class.  This uses the Scrap Your

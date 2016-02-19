@@ -57,7 +57,6 @@ library
         Language.Haskell.TH.Compat
         Language.Haskell.TH.Data
         Language.Haskell.TH.ExpandSynonym
-        Language.Haskell.TH.FixedPpr
         Language.Haskell.TH.Helper
         Language.Haskell.TH.Peephole
 -- GENERATED START
