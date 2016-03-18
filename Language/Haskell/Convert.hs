@@ -39,13 +39,16 @@ instance Convert TH.Dec HS.Decl where
 #if MIN_VERSION_template_haskell(2,11,0)      
         DataD cxt n vs _ con ds -> f DataType cxt n vs con ds
         NewtypeD cxt n vs _ con ds -> f NewType cxt n vs [con] ds
+        where
+            f :: DataOrNew -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> unused -> HS.Decl
+            f t cxt n vs con _ = DataDecl sl t (c cxt) (c n) (c vs) (c con) []
 #else
         DataD cxt n vs con ds -> f DataType cxt n vs con ds
         NewtypeD cxt n vs con ds -> f NewType cxt n vs [con] ds
-#endif
         where
             f :: DataOrNew -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> [TH.Name] -> HS.Decl
             f t cxt n vs con ds = DataDecl sl t (c cxt) (c n) (c vs) (c con) []
+#endif
 
 instance Convert TH.Name HS.TyVarBind where
     conv = UnkindedVar . c
@@ -107,11 +110,19 @@ instance Convert HS.Decl TH.Dec where
     conv (FunBind ms@(HS.Match _ nam _ _ _ _:_)) = FunD (c nam) (c ms)
     conv (PatBind _ p bod ds) = ValD (c p) (c bod) (c ds)
     conv (TypeSig _ [nam] typ) = SigD (c nam) (c $ foralls typ)
+#if MIN_VERSION_template_haskell(2,11,0)
+    --  ! certainly BROKEN because it ignores contexts
+    conv (DataDecl _ DataType ctx nam typ cs ds) =
+      DataD (c ctx) (c nam) (c typ) Nothing (c cs) [] -- (c (map fst ds))
+    conv (DataDecl _ NewType ctx nam typ [con] ds) =
+      NewtypeD (c ctx) (c nam) (c typ) Nothing (c con) [] -- (c (map fst ds)) 
+#else
     conv (DataDecl _ DataType ctx nam typ cs ds) =
       DataD (c ctx) (c nam) (c typ) (c cs) (c (map fst ds))
     conv (DataDecl _ NewType ctx nam typ [con] ds) =
       NewtypeD (c ctx) (c nam) (c typ) (c con) (c (map fst ds))
-
+#endif
+      
 instance Convert HS.QualConDecl TH.Con where
     conv (QualConDecl _ [] [] con) = c con
     conv (QualConDecl _ vs cx con) = ForallC (c vs) (c cx) (c con)
@@ -122,13 +133,21 @@ instance Convert HS.ConDecl TH.Con where
     conv (RecDecl nam fs) = RecC (c nam) (concatMap c fs)
 
 instance Convert HS.Type TH.StrictType where
+#if MIN_VERSION_template_haskell(2,11,0)
+    conv (TyBang BangedTy t) = (Bang NoSourceUnpackedness SourceStrict, c t)
+#else
     conv (TyBang BangedTy t) = (IsStrict, c t)
 #if __GLASGOW_HASKELL__ >= 704
     conv (TyBang UnpackedTy t) = (Unpacked, c t)
 #else
     conv (TyBang UnpackedTy t) = (IsStrict, c t)
 #endif
+#endif
+#if MIN_VERSION_template_haskell(2,11,0)
+    conv t = (Bang NoSourceUnpackedness NoSourceStrictness, c t)
+#else
     conv t = (NotStrict, c t)
+#endif
 
 instance Convert ([HS.Name],HS.Type) [TH.VarStrictType] where
     conv (names,bt) = [(c name,s,t) | name <- names]
