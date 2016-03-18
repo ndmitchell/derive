@@ -2,6 +2,9 @@
 -- | The core module of the Data.Derive system.  This module contains
 -- the data types used for communication between the extractors and
 -- the derivors.
+
+{-# language CPP #-}
+
 module Language.Haskell.TH.Data where
 
 import Data.Char
@@ -18,24 +21,44 @@ type CtorDef = Con
 
 
 dataName :: DataDef -> String
+#if MIN_VERSION_template_haskell(2,11,0)
+dataName (DataD    _ name _ _ _ _) = unqualifiedName name
+dataName (NewtypeD _ name _ _ _ _) = unqualifiedName name
+#else
 dataName (DataD    _ name _ _ _) = unqualifiedName name
 dataName (NewtypeD _ name _ _ _) = unqualifiedName name
+#endif
 
 qualifiedDataName :: DataDef -> Name
+#if MIN_VERSION_template_haskell(2,11,0)
+qualifiedDataName (DataD    _ name _ _ _ _) = name
+qualifiedDataName (NewtypeD _ name _ _ _ _) = name
+#else
 qualifiedDataName (DataD    _ name _ _ _) = name
 qualifiedDataName (NewtypeD _ name _ _ _) = name
+#endif
 
 dataArity :: DataDef -> Int
+#if MIN_VERSION_template_haskell(2,11,0)
+dataArity (DataD    _ _ xs _ _ _) = length xs
+dataArity (NewtypeD _ _ xs _ _ _) = length xs
+#else
 dataArity (DataD    _ _ xs _ _) = length xs
 dataArity (NewtypeD _ _ xs _ _) = length xs
+#endif
 
 dataArgs :: DataDef -> [Name]
 dataArgs = dataDefinitionTypeArgs
 
 
 dataCtors :: DataDef -> [CtorDef]
+#if MIN_VERSION_template_haskell(2,11,0)
+dataCtors (DataD    _ _ _ _ xs _) = xs
+dataCtors (NewtypeD _ _ _ _ x  _) = [x]
+#else
 dataCtors (DataD    _ _ _ xs _) = xs
 dataCtors (NewtypeD _ _ _ x  _) = [x]
+#endif
 
 
 ctorName :: CtorDef -> String

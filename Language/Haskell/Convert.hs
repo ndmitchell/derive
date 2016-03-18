@@ -36,8 +36,13 @@ instance Convert a b => Convert [a] [b] where
 
 instance Convert TH.Dec HS.Decl where
     conv x = case x of
+#if MIN_VERSION_template_haskell(2,11,0)      
+        DataD cxt n vs _ con ds -> f DataType cxt n vs con ds
+        NewtypeD cxt n vs _ con ds -> f NewType cxt n vs [con] ds
+#else
         DataD cxt n vs con ds -> f DataType cxt n vs con ds
         NewtypeD cxt n vs con ds -> f NewType cxt n vs [con] ds
+#endif
         where
             f :: DataOrNew -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> [TH.Name] -> HS.Decl
             f t cxt n vs con ds = DataDecl sl t (c cxt) (c n) (c vs) (c con) []
@@ -63,10 +68,17 @@ instance Convert TH.Con HS.ConDecl where
     conv (InfixC x n y) = InfixConDecl (c x) (c n) (c y)
 
 instance Convert TH.StrictType HS.Type where
+#if MIN_VERSION_template_haskell(2,11,0)
+    conv (Bang SourceUnpack SourceStrict, x) = TyBang UnpackedTy $ TyBang BangedTy $ c x
+    conv (Bang SourceUnpack NoSourceStrictness, x) = TyBang UnpackedTy $ c x
+    conv (Bang NoSourceUnpackedness SourceStrict, x) = TyBang BangedTy $ c x
+    conv (Bang NoSourceUnpackedness NoSourceStrictness, x) = c x
+#else
     conv (IsStrict, x) = TyBang BangedTy $ c x
     conv (NotStrict, x) = c x
 #if __GLASGOW_HASKELL__ >= 704
     conv (Unpacked, x) = TyBang UnpackedTy $ c x
+#endif
 #endif
 
 instance Convert TH.Type HS.Type where
