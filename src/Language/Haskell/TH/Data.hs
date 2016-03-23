@@ -21,7 +21,7 @@ type CtorDef = Con
 
 
 dataName :: DataDef -> String
-#if MIN_VERSION_template_haskell(2,11,0)
+#if __GLASGOW_HASKELL__ >= 800
 dataName (DataD    _ name _ _ _ _) = unqualifiedName name
 dataName (NewtypeD _ name _ _ _ _) = unqualifiedName name
 #else
@@ -30,7 +30,7 @@ dataName (NewtypeD _ name _ _ _) = unqualifiedName name
 #endif
 
 qualifiedDataName :: DataDef -> Name
-#if MIN_VERSION_template_haskell(2,11,0)
+#if __GLASGOW_HASKELL__ >= 800
 qualifiedDataName (DataD    _ name _ _ _ _) = name
 qualifiedDataName (NewtypeD _ name _ _ _ _) = name
 #else
@@ -39,7 +39,7 @@ qualifiedDataName (NewtypeD _ name _ _ _) = name
 #endif
 
 dataArity :: DataDef -> Int
-#if MIN_VERSION_template_haskell(2,11,0)
+#if __GLASGOW_HASKELL__ >= 800
 dataArity (DataD    _ _ xs _ _ _) = length xs
 dataArity (NewtypeD _ _ xs _ _ _) = length xs
 #else
@@ -52,7 +52,7 @@ dataArgs = dataDefinitionTypeArgs
 
 
 dataCtors :: DataDef -> [CtorDef]
-#if MIN_VERSION_template_haskell(2,11,0)
+#if __GLASGOW_HASKELL__ >= 800
 dataCtors (DataD    _ _ _ _ xs _) = xs
 dataCtors (NewtypeD _ _ _ _ x  _) = [x]
 #else

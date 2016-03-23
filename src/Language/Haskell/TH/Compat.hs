@@ -17,7 +17,7 @@ fromTyVar v = v
 
 
 dataDefinitionTypeArgs :: Dec -> [Name]
-#if MIN_VERSION_template_haskell(2,11,0)
+#if __GLASGOW_HASKELL__ >= 800
 dataDefinitionTypeArgs (DataD _cx name _ _ _ cxt) = map from_cxt cxt
 dataDefinitionTypeArgs (NewtypeD cx name _ _ _ cxt) = map from_cxt cxt
 #else    

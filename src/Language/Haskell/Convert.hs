@@ -36,7 +36,7 @@ instance Convert a b => Convert [a] [b] where
 
 instance Convert TH.Dec HS.Decl where
     conv x = case x of
-#if MIN_VERSION_template_haskell(2,11,0)      
+#if __GLASGOW_HASKELL__ >= 800
         DataD cxt n vs _ con ds -> f DataType cxt n vs con ds
         NewtypeD cxt n vs _ con ds -> f NewType cxt n vs [con] ds
         where
@@ -71,7 +71,7 @@ instance Convert TH.Con HS.ConDecl where
     conv (InfixC x n y) = InfixConDecl (c x) (c n) (c y)
 
 instance Convert TH.StrictType HS.Type where
-#if MIN_VERSION_template_haskell(2,11,0)
+#if __GLASGOW_HASKELL__ >= 800
     conv (Bang SourceUnpack SourceStrict, x) = TyBang UnpackedTy $ TyBang BangedTy $ c x
     conv (Bang SourceUnpack NoSourceStrictness, x) = TyBang UnpackedTy $ c x
     conv (Bang NoSourceUnpackedness SourceStrict, x) = TyBang BangedTy $ c x
@@ -110,7 +110,7 @@ instance Convert HS.Decl TH.Dec where
     conv (FunBind ms@(HS.Match _ nam _ _ _ _:_)) = FunD (c nam) (c ms)
     conv (PatBind _ p bod ds) = ValD (c p) (c bod) (c ds)
     conv (TypeSig _ [nam] typ) = SigD (c nam) (c $ foralls typ)
-#if MIN_VERSION_template_haskell(2,11,0)
+#if __GLASGOW_HASKELL__ >= 800
     --  ! certainly BROKEN because it ignores contexts
     conv (DataDecl _ DataType ctx nam typ cs ds) =
       DataD (c ctx) (c nam) (c typ) Nothing (c cs) [] -- (c (map fst ds))
@@ -133,7 +133,7 @@ instance Convert HS.ConDecl TH.Con where
     conv (RecDecl nam fs) = RecC (c nam) (concatMap c fs)
 
 instance Convert HS.Type TH.StrictType where
-#if MIN_VERSION_template_haskell(2,11,0)
+#if __GLASGOW_HASKELL__ >= 800
     conv (TyBang BangedTy t) = (Bang NoSourceUnpackedness SourceStrict, c t)
 #else
     conv (TyBang BangedTy t) = (IsStrict, c t)
@@ -143,7 +143,7 @@ instance Convert HS.Type TH.StrictType where
     conv (TyBang UnpackedTy t) = (IsStrict, c t)
 #endif
 #endif
-#if MIN_VERSION_template_haskell(2,11,0)
+#if __GLASGOW_HASKELL__ >= 800
     conv t = (Bang NoSourceUnpackedness NoSourceStrictness, c t)
 #else
     conv t = (NotStrict, c t)
