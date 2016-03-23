@@ -17,12 +17,12 @@ evil = words "TTypeable Uniplate"
 -- generate extra information for each derivation
 generate :: IO ()
 generate = do
-    xs <- getDirectoryContents "Data/Derive"
+    xs <- getDirectoryContents "src/Data/Derive"
     xs <- return $ sort [x | x <- xs, takeExtension x == ".hs", x /= "All.hs", takeBaseName x `notElem` evil]
-    lis <- mapM generateFile $ map ("Data/Derive" </>) xs
+    lis <- mapM generateFile $ map ("src/Data/Derive" </>) xs
     let names = map dropExtension xs
         n = maximum $ map length names
-    writeGenerated "Data/Derive/All.hs" $
+    writeGenerated "src/Data/Derive/All.hs" $
         ["import Data.Derive." ++ x ++ replicate (4 + n - length x) ' ' ++ "as D" | x <- names] ++
         ["derivations :: [Derivation]"
         ,"derivations = [make" ++ concat (intersperse ",make" names) ++ "]"]
