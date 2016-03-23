@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    #14, update to GHC 8.0.1
     #15, move all the source files under src to speed up building
     Delete the FixedPpr module, was unused
 2.5.23
