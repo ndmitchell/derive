@@ -17,6 +17,10 @@ fromTyVar v = v
 
 
 dataDefinitionTypeArgs :: Dec -> [Name]
+#if MIN_VERSION_template_haskell(2,11,0)
+dataDefinitionTypeArgs (DataD _cx name _ _ _ cxt) = map from_cxt cxt
+dataDefinitionTypeArgs (NewtypeD cx name _ _ _ cxt) = map from_cxt cxt
+#else    
 #if __GLASGOW_HASKELL__ >= 612
 dataDefinitionTypeArgs (DataD _cx name _ _ args) = args
 dataDefinitionTypeArgs (NewtypeD cx name _ _ args) = args
@@ -24,6 +28,10 @@ dataDefinitionTypeArgs (NewtypeD cx name _ _ args) = args
 dataDefinitionTypeArgs (DataD _cx name args cons _derv) = args
 dataDefinitionTypeArgs (NewtypeD cx name args con derv) = args
 #endif
+#endif
+
+from_cxt :: Type -> Name
+from_cxt (ConT name) = name
 
 #if __GLASGOW_HASKELL__ >= 612 && __GLASGOW_HASKELL__ < 709
 typeToPred :: Type -> Pred
