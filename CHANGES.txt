@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    #15, move all the source files under src to speed up building
     Delete the FixedPpr module, was unused
 2.5.23
     Require haskell-src-exts-1.17
