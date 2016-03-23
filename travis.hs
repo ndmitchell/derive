@@ -6,7 +6,6 @@ import System.Exit
 
 main = do
     ver <- lookupEnv "GHCVER"
-    system "ghc-pkg init" -- may fail
     (\act -> if ver == Just "head" then catch_ act $ const exitSuccess else act) $
         retry 3 $ system_ "cabal install cereal json binarydefer QuickCheck --force-reinstalls"
     system_ "runhaskell Main --generate"
