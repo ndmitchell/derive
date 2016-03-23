@@ -1,6 +1,6 @@
 :set -fwarn-unused-binds -fwarn-unused-imports
 :load Main Data.DeriveTH
 
-:def test const $ return ":main --generate\n:r\n:main --test"
+:def test const $ return ":main --generate\n:reload\n:main --test"
 
 :def safe const $ return ":load Derive.Generate\ngenerate\n:load Main"
