@@ -58,7 +58,7 @@ test = do
     forM sets $ \(i,xs) -> autoTest (name++show i) decls xs
     writeFile (name++".hs") $ unlines $
         ["import " ++ name ++ show (fst i) | i <- sets] ++ ["main = putStrLn \"Type checking successful\""]
-    res <- system $ "runhaskell " ++ name ++ ".hs"
+    res <- system $ "runhaskell -isrc " ++ name ++ ".hs"
     when (res /= ExitSuccess) $ error "Failed to typecheck results"
 
 
