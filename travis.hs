@@ -5,7 +5,6 @@ import System.Environment.Extra
 import System.Exit
 
 main = do
-    putStrLn "DEBUG: Running travis.hs test script"
     ver <- lookupEnv "GHCVER"
     system "ghc-pkg init" -- may fail
     (\act -> if ver == Just "head" then catch_ act $ const exitSuccess else act) $
