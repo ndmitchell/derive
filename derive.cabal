@@ -1,4 +1,4 @@
-cabal-version:  >= 1.6
+cabal-version:  >= 1.8
 build-type:     Default
 name:           derive
 version:        2.5.23
@@ -27,9 +27,11 @@ source-repository head
     location: https://github.com/ndmitchell/derive.git
 
 executable derive
+    build-depends: base==4.* , derive
     main-is: Main.hs
 
 library
+    hs-source-dirs: src
     build-depends:
         base == 4.*,
         filepath, syb, template-haskell, containers, pretty,
