@@ -56,7 +56,7 @@ instance_default :: String -> DataDef -> [Dec] -> Dec
 instance_default n = instance_context [n] n
 
 instance_context :: [String] -> String -> DataDef -> [Dec] -> Dec
-instance_context req cls dat defs = InstanceD ctx hed defs
+instance_context req cls dat defs = instanceD ctx hed defs
     where
         vrs = vars 't' (dataArity dat)
         hed = l1 cls (lK (dataName dat) vrs)
@@ -70,7 +70,7 @@ simple_instance cls dat defs = [instance_default cls dat defs]
 
 -- | Build an instance of a class for a data type, using the class at the given types
 generic_instance :: String -> DataDef -> [Type] -> [Dec] -> [Dec]
-generic_instance cls dat ctxTypes defs = [InstanceD ctx hed defs]
+generic_instance cls dat ctxTypes defs = [instanceD ctx hed defs]
     where
         vrs = vars 't' (dataArity dat)
         hed = l1 cls (lK (dataName dat) vrs)

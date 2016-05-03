@@ -4,6 +4,7 @@ module Language.Haskell.Convert(Convert, convert) where
 
 import Language.Haskell as HS
 import Language.Haskell.TH.Syntax as TH
+import Language.Haskell.TH.Compat
 import Control.Exception
 import Data.Typeable
 import System.IO.Unsafe
@@ -106,7 +107,7 @@ instance Convert TH.Type HS.Asst where
 
 
 instance Convert HS.Decl TH.Dec where
-    conv (InstDecl _ _ _ cxt nam typ ds) = InstanceD (c cxt) (c $ tyApp (TyCon nam) typ) [c d | InsDecl d <- ds]
+    conv (InstDecl _ _ _ cxt nam typ ds) = instanceD (c cxt) (c $ tyApp (TyCon nam) typ) [c d | InsDecl d <- ds]
     conv (FunBind ms@(HS.Match _ nam _ _ _ _:_)) = FunD (c nam) (c ms)
     conv (PatBind _ p bod ds) = ValD (c p) (c bod) (c ds)
     conv (TypeSig _ [nam] typ) = SigD (c nam) (c $ foralls typ)

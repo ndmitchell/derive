@@ -15,6 +15,11 @@ fromTyVar :: Name -> Name
 fromTyVar v = v
 #endif
 
+#if __GLASGOW_HASKELL__ >= 800
+instanceD = InstanceD Nothing
+#else
+instanceD = InstanceD
+#endif
 
 dataDefinitionTypeArgs :: Dec -> [Name]
 #if __GLASGOW_HASKELL__ >= 800
