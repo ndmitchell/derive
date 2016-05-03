@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.5.25
     #14, further GHC 8.0.1 updates
 2.5.24
     #14, update to GHC 8.0.1
