@@ -1,5 +1,19 @@
 {-# LANGUAGE PatternGuards #-}
 
+{-# OPTIONS_GHC -Wwarn #-}
+{-
+Otherwise I get:
+
+src/Language/Haskell/TH/Peephole.hs:64:1: warning:
+    Pattern match checker exceeded (2000000) iterations in
+    an equation for ‘peep’. (Use -fmax-pmcheck-iterations=n
+    to set the maximun number of iterations to n)
+
+Seriously. Your warning checker is crap. My code is fine.
+Don't produce warnings about code I can't possibly fix.
+Especially not by default.
+-}
+
 module Language.Haskell.TH.Peephole(peephole, replaceVar, replaceVars) where
 
 import Language.Haskell.TH.Syntax
