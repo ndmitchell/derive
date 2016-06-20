@@ -74,9 +74,9 @@ instance Convert TH.Con HS.ConDecl where
 instance Convert TH.StrictType HS.Type where
 #if __GLASGOW_HASKELL__ >= 800
     conv (Bang SourceUnpack SourceStrict, x) = TyBang UnpackedTy $ TyBang BangedTy $ c x
-    conv (Bang SourceUnpack NoSourceStrictness, x) = TyBang UnpackedTy $ c x
-    conv (Bang NoSourceUnpackedness SourceStrict, x) = TyBang BangedTy $ c x
-    conv (Bang NoSourceUnpackedness NoSourceStrictness, x) = c x
+    conv (Bang SourceUnpack _, x) = TyBang UnpackedTy $ c x
+    conv (Bang _ SourceStrict, x) = TyBang BangedTy $ c x
+    conv (Bang _ _, x) = c x
 #else
     conv (IsStrict, x) = TyBang BangedTy $ c x
     conv (NotStrict, x) = c x
