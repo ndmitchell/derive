@@ -1,5 +1,6 @@
 Changelog for Derive
 
+    #17, fix incomplete pattern matches for certain types of data
 2.5.25
     #14, further GHC 8.0.1 updates
 2.5.24
