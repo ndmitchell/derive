@@ -8,6 +8,8 @@ main = do
     ver <- lookupEnv "GHCVER"
     (\act -> if ver == Just "head" then catch_ act $ const exitSuccess else act) $
         retry 3 $ system_ "cabal install cereal json binarydefer QuickCheck --force-reinstalls"
+    -- installing other stuff might break derive, so force that it gets rebuilt
+    retry 3 $ system_ "cabal install derive --force-reinstalls"
     system_ "runhaskell Main --generate"
     system_ "git diff --exit-code"
     system_ "runhaskell Main --test"
