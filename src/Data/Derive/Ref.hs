@@ -29,14 +29,14 @@ makeRef :: Derivation
 makeRef = derivationCustom "Ref" $ \(_,d) -> Right $ concatMap (makeRefField d) $ dataDeclFields d
 
 
-makeRefField :: DataDecl -> String -> [Decl]
-makeRefField d field = if isIdent field then [TypeSig sl [name ref] typ, bind ref [] bod] else []
+makeRefField :: DataDecl -> String -> [Decl ()]
+makeRefField d field = if isIdent field then [TypeSig () [name ref] typ, bind ref [] bod] else []
     where
         ref = "ref" ++ title field
-        typ = TyApp (tyCon "Ref") (dataDeclType d)
+        typ = TyApp () (tyCon "Ref") (dataDeclType d)
 
-        bod = RecConstr (qname "Ref")
-            [FieldUpdate (qname "select") (var field)
-            ,FieldUpdate (qname "update") $ Lambda sl [pVar "f",pVar "v"] $
-                RecUpdate (var "v") [FieldUpdate (qname field) $ App (var "f") $ Paren $ App (var field) (var "v")]
+        bod = RecConstr () (qname "Ref")
+            [FieldUpdate () (qname "select") (var field)
+            ,FieldUpdate () (qname "update") $ Lambda () [pVar "f",pVar "v"] $
+                RecUpdate () (var "v") [FieldUpdate () (qname field) $ App () (var "f") $ Paren () $ App () (var field) (var "v")]
             ]
