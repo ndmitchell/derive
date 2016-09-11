@@ -30,21 +30,23 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
     where
     f (Instance ctx hd body) =
         OApp "InstDecl"
-            [out (Nothing :: Maybe Overlap)
-            ,out ([] :: [TyVarBind])
-            ,out
-                [ClassA (UnQual $ Ident c) [TyVar $ Ident v]
-                | let seen = [x | TyVar (Ident x) <- universeBi $ concatMap ctorDeclFields $ dataCtors input]
+            [out ()
+            ,out (Nothing :: Maybe (Overlap ()))
+            ,out (IRule () Nothing context insthead :: InstRule ())
+            ,f body]
+        where
+            context = Just $ CxTuple ()
+                [ClassA () (UnQual () $ Ident () c) [TyVar () $ Ident () v]
+                | let seen = [x | TyVar () (Ident () x) <- universeBi $ concatMap ctorDeclFields $ dataCtors input]
                 , v <- dataDeclVarsStar input `intersect` seen
                 , c <- ctx]
-            ,out $ UnQual $ Ident hd
-            ,out [TyParen $ foldl TyApp
-                (TyCon $ UnQual $ Ident $ dataName input)
-                (map tyVar $ dataDeclVars input)]
-            ,f body]
+            ty = TyParen () $ foldl (TyApp ())
+                (TyCon () $ UnQual () $ Ident () $ dataName input)
+                (map tyVar $ dataDeclVars input)
+            insthead = IHApp () (IHCon () $ UnQual () $ Ident () hd) ty
 
     f (Application (f -> OList xs)) =
-        foldl1 (\a b -> OApp "App" [a,b]) xs
+        foldl1 (\a b -> OApp "App" [OApp "()" [],a,b]) xs
 
     f (MapCtor dsl) = OList  [applyEnv dsl env{envCtor=c}
          |  c <- dataCtors input]

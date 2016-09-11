@@ -1,10 +1,11 @@
 {-# LANGUAGE CPP, ScopedTypeVariables, MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Language.Haskell.Convert(Convert, convert) where
 
 import Language.Haskell as HS
+import qualified Language.Haskell.Exts as HSE(FieldDecl(..))
 import Language.Haskell.TH.Syntax as TH
-import Language.Haskell.TH.Compat
 import Control.Exception
 import Data.Typeable
 import System.IO.Unsafe
@@ -35,80 +36,92 @@ instance Convert a b => Convert [a] [b] where
 
 
 
-instance Convert TH.Dec HS.Decl where
+instance Convert TH.Dec (HS.Decl ()) where
     conv x = case x of
 #if __GLASGOW_HASKELL__ >= 800
         DataD cxt n vs _ con ds -> f DataType cxt n vs con ds
         NewtypeD cxt n vs _ con ds -> f NewType cxt n vs [con] ds
         where
             f :: DataOrNew -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> unused -> HS.Decl
-            f t cxt n vs con _ = DataDecl sl t (c cxt) (c n) (c vs) (c con) []
+            f t cxt n vs con _ = DataDecl () t (c cxt) (dh (c n) (c vs)) (c con) Nothing
 #else
-        DataD cxt n vs con ds -> f DataType cxt n vs con ds
-        NewtypeD cxt n vs con ds -> f NewType cxt n vs [con] ds
+        DataD cxt n vs con ds -> f (DataType ()) cxt n vs con ds
+        NewtypeD cxt n vs con ds -> f (NewType ()) cxt n vs [con] ds
         where
-            f :: DataOrNew -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> [TH.Name] -> HS.Decl
-            f t cxt n vs con ds = DataDecl sl t (c cxt) (c n) (c vs) (c con) []
+            f :: DataOrNew () -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> [TH.Name] -> HS.Decl ()
+            f t cxt n vs con ds = DataDecl () t (Just $ c cxt) (dh (c n) (c vs)) (c con) Nothing
 #endif
 
-instance Convert TH.Name HS.TyVarBind where
-    conv = UnkindedVar . c
+            dh name [] = DHead () name
+            dh name xs = DHApp () (dh name $ init xs) (last xs)
 
-instance Convert TH.Name HS.Name where
+instance Convert TH.Cxt (HS.Context ()) where
+    conv = CxTuple () . map c
+
+instance Convert (Maybe (HS.Context ())) TH.Cxt where
+    conv Nothing = []
+    conv (Just (CxSingle _ x)) = [c x]
+    conv (Just (CxTuple _ xs)) = map c xs
+    conv (Just (CxEmpty _)) = []
+
+instance Convert TH.Name (HS.TyVarBind ()) where
+    conv = UnkindedVar () . c
+
+instance Convert TH.Name (HS.Name ()) where
     conv x = name $ if '.' `elem` x2 then reverse $ takeWhile (/= '.') $ reverse x2 else x2
         where x2 = show x
 
-instance Convert TH.Name HS.QName where
-    conv x = if x2 == Ident "[]" then Special ListCon else UnQual x2
+instance Convert TH.Name (HS.QName ()) where
+    conv x = if x2 == Ident () "[]" then Special () $ ListCon () else UnQual () x2
         where x2 = c x
 
-instance Convert TH.Con HS.QualConDecl where
-    conv (ForallC vs cxt x) = QualConDecl sl (c vs) (c cxt) (c x)
-    conv x = QualConDecl sl [] [] (c x)
+instance Convert TH.Con (HS.QualConDecl ()) where
+    conv (ForallC vs cxt x) = QualConDecl () (Just $ c vs) (Just $ c cxt) (c x)
+    conv x = QualConDecl () Nothing Nothing (c x)
 
-instance Convert TH.Con HS.ConDecl where
-    conv (NormalC n xs) = ConDecl (c n) (c xs)
-    conv (RecC n xs) = RecDecl (c n) [([c x], c (y,z)) | (x,y,z) <- xs]
-    conv (InfixC x n y) = InfixConDecl (c x) (c n) (c y)
+instance Convert TH.Con (HS.ConDecl ()) where
+    conv (NormalC n xs) = ConDecl () (c n) (c xs)
+    conv (RecC n xs) = RecDecl () (c n) [HSE.FieldDecl () [c x] $ c (y,z) | (x,y,z) <- xs]
+    conv (InfixC x n y) = InfixConDecl () (c x) (c n) (c y)
 
-instance Convert TH.StrictType HS.Type where
+instance Convert TH.StrictType (HS.Type ()) where
 #if __GLASGOW_HASKELL__ >= 800
     conv (Bang SourceUnpack SourceStrict, x) = TyBang UnpackedTy $ TyBang BangedTy $ c x
     conv (Bang SourceUnpack _, x) = TyBang UnpackedTy $ c x
     conv (Bang _ SourceStrict, x) = TyBang BangedTy $ c x
     conv (Bang _ _, x) = c x
 #else
-    conv (IsStrict, x) = TyBang BangedTy $ c x
+    conv (IsStrict, x) = TyBang () (BangedTy ()) (NoUnpack ()) $ c x
     conv (NotStrict, x) = c x
 #if __GLASGOW_HASKELL__ >= 704
-    conv (Unpacked, x) = TyBang UnpackedTy $ c x
+    conv (Unpacked, x) = TyBang () (BangedTy ()) (Unpack ()) $ c x
 #endif
 #endif
 
-instance Convert TH.Type HS.Type where
-    conv (ForallT xs cxt t) = TyForall (Just $ c xs) (c cxt) (c t)
-    conv (VarT x) = TyVar $ c x
-    conv (ConT x) | ',' `elem` show x = TyTuple Boxed []
-                  | otherwise = TyCon $ c x
-    conv (AppT (AppT ArrowT x) y) = TyFun (c x) (c y)
-    conv (ArrowT) = TyCon $ Special FunCon
-    conv (AppT ListT x) = TyList $ c x
-    conv (ListT) = TyCon $ Special ListCon
-    conv (TupleT _) = TyTuple Boxed []
+instance Convert TH.Type (HS.Type ()) where
+    conv (ForallT xs cxt t) = TyForall () (Just $ c xs) (Just $ c cxt) (c t)
+    conv (VarT x) = TyVar () $ c x
+    conv (ConT x) | ',' `elem` show x = TyTuple () Boxed []
+                  | otherwise = TyCon () $ c x
+    conv (AppT (AppT ArrowT x) y) = TyFun () (c x) (c y)
+    conv (ArrowT) = TyCon () $ Special () $ FunCon ()
+    conv (AppT ListT x) = TyList () $ c x
+    conv (ListT) = TyCon () $ Special () $ ListCon ()
+    conv (TupleT _) = TyTuple () Boxed []
     conv (AppT x y) = case c x of
-        TyTuple b xs -> TyTuple b $ xs ++ [c y]
-        x -> TyApp x $ c y
+        TyTuple _ b xs -> TyTuple () b $ xs ++ [c y]
+        x -> TyApp () x $ c y
 
-instance Convert TH.Type HS.Asst where
-    conv (ConT x) = ClassA (UnQual $ c x) []
+instance Convert TH.Type (HS.Asst ()) where
+    conv (ConT x) = ClassA () (UnQual () $ c x) []
     conv (AppT x y) = case c x of
-        ClassA a b -> ClassA a (b ++ [c y])
+        ClassA _ a b -> ClassA () a (b ++ [c y])
 
 
 
-instance Convert HS.Decl TH.Dec where
-    conv (InstDecl _ _ _ cxt nam typ ds) = instanceD (c cxt) (c $ tyApp (TyCon nam) typ) [c d | InsDecl d <- ds]
-    conv (FunBind ms@(HS.Match _ nam _ _ _ _:_)) = FunD (c nam) (c ms)
+instance Convert (HS.Decl ()) TH.Dec where
+-- NEIL    conv (InstDecl _ _ _ cxt nam typ ds) = instanceD (c cxt) (c $ tyApp (TyCon nam) typ) [c d | InsDecl d <- ds]
+    conv (FunBind _ ms@(HS.Match _ nam _ _ _:_)) = FunD (c nam) (c ms)
     conv (PatBind _ p bod ds) = ValD (c p) (c bod) (c ds)
     conv (TypeSig _ [nam] typ) = SigD (c nam) (c $ foralls typ)
 #if __GLASGOW_HASKELL__ >= 800
@@ -118,30 +131,33 @@ instance Convert HS.Decl TH.Dec where
     conv (DataDecl _ NewType ctx nam typ [con] ds) =
       NewtypeD (c ctx) (c nam) (c typ) Nothing (c con) [] -- (c (map fst ds)) 
 #else
-    conv (DataDecl _ DataType ctx nam typ cs ds) =
-      DataD (c ctx) (c nam) (c typ) (c cs) (c (map fst ds))
-    conv (DataDecl _ NewType ctx nam typ [con] ds) =
-      NewtypeD (c ctx) (c nam) (c typ) (c con) (c (map fst ds))
+    conv (DataDecl _ DataType{} ctx (fromDeclHead -> (nam, typ)) cs ds) =
+      DataD (c ctx) (c nam) (c typ) (c cs) []
+    conv (DataDecl _ NewType{} ctx (fromDeclHead -> (nam, typ)) [con] ds) =
+      NewtypeD (c ctx) (c nam) (c typ) (c con) []
 #endif
-      
-instance Convert HS.QualConDecl TH.Con where
-    conv (QualConDecl _ [] [] con) = c con
-    conv (QualConDecl _ vs cx con) = ForallC (c vs) (c cx) (c con)
 
-instance Convert HS.ConDecl TH.Con where
-    conv (ConDecl nam typ) = NormalC (c nam) (c typ)
-    conv (InfixConDecl l nam r) = InfixC (c l) (c nam) (c r)
-    conv (RecDecl nam fs) = RecC (c nam) (concatMap c fs)
+instance Convert (HS.QualConDecl ()) TH.Con where
+    conv (QualConDecl _ Nothing Nothing con) = c con
+    conv (QualConDecl _ vs cx con) = ForallC (c $ fromMaybe [] vs) (c cx) (c con)
 
-instance Convert HS.Type TH.StrictType where
+instance Convert (HS.ConDecl ()) TH.Con where
+    conv (ConDecl _ nam typ) = NormalC (c nam) (c typ)
+    conv (InfixConDecl _ l nam r) = InfixC (c l) (c nam) (c r)
+    conv (RecDecl _ nam fs) = RecC (c nam) (concatMap c fs)
+
+instance Convert (HSE.FieldDecl ()) [TH.VarStrictType] where
+    conv (HSE.FieldDecl _ names ty) = [(c name, bang, t) | let (bang,t) = c ty, name <- names]
+
+instance Convert (HS.Type ()) TH.StrictType where
 #if __GLASGOW_HASKELL__ >= 800
     conv (TyBang BangedTy t) = (Bang NoSourceUnpackedness SourceStrict, c t)
 #else
-    conv (TyBang BangedTy t) = (IsStrict, c t)
+    conv (TyBang _ BangedTy{} _ t) = (IsStrict, c t)
 #if __GLASGOW_HASKELL__ >= 704
-    conv (TyBang UnpackedTy t) = (Unpacked, c t)
+    conv (TyBang _ _ Unpack{} t) = (Unpacked, c t)
 #else
-    conv (TyBang UnpackedTy t) = (IsStrict, c t)
+    conv (TyBang _ _ Unpack{} t) = (IsStrict, c t)
 #endif
 #endif
 #if __GLASGOW_HASKELL__ >= 800
@@ -150,139 +166,144 @@ instance Convert HS.Type TH.StrictType where
     conv t = (NotStrict, c t)
 #endif
 
-instance Convert ([HS.Name],HS.Type) [TH.VarStrictType] where
+instance Convert ([HS.Name ()],HS.Type ()) [TH.VarStrictType] where
     conv (names,bt) = [(c name,s,t) | name <- names]
      where (s,t) = c bt
 
-instance Convert HS.Asst TH.Type where
-    conv (InfixA x y z) = c $ ClassA y [x,z]
-    conv (ClassA x y) = appT (ConT $ c x) (c y)
+instance Convert (HS.Asst ()) TH.Type where
+    conv (InfixA _ x y z) = c $ ClassA () y [x,z]
+    conv (ClassA _ x y) = appT (ConT $ c x) (c y)
 
-instance Convert HS.Type TH.Type where
-    conv (TyCon (Special ListCon)) = ListT
-    conv (TyCon (Special UnitCon)) = TupleT 0
-    conv (TyParen x) = c x
-    conv (TyForall x y z) = ForallT (c $ fromMaybe [] x) (c y) (c z)
-    conv (TyVar x) = VarT $ c x
-    conv (TyCon x) = if x ~= "[]" then error "here" else ConT $ c x
-    conv (TyFun x y) = AppT (AppT ArrowT (c x)) (c y)
-    conv (TyList x) = AppT ListT (c x)
-    conv (TyTuple _ x) = appT (TupleT (length x)) (c x)
-    conv (TyApp x y) = AppT (c x) (c y)
+instance Convert (HS.Type ()) TH.Type where
+    conv (TyCon _ (Special _ ListCon{})) = ListT
+    conv (TyCon _ (Special _ UnitCon{})) = TupleT 0
+    conv (TyParen _ x) = c x
+    conv (TyForall _ x y z) = ForallT (c $ fromMaybe [] x) (c y) (c z)
+    conv (TyVar _ x) = VarT $ c x
+    conv (TyCon _ x) = if x ~= "[]" then error "here" else ConT $ c x
+    conv (TyFun _ x y) = AppT (AppT ArrowT (c x)) (c y)
+    conv (TyList _ x) = AppT ListT (c x)
+    conv (TyTuple _ _ x) = appT (TupleT (length x)) (c x)
+    conv (TyApp _ x y) = AppT (c x) (c y)
 
-instance Convert HS.Name TH.Name where
+instance Convert (HS.Name ()) TH.Name where
     conv = mkName . filter (`notElem` "()") . prettyPrint
 
-instance Convert HS.Match TH.Clause where
-    conv (HS.Match _ _ ps _ bod ds) = Clause (c ps) (c bod) (c ds)
+instance Convert (HS.Match ()) TH.Clause where
+    conv (HS.Match _ _ ps bod ds) = Clause (c ps) (c bod) (c ds)
 
-instance Convert HS.Rhs TH.Body where
-    conv (UnGuardedRhs x) = NormalB (c x)
-    conv (GuardedRhss x) = GuardedB (c x)
+instance Convert (HS.Rhs ()) TH.Body where
+    conv (UnGuardedRhs _ x) = NormalB (c x)
+    conv (GuardedRhss _ x) = GuardedB (c x)
 
-instance Convert HS.Exp TH.Exp where
-    conv (Con (Special UnitCon)) = TupE []
-    conv (Var x) = VarE (c x)
-    conv (Con x) = ConE (c x)
-    conv (Lit x) = LitE (c x)
-    conv (App x y) = AppE (c x) (c y)
-    conv (Paren x) = c x
-    conv (InfixApp x y z) = InfixE (Just $ c x) (c y) (Just $ c z)
-    conv (LeftSection x y) = InfixE (Just $ c x) (c y) Nothing
-    conv (RightSection y z) = InfixE Nothing (c y) (Just $ c z)
+instance Convert (HS.Exp ()) TH.Exp where
+    conv (Con _ (Special _ UnitCon{})) = TupE []
+    conv (Var _ x) = VarE (c x)
+    conv (Con _ x) = ConE (c x)
+    conv (Lit _ x) = LitE (c x)
+    conv (App _ x y) = AppE (c x) (c y)
+    conv (Paren _ x) = c x
+    conv (InfixApp _ x y z) = InfixE (Just $ c x) (c y) (Just $ c z)
+    conv (LeftSection _ x y) = InfixE (Just $ c x) (c y) Nothing
+    conv (RightSection _ y z) = InfixE Nothing (c y) (Just $ c z)
     conv (Lambda _ x y) = LamE (c x) (c y)
-    conv (Tuple _ x) = TupE (c x)
-    conv (If x y z) = CondE (c x) (c y) (c z)
-    conv (Let x y) = LetE (c x) (c y)
-    conv (Case x y) = CaseE (c x) (c y)
-    conv (Do x) = DoE (c x)
-    conv (EnumFrom x) = ArithSeqE $ FromR (c x)
-    conv (EnumFromTo x y) = ArithSeqE $ FromToR (c x) (c y)
-    conv (EnumFromThen x y) = ArithSeqE $ FromThenR (c x) (c y)
-    conv (EnumFromThenTo x y z) = ArithSeqE $ FromThenToR (c x) (c y) (c z)
-    conv (List x) = ListE (c x)
+    conv (Tuple _ _ x) = TupE (c x)
+    conv (If _ x y z) = CondE (c x) (c y) (c z)
+    conv (Let _ x y) = LetE (c x) (c y)
+    conv (Case _ x y) = CaseE (c x) (c y)
+    conv (Do _ x) = DoE (c x)
+    conv (EnumFrom _ x) = ArithSeqE $ FromR (c x)
+    conv (EnumFromTo _ x y) = ArithSeqE $ FromToR (c x) (c y)
+    conv (EnumFromThen _ x y) = ArithSeqE $ FromThenR (c x) (c y)
+    conv (EnumFromThenTo _ x y z) = ArithSeqE $ FromThenToR (c x) (c y) (c z)
+    conv (List _ x) = ListE (c x)
     conv (ExpTypeSig _ x y) = SigE (c x) (c y)
-    conv (RecConstr x y) = RecConE (c x) (c y)
-    conv (RecUpdate x y) = RecUpdE (c x) (c y) 
+    conv (RecConstr _ x y) = RecConE (c x) (c y)
+    conv (RecUpdate _ x y) = RecUpdE (c x) (c y) 
     -- Work around bug 3395, convert to do notation instead
-    conv (ListComp x y) = CompE $ c $ y ++ [QualStmt $ Qualifier x]
+    conv (ListComp _ x y) = CompE $ c $ y ++ [QualStmt () $ Qualifier () x]
 
-instance Convert HS.GuardedRhs (TH.Guard, TH.Exp) where
-    conv = undefined
+instance Convert (HS.GuardedRhs ()) (TH.Guard, TH.Exp) where
+    conv (GuardedRhs _ g x) = (conv g, conv x)
 
-instance Convert HS.Binds [TH.Dec] where
-    conv (BDecls x) = c x
+instance Convert [HS.Stmt ()] TH.Guard where
+    conv xs = PatG $ map conv xs
 
-instance Convert (Maybe HS.Binds) [TH.Dec] where
+instance Convert (HS.Binds ()) [TH.Dec] where
+    conv (BDecls _ x) = c x
+
+instance Convert (Maybe (HS.Binds ())) [TH.Dec] where
     conv Nothing = []
     conv (Just x) = c x
 
-instance Convert HS.Pat TH.Pat where
-    conv (PParen x) = c x
-    conv (PLit Signless x) = LitP (c x)
-    conv (PTuple _ x) = TupP (c x)
-    conv (PApp x y) = ConP (c x) (c y)
-    conv (PVar x) = VarP (c x)
-    conv (PInfixApp x y z) = InfixP (c x) (c y) (c z)
-    conv (PIrrPat x) = TildeP (c x)
-    conv (PAsPat x y) = AsP (c x) (c y)
-    conv (PWildCard) = WildP
-    conv (PRec x y) = RecP (c x) (c y)
-    conv (PList x) = ListP (c x)
+instance Convert (HS.Pat ()) TH.Pat where
+    conv (PParen _ x) = c x
+    conv (PLit _ Signless{} x) = LitP (c x)
+    conv (PTuple _ _ x) = TupP (c x)
+    conv (PApp _ x y) = ConP (c x) (c y)
+    conv (PVar _ x) = VarP (c x)
+    conv (PInfixApp _ x y z) = InfixP (c x) (c y) (c z)
+    conv (PIrrPat _ x) = TildeP (c x)
+    conv (PAsPat _ x y) = AsP (c x) (c y)
+    conv (PWildCard{}) = WildP
+    conv (PRec _ x y) = RecP (c x) (c y)
+    conv (PList _ x) = ListP (c x)
     conv (PatTypeSig _ x y) = SigP (c x) (c y)
 
-instance Convert HS.Literal TH.Lit where
-    conv (Char x) = CharL x
-    conv (String x) = StringL x
-    conv (Int x) = IntegerL x
-    conv (Frac x) = RationalL x
-    conv (PrimInt x) = IntPrimL x
-    conv (PrimWord x) = WordPrimL x
-    conv (PrimFloat x) = FloatPrimL x
-    conv (PrimDouble x) = DoublePrimL x
+instance Convert (HS.Literal ()) TH.Lit where
+    conv (Char _ x _) = CharL x
+    conv (String _ x _) = StringL x
+    conv (Int _ x _) = IntegerL x
+    conv (Frac _ x _) = RationalL x
+    conv (PrimInt _ x _) = IntPrimL x
+    conv (PrimWord _ x _) = WordPrimL x
+    conv (PrimFloat _ x _) = FloatPrimL x
+    conv (PrimDouble _ x _) = DoublePrimL x
 
-instance Convert HS.QName TH.Name where
-    conv (UnQual x) = c x
-    conv (Qual m x) = c (Ident $ prettyPrint m ++ "." ++ prettyPrint x)
-    conv (Special (TupleCon Boxed i)) = Name (mkOccName $ "(" ++ replicate (i-1) ',' ++ ")") NameS
+instance Convert (HS.QName ()) TH.Name where
+    conv (UnQual _ x) = c x
+    conv (Qual _ m x) = c (Ident () $ prettyPrint m ++ "." ++ prettyPrint x)
+    conv (Special _ (TupleCon _ Boxed i)) = Name (mkOccName $ "(" ++ replicate (i-1) ',' ++ ")") NameS
 
-instance Convert HS.PatField TH.FieldPat where
-    conv = undefined
+instance Convert (HS.PatField ()) TH.FieldPat where
+    conv (PFieldPat _ name pat) = (c name, c pat)
+    conv (PFieldPun _ name) = (c name, c $ PVar () $ Ident () $ prettyPrint name)
+    conv (PFieldWildcard _) = error "Can't convert PFieldWildcard"
 
-instance Convert HS.QOp TH.Exp where
-    conv (QVarOp x) = c $ Var x
-    conv (QConOp x) = c $ Con x
+instance Convert (HS.QOp ()) TH.Exp where
+    conv (QVarOp _ x) = c $ Var () x
+    conv (QConOp _ x) = c $ Con () x
 
-instance Convert HS.Alt TH.Match where
+instance Convert (HS.Alt ()) TH.Match where
     conv (Alt _ x y z) = TH.Match (c x) (c y) (c z)
 
-instance Convert HS.Stmt TH.Stmt where
+instance Convert (HS.Stmt ()) TH.Stmt where
     conv (Generator _ x y) = BindS (c x) (c y)
-    conv (LetStmt x) = LetS (c x)
-    conv (Qualifier x) = NoBindS (c x)
+    conv (LetStmt _ x) = LetS (c x)
+    conv (Qualifier _ x) = NoBindS (c x)
 
-instance Convert HS.QualStmt TH.Stmt where
-    conv (QualStmt x) = c x
+instance Convert (HS.QualStmt ()) TH.Stmt where
+    conv (QualStmt _ x) = c x
 
-instance Convert HS.FieldUpdate TH.FieldExp where
-    conv (FieldUpdate x y) = (c x, c y)
+instance Convert (HS.FieldUpdate ()) TH.FieldExp where
+    conv (FieldUpdate _ x y) = (c x, c y)
 
-instance Convert HS.TyVarBind TH.Name where
-    conv (UnkindedVar x) = c x
+instance Convert (HS.TyVarBind ()) TH.Name where
+    conv (UnkindedVar _ x) = c x
 
 #if __GLASGOW_HASKELL__ >= 612
-instance Convert TH.TyVarBndr HS.TyVarBind where
-    conv (PlainTV x) = UnkindedVar $ c x
-    conv (KindedTV x y) = KindedVar (c x) $ c y
+instance Convert TH.TyVarBndr (HS.TyVarBind ()) where
+    conv (PlainTV x) = UnkindedVar () $ c x
+    conv (KindedTV x y) = KindedVar () (c x) $ c y
 
 #if __GLASGOW_HASKELL__ < 706
-instance Convert TH.Kind HS.Kind where
+instance Convert (TH.Kind ()) HS.Kind where
     conv StarK = KindStar
     conv (ArrowK x y) = KindFn (c x) $ c y
 #else
-instance Convert TH.Kind HS.Kind where
-    conv StarT = KindStar
-    conv (AppT (AppT ArrowT x) y) = KindFn (c x) (c y)
+instance Convert TH.Kind (HS.Kind ()) where
+    conv StarT = KindStar ()
+    conv (AppT (AppT ArrowT x) y) = KindFn () (c x) (c y)
 #endif
 
 #if __GLASGOW_HASKELL__ < 709
@@ -295,17 +316,17 @@ instance Convert HS.Asst TH.Pred where
     conv (HS.EqualP x y) = TH.EqualP (c x) $ c y
 #endif
 
-instance Convert HS.TyVarBind TH.TyVarBndr where
-    conv (UnkindedVar x) = PlainTV $ c x
-    conv (KindedVar x y) = KindedTV (c x) $ c y
+instance Convert (HS.TyVarBind ()) TH.TyVarBndr where
+    conv (UnkindedVar _ x) = PlainTV $ c x
+    conv (KindedVar _ x y) = KindedTV (c x) $ c y
 
 #if __GLASGOW_HASKELL__ < 706
-instance Convert HS.Kind TH.Kind where
-    conv KindStar = StarK
-    conv (KindFn x y) = ArrowK (c x) $ c y
+instance Convert (HS.Kind ()) TH.Kind where
+    conv (KindStar _) = StarK
+    conv (KindFn _ x y) = ArrowK (c x) $ c y
 #else
-instance Convert HS.Kind TH.Kind where
-    conv KindStar = StarT
-    conv (KindFn x y) = AppT (AppT ArrowT (c x)) (c y)
+instance Convert (HS.Kind ()) TH.Kind where
+    conv KindStar{} = StarT
+    conv (KindFn _ x y) = AppT (AppT ArrowT (c x)) (c y)
 #endif
 #endif

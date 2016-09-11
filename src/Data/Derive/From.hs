@@ -36,30 +36,30 @@ makeFrom :: Derivation
 makeFrom = derivationCustom "From" $ \(_,d) -> Right $ concatMap (makeFromCtor d) $ dataDeclCtors d
 
 
-makeFromCtor :: DataDecl -> CtorDecl -> [Decl]
-makeFromCtor d c | isIdent n = [TypeSig sl [name from] typ, FunBind $ match : [defMatch | length (dataDeclCtors d) > 1]]
+makeFromCtor :: DataDecl -> CtorDecl -> [Decl ()]
+makeFromCtor d c | isIdent n = [TypeSig () [name from] typ, FunBind () $ match : [defMatch | length (dataDeclCtors d) > 1]]
                  | otherwise = []
     where
         n = ctorDeclName c
         from = "from" ++ n
 
-        typ = TyFun (dataDeclType d)
+        typ = TyFun () (dataDeclType d)
             (tyTuple $ map snd $ ctorDeclFields c)
 
-        match = Match sl (name from) [pat] Nothing (UnGuardedRhs rhs) Nothing
-        pat = (length vars == 0 ? id $ PParen) $ PApp (qname n) (map pVar vars)
+        match = Match () (name from) [pat] (UnGuardedRhs () rhs) Nothing
+        pat = (length vars == 0 ? id $ PParen ()) $ PApp () (qname n) (map pVar vars)
         vars = take (length $ ctorDeclFields c) $ map ((:) 'x' . show) [1..]
         rhs = valTuple $ map var vars
 
-        defMatch = Match sl (name from) [PWildCard] Nothing (UnGuardedRhs err) Nothing
-        err = App (var "error") $ Lit $ String $ from ++ " failed, not a " ++ n
+        defMatch = Match () (name from) [PWildCard ()] (UnGuardedRhs () err) Nothing
+        err = App () (var "error") $ Lit () $ let s = from ++ " failed, not a " ++ n in String () s (show s)
 
 
-tyTuple [] = TyCon $ Special UnitCon
+tyTuple [] = TyCon () $ Special () $ UnitCon ()
 tyTuple [x] = x
-tyTuple xs = TyTuple Boxed xs
+tyTuple xs = TyTuple () Boxed xs
 
 
-valTuple [] = Con $ Special UnitCon
+valTuple [] = Con () $ Special () $ UnitCon ()
 valTuple [x] = x
-valTuple xs = Tuple Boxed xs
+valTuple xs = Tuple () Boxed xs

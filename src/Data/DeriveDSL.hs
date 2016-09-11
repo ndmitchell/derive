@@ -9,13 +9,13 @@ import Data.Derive.DSL.SYB
 import Data.Maybe
 
 
-deriveDSL :: [Decl] -> Maybe DSL
+deriveDSL :: [Decl ()] -> Maybe DSL
 deriveDSL = listToMaybe . derive
 
 
-applyDSL :: DSL -> DataDecl -> Either String [Decl]
+applyDSL :: DSL -> DataDecl -> Either String [Decl ()]
 applyDSL dsl inp = Right $ apply dsl $ toInput inp
 
 
-dynamicDSL :: DSL -> Maybe [Decl]
+dynamicDSL :: DSL -> Maybe [Decl ()]
 dynamicDSL = dslSYB

@@ -25,45 +25,69 @@ makeMonoid :: Derivation
 makeMonoid = derivationDSL "Monoid" dslMonoid
 
 dslMonoid =
-    List [Instance ["Monoid"] "Monoid" (List [App "InsDecl" (List [App
-    "PatBind" (List [App "PVar" (List [App "Ident" (List [String
-    "mempty"])]),App "UnGuardedRhs" (List [App "App" (List [App "Var"
-    (List [App "UnQual" (List [App "Ident" (List [String "head"])])]),
-    App "List" (List [MapCtor (Application (Concat (List [List [App
-    "Con" (List [App "UnQual" (List [App "Ident" (List [CtorName])])])
-    ],MapField (App "Paren" (List [Application (List [App "Var" (List
-    [App "UnQual" (List [App "Ident" (List [String "const"])])]),App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "mempty"])])]),App "Lit" (List [App "Int" (List [FieldIndex])])])]
-    ))])))])])]),App "Nothing" (List [])])]),App "InsDecl" (List [App
-    "FunBind" (List [Concat (List [MapCtor (App "Match" (List [App
-    "Ident" (List [String "mappend"]),List [App "PParen" (List [App
-    "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName])]),
-    MapField (App "PVar" (List [App "Ident" (List [Concat (List [
-    String "x",ShowInt FieldIndex])])]))])]),App "PParen" (List [App
-    "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName])]),
-    MapField (App "PVar" (List [App "Ident" (List [Concat (List [
-    String "y",ShowInt FieldIndex])])]))])])],App "Nothing" (List []),
-    App "UnGuardedRhs" (List [Application (Concat (List [List [App
-    "Con" (List [App "UnQual" (List [App "Ident" (List [CtorName])])])
-    ],MapField (App "Paren" (List [Application (List [App "Var" (List
-    [App "UnQual" (List [App "Ident" (List [String "mappend"])])]),App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (List [
-    String "x",ShowInt FieldIndex])])])]),App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [Concat (List [String "y",
-    ShowInt FieldIndex])])])])])]))]))]),App "Nothing" (List [])])),
-    List [App "Match" (List [App "Ident" (List [String "mappend"]),
-    List [App "PWildCard" (List []),App "PWildCard" (List [])],App
-    "Nothing" (List []),App "GuardedRhss" (List [List [App
-    "GuardedRhs" (List [List [App "Qualifier" (List [App "InfixApp" (
-    List [App "App" (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "length"])])]),App "List" (List [MapCtor (
-    App "RecConstr" (List [App "UnQual" (List [App "Ident" (List [
-    CtorName])]),List []]))])]),App "QVarOp" (List [App "UnQual" (List
-    [App "Symbol" (List [String ">"])])]),App "Lit" (List [App "Int" (
-    List [Int 1])])])])],App "App" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "error"])])]),App "Lit"
-    (List [App "String" (List [Concat (List [String
-    "Monoid.mappend: Different constructors for ",DataName])])])])])]]
-    ),App "Nothing" (List [])])]])])])])]
+    List [Instance ["Monoid"] "Monoid" (App "Just" (List [List [App
+    "InsDecl" (List [App "()" (List []),App "PatBind" (List [App "()"
+    (List []),App "PVar" (List [App "()" (List []),App "Ident" (List [
+    App "()" (List []),String "mempty"])]),App "UnGuardedRhs" (List [
+    App "()" (List []),App "App" (List [App "()" (List []),App "Var" (
+    List [App "()" (List []),App "UnQual" (List [App "()" (List []),
+    App "Ident" (List [App "()" (List []),String "head"])])]),App
+    "List" (List [App "()" (List []),MapCtor (Application (Concat (
+    List [List [App "Con" (List [App "()" (List []),App "UnQual" (List
+    [App "()" (List []),App "Ident" (List [App "()" (List []),CtorName
+    ])])])],MapField (App "Paren" (List [App "()" (List []),
+    Application (List [App "Var" (List [App "()" (List []),App
+    "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
+    List []),String "const"])])]),App "Var" (List [App "()" (List []),
+    App "UnQual" (List [App "()" (List []),App "Ident" (List [App "()"
+    (List []),String "mempty"])])]),App "Lit" (List [App "()" (List []
+    ),App "Int" (List [App "()" (List []),FieldIndex,ShowInt
+    FieldIndex])])])]))])))])])]),App "Nothing" (List [])])]),App
+    "InsDecl" (List [App "()" (List []),App "FunBind" (List [App "()"
+    (List []),Concat (List [MapCtor (App "Match" (List [App "()" (List
+    []),App "Ident" (List [App "()" (List []),String "mappend"]),List
+    [App "PParen" (List [App "()" (List []),App "PApp" (List [App "()"
+    (List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),CtorName])]),MapField (App "PVar" (List [App
+    "()" (List []),App "Ident" (List [App "()" (List []),Concat (List
+    [String "x",ShowInt FieldIndex])])]))])]),App "PParen" (List [App
+    "()" (List []),App "PApp" (List [App "()" (List []),App "UnQual" (
+    List [App "()" (List []),App "Ident" (List [App "()" (List []),
+    CtorName])]),MapField (App "PVar" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),Concat (List [String "y",ShowInt
+    FieldIndex])])]))])])],App "UnGuardedRhs" (List [App "()" (List []
+    ),Application (Concat (List [List [App "Con" (List [App "()" (List
+    []),App "UnQual" (List [App "()" (List []),App "Ident" (List [App
+    "()" (List []),CtorName])])])],MapField (App "Paren" (List [App
+    "()" (List []),Application (List [App "Var" (List [App "()" (List
+    []),App "UnQual" (List [App "()" (List []),App "Ident" (List [App
+    "()" (List []),String "mappend"])])]),App "Var" (List [App "()" (
+    List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),Concat (List [String "x",ShowInt FieldIndex])]
+    )])]),App "Var" (List [App "()" (List []),App "UnQual" (List [App
+    "()" (List []),App "Ident" (List [App "()" (List []),Concat (List
+    [String "y",ShowInt FieldIndex])])])])])]))]))]),App "Nothing" (
+    List [])])),List [App "Match" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),String "mappend"]),List [App
+    "PWildCard" (List [App "()" (List [])]),App "PWildCard" (List [App
+    "()" (List [])])],App "GuardedRhss" (List [App "()" (List []),List
+    [App "GuardedRhs" (List [App "()" (List []),List [App "Qualifier"
+    (List [App "()" (List []),App "InfixApp" (List [App "()" (List [])
+    ,App "App" (List [App "()" (List []),App "Var" (List [App "()" (
+    List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),String "length"])])]),App "List" (List [App
+    "()" (List []),MapCtor (App "RecConstr" (List [App "()" (List []),
+    App "UnQual" (List [App "()" (List []),App "Ident" (List [App "()"
+    (List []),CtorName])]),List []]))])]),App "QVarOp" (List [App "()"
+    (List []),App "UnQual" (List [App "()" (List []),App "Symbol" (
+    List [App "()" (List []),String ">"])])]),App "Lit" (List [App
+    "()" (List []),App "Int" (List [App "()" (List []),Int 1,ShowInt (
+    Int 1)])])])])],App "App" (List [App "()" (List []),App "Var" (
+    List [App "()" (List []),App "UnQual" (List [App "()" (List []),
+    App "Ident" (List [App "()" (List []),String "error"])])]),App
+    "Lit" (List [App "()" (List []),App "String" (List [App "()" (List
+    []),Concat (List [String
+    "Monoid.mappend: Different constructors for ",DataName]),Concat (
+    List [String "Monoid.mappend: Different constructors for ",
+    DataName])])])])])]]),App "Nothing" (List [])])]])])])]]))]
 -- GENERATED STOP

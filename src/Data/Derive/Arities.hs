@@ -32,13 +32,17 @@ makeArities :: Derivation
 makeArities = derivationDSL "Arities" dslArities
 
 dslArities =
-    List [Instance [] "Arities" (List [App "InsDecl" (List [App
-    "FunBind" (List [List [App "Match" (List [App "Ident" (List [
-    String "arities"]),List [App "PWildCard" (List [])],App "Nothing"
-    (List []),App "UnGuardedRhs" (List [App "List" (List [MapCtor (
-    Application (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "const"])])]),App "Lit" (List [App "Int" (
-    List [CtorArity])]),App "RecConstr" (List [App "UnQual" (List [App
-    "Ident" (List [CtorName])]),List []])]))])]),App "Nothing" (List [
-    ])])]])])])]
+    List [Instance [] "Arities" (App "Just" (List [List [App "InsDecl"
+    (List [App "()" (List []),App "FunBind" (List [App "()" (List []),
+    List [App "Match" (List [App "()" (List []),App "Ident" (List [App
+    "()" (List []),String "arities"]),List [App "PWildCard" (List [App
+    "()" (List [])])],App "UnGuardedRhs" (List [App "()" (List []),App
+    "List" (List [App "()" (List []),MapCtor (Application (List [App
+    "Var" (List [App "()" (List []),App "UnQual" (List [App "()" (List
+    []),App "Ident" (List [App "()" (List []),String "const"])])]),App
+    "Lit" (List [App "()" (List []),App "Int" (List [App "()" (List []
+    ),CtorArity,ShowInt CtorArity])]),App "RecConstr" (List [App "()"
+    (List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),CtorName])]),List []])]))])]),App "Nothing" (
+    List [])])]])])]]))]
 -- GENERATED STOP

@@ -28,13 +28,13 @@ makeHas :: Derivation
 makeHas = derivationCustom "Has" $ \(_,d) -> Right $ concatMap (makeHasField d) $ dataDeclFields d
 
 
-makeHasField :: DataDecl -> String -> [Decl]
-makeHasField d field = if isIdent field then [TypeSig sl [name has] typ, binds has ms] else []
+makeHasField :: DataDecl -> String -> [Decl ()]
+makeHasField d field = if isIdent field then [TypeSig () [name has] typ, binds has ms] else []
     where
         has = "has" ++ title field
-        typ = TyFun (dataDeclType d) (tyCon "Bool")
+        typ = TyFun () (dataDeclType d) (tyCon "Bool")
         (yes,no) = partition (elem field . map fst . ctorDeclFields) $ dataDeclCtors d
         match pat val = ([pat], con val)
 
-        ms | null no = [match PWildCard "True"]
-           | otherwise = [match (PRec (qname $ ctorDeclName c) []) "True" | c <- yes] ++ [match PWildCard "False"]
+        ms | null no = [match (PWildCard ()) "True"]
+           | otherwise = [match (PRec () (qname $ ctorDeclName c) []) "True" | c <- yes] ++ [match (PWildCard ()) "False"]

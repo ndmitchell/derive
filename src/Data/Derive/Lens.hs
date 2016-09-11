@@ -29,8 +29,8 @@ makeLens :: Derivation
 makeLens = derivationCustom "Lens" $ \(_,d) -> Right $ concatMap (makeLensField d) $ dataDeclFields d
 
 
-makeLensField :: DataDecl -> String -> [Decl]
-makeLensField d field = if isIdent field then [TypeSig sl [name ref] typ, bind ref [] bod] else []
+makeLensField :: DataDecl -> String -> [Decl ()]
+makeLensField d field = if isIdent field then [TypeSig () [name ref] typ, bind ref [] bod] else []
     where
         ref = "lens" ++ title field
         typ = tyApps (tyCon "Lens") [dataDeclType d, t]
@@ -38,4 +38,4 @@ makeLensField d field = if isIdent field then [TypeSig sl [name ref] typ, bind r
 
         bod = apps (var "lens")
             [var field
-            ,Paren $ Lambda sl [pVar "x",pVar "v"] $ RecUpdate (var "v") [FieldUpdate (qname field) (var "x")]]
+            ,Paren () $ Lambda () [pVar "x",pVar "v"] $ RecUpdate () (var "v") [FieldUpdate () (qname field) (var "x")]]

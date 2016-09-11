@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 
 module Derive.Derivation(wantDerive, performDerive, writeDerive) where
 
@@ -16,35 +17,35 @@ import qualified Data.Map as Map
 ---------------------------------------------------------------------
 -- WHAT DO YOU WANT TO DERIVE
 
-wantDerive :: [Flag] -> Module -> Module -> [Type]
+wantDerive :: [Flag] -> Module () -> Module () -> [Type ()]
 wantDerive flag real mine = nub $ map fromTyParens $ wantDeriveFlag flag decls ++ wantDeriveAnnotation real mine
     where decls = filter isDataDecl $ moduleDecls mine
 
 
-wantDeriveFlag :: [Flag] -> [DataDecl] -> [Type]
-wantDeriveFlag flags decls = [TyApp (tyCon x) d | Derive xs <- flags, x <- xs, d <- declst]
+wantDeriveFlag :: [Flag] -> [DataDecl] -> [Type ()]
+wantDeriveFlag flags decls = [TyApp () (tyCon x) d | Derive xs <- flags, x <- xs, d <- declst]
     where declst = [tyApps (tyCon $ dataDeclName d) (map tyVar $ dataDeclVars d) | d <- decls]
 
-wantDeriveAnnotation :: Module -> Module -> [Type]
+wantDeriveAnnotation :: Module () -> Module () -> [Type ()]
 wantDeriveAnnotation real mine = moduleDerives mine \\ moduleDerives real
 
 
-moduleDerives :: Module -> [Type]
+moduleDerives :: Module () -> [Type ()]
 moduleDerives = concatMap f . moduleDecls 
     where
-        f (DataDecl _ _ _ name vars _ deriv) = g name vars deriv
-        f (GDataDecl _ _ _ name vars _ _ deriv) = g name vars deriv
-        f (DerivDecl _ _ _ _ name args) = [TyCon name `tyApps` args]
+        f (DataDecl _ _ _ (fromDeclHead -> (name, vars)) _ deriv) = g name vars deriv
+        f (GDataDecl _ _ _ (fromDeclHead -> (name, vars)) _ _ deriv) = g name vars deriv
+        f (DerivDecl _ _ (fromIParen -> IRule _ _ _ (fromInstHead -> (name, args)))) = [TyCon () name `tyApps` args]
         f _ = []
 
-        g name vars deriv = [TyCon a `tyApps` (b:bs) | (a,bs) <- deriv]
-            where b = TyCon (UnQual name) `tyApps` map (tyVar . prettyPrint) vars
+        g name vars deriv = [TyCon () a `tyApps` (b:bs) | IRule _ _ _ (fromInstHead -> (a,bs)) <- map fromIParen $ maybe [] (\(Deriving _ xs) -> xs) deriv]
+            where b = TyCon () (UnQual () name) `tyApps` map (tyVar . prettyPrint) vars
 
 
 ---------------------------------------------------------------------
 -- ACTUALLY DERIVE IT
 
-performDerive :: [Derivation] -> Module -> [Type] -> [String]
+performDerive :: [Derivation] -> Module () -> [Type ()] -> [String]
 performDerive derivations modu = concatMap ((:) "" . f)
     where
         grab = getDecl modu
@@ -61,13 +62,13 @@ performDerive derivations modu = concatMap ((:) "" . f)
                 msg x = "Deriving " ++ prettyPrint ty ++ ": " ++ x
 
 
-getDecl :: Module -> (String -> Decl)
+getDecl :: Module () -> (String -> Decl ())
 getDecl modu = \name -> Map.findWithDefault (error $ "Can't find data type definition for: " ++ name) name mp
     where
         mp = Map.fromList $ concatMap f $ moduleDecls modu
-        f x@(DataDecl _ _ _ name _ _ _) = [(prettyPrint name, x)]
-        f x@(GDataDecl _ _ _ name _ _ _ _) = [(prettyPrint name, x)]
-        f x@(TypeDecl _ name _ _) = [(prettyPrint name, x)]
+        f x@(DataDecl _ _ _ (fromDeclHead -> (name, _)) _ _) = [(prettyPrint name, x)]
+        f x@(GDataDecl _ _ _ (fromDeclHead -> (name, _)) _ _ _) = [(prettyPrint name, x)]
+        f x@(TypeDecl _ (fromDeclHead -> (name, _)) _) = [(prettyPrint name, x)]
         f _ = []
 
 
@@ -80,7 +81,7 @@ getDerivation derivations = \name -> Map.findWithDefault (error $ "Don't know ho
 ---------------------------------------------------------------------
 -- WRITE IT BACK
 
-writeDerive :: FilePath -> ModuleName -> [Flag] -> [String] -> IO ()
+writeDerive :: FilePath -> ModuleName () -> [Flag] -> [String] -> IO ()
 writeDerive file modu flags xs = do
     -- force the output first, ensure that we don't crash half way through
     () <- length (concat xs) `seq` return ()

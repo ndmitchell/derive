@@ -41,4 +41,4 @@ deriveFromDec d x = do
         Right v -> return $ convert v
 
 toFullDataDecl :: Dec -> FullDataDecl
-toFullDataDecl x = (ModuleName "Todo", convert x)
+toFullDataDecl x = (ModuleName () "Todo", convert x)

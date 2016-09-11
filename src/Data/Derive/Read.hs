@@ -82,27 +82,40 @@ import Data.Derive.Internal.Derivation
 
 makeRead :: Derivation
 makeRead = derivationCustomDSL "Read" custom $
-    List [Instance ["Read"] "Read" (List [App "InsDecl" (List [App
-    "FunBind" (List [List [App "Match" (List [App "Ident" (List [
-    String "readsPrec"]),List [App "PVar" (List [App "Ident" (List [
+    List [Instance ["Read"] "Read" (App "Just" (List [List [App
+    "InsDecl" (List [App "()" (List []),App "FunBind" (List [App "()"
+    (List []),List [App "Match" (List [App "()" (List []),App "Ident"
+    (List [App "()" (List []),String "readsPrec"]),List [App "PVar" (
+    List [App "()" (List []),App "Ident" (List [App "()" (List []),
     Concat (List [String "p",ShowInt (Int 0)])])]),App "PVar" (List [
-    App "Ident" (List [String "r"])])],App "Nothing" (List []),App
-    "UnGuardedRhs" (List [Fold (App "InfixApp" (List [Head,App
-    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String
-    "++"])])]),Tail])) (Concat (List [MapCtor (Application (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "readParen"])])]),App "SpliceExp" (List [App "ParenSplice" (List [
-    App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "bracket"])])]),App "Lit" (List [App "Int" (List [
-    CtorIndex])])])])]),App "Paren" (List [App "Lambda" (List [List [
-    App "PVar" (List [App "Ident" (List [Concat (List [String "r",
-    ShowInt (Int 0)])])])],App "SpliceExp" (List [App "ParenSplice" (
-    List [Application (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "comp"])])]),App "Lit" (List [App "Int" (
-    List [CtorIndex])]),App "Con" (List [App "UnQual" (List [App
-    "Ident" (List [CtorName])])])])])])])]),App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "r"])])])])),List [App
-    "List" (List [List []])]]))]),App "Nothing" (List [])])]])])])]
+    App "()" (List []),App "Ident" (List [App "()" (List []),String
+    "r"])])],App "UnGuardedRhs" (List [App "()" (List []),Fold (App
+    "InfixApp" (List [App "()" (List []),Head,App "QVarOp" (List [App
+    "()" (List []),App "UnQual" (List [App "()" (List []),App "Symbol"
+    (List [App "()" (List []),String "++"])])]),Tail])) (Concat (List
+    [MapCtor (Application (List [App "Var" (List [App "()" (List []),
+    App "UnQual" (List [App "()" (List []),App "Ident" (List [App "()"
+    (List []),String "readParen"])])]),App "SpliceExp" (List [App "()"
+    (List []),App "ParenSplice" (List [App "()" (List []),App "App" (
+    List [App "()" (List []),App "Var" (List [App "()" (List []),App
+    "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
+    List []),String "bracket"])])]),App "Lit" (List [App "()" (List []
+    ),App "Int" (List [App "()" (List []),CtorIndex,ShowInt CtorIndex]
+    )])])])]),App "Paren" (List [App "()" (List []),App "Lambda" (List
+    [App "()" (List []),List [App "PVar" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),Concat (List [String "r",ShowInt
+    (Int 0)])])])],App "SpliceExp" (List [App "()" (List []),App
+    "ParenSplice" (List [App "()" (List []),Application (List [App
+    "Var" (List [App "()" (List []),App "UnQual" (List [App "()" (List
+    []),App "Ident" (List [App "()" (List []),String "comp"])])]),App
+    "Lit" (List [App "()" (List []),App "Int" (List [App "()" (List []
+    ),CtorIndex,ShowInt CtorIndex])]),App "Con" (List [App "()" (List
+    []),App "UnQual" (List [App "()" (List []),App "Ident" (List [App
+    "()" (List []),CtorName])])])])])])])]),App "Var" (List [App "()"
+    (List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),String "r"])])])])),List [App "List" (List [
+    App "()" (List []),List []])]]))]),App "Nothing" (List [])])]])])]
+    ]))]
 -- GENERATED STOP
 
 custom = customSplice splice

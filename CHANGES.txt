@@ -1,5 +1,7 @@
 Changelog for Derive
 
+    Change to use annotated Haskell syntax trees
+    Require haskell-src-exts-1.18
 2.5.26
     #17, fix incomplete pattern matches for certain types of data
 2.5.25

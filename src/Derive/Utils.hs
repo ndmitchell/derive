@@ -13,32 +13,32 @@ import Data.Maybe
 
 data Src = Src
     {srcName :: String
-    ,srcImport :: [ImportDecl]
-    ,srcExample :: Maybe [Decl]
-    ,srcTest :: [(Type,[Decl])]
+    ,srcImport :: [ImportDecl ()]
+    ,srcExample :: Maybe [Decl ()]
+    ,srcTest :: [(Type (),[Decl ()])]
     ,srcCustom :: Bool
     }
 
 -- skip the importPkg bits
-srcImportStd :: Src -> [ImportDecl]
+srcImportStd :: Src -> [ImportDecl ()]
 srcImportStd y= [x{importPkg=Nothing} | x <- srcImport y]
 
 nullSrc = Src "" [] Nothing [] False
 
 
-readHSE :: FilePath -> IO Module
+readHSE :: FilePath -> IO (Module ())
 readHSE file = do
     src <- readFile' file
     src <- return $ takeWhile (/= "-}") $ drop 1 $ dropWhile (/= "{-") $
                     dropWhile (not . isPrefixOf "module ") $ lines src
 
     let mode = defaultParseMode{extensions=map EnableExtension [MultiParamTypeClasses,FlexibleContexts,TemplateHaskell,PackageImports,TypeOperators]}
-    return $ fromParseResult $ parseFileContentsWithMode mode $ unlines $ "module Example where":src
+    return $ fmap (const ()) $ fromParseResult $ parseFileContentsWithMode mode $ unlines $ "module Example where":src
 
 
-data Pragma = Example Bool | Test Type
+data Pragma = Example Bool | Test (Type ())
 
-asPragma :: Decl -> Maybe Pragma
+asPragma :: Decl () -> Maybe Pragma
 asPragma (TypeSig _ [x] t)
     | x ~= "example" = Just $ Example $ prettyPrint t == "Custom"
     | x ~= "test" = Just $ Test t

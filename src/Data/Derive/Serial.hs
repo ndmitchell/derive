@@ -28,38 +28,57 @@ makeSerial :: Derivation
 makeSerial = derivationDSL "Serial" dslSerial
 
 dslSerial =
-    List [Instance ["Serial"] "Serial" (List [App "InsDecl" (List [App
-    "PatBind" (List [App "PVar" (List [App "Ident" (List [String
-    "series"])]),App "UnGuardedRhs" (List [Fold (App "InfixApp" (List
-    [Tail,App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
-    String "\\/"])])]),Head])) (Reverse (MapCtor (App "App" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [Concat (List [
-    String "cons",ShowInt CtorArity])])])]),App "Con" (List [App
-    "UnQual" (List [App "Ident" (List [CtorName])])])]))))]),App
-    "Nothing" (List [])])]),App "InsDecl" (List [App "FunBind" (List [
-    List [App "Match" (List [App "Ident" (List [String "coseries"]),
-    List [App "PVar" (List [App "Ident" (List [String "rs"])]),App
-    "PVar" (List [App "Ident" (List [String "d"])])],App "Nothing" (
-    List []),App "UnGuardedRhs" (List [App "ListComp" (List [App
-    "Lambda" (List [List [App "PVar" (List [App "Ident" (List [String
-    "t"])])],App "Case" (List [App "Var" (List [App "UnQual" (List [
-    App "Ident" (List [String "t"])])]),MapCtor (App "Alt" (List [App
-    "PApp" (List [App "UnQual" (List [App "Ident" (List [CtorName])]),
-    MapField (App "PVar" (List [App "Ident" (List [Concat (List [
-    String "x",ShowInt FieldIndex])])]))]),App "UnGuardedRhs" (List [
-    Application (Concat (List [List [App "Var" (List [App "UnQual" (
-    List [App "Ident" (List [Concat (List [String "t",ShowInt
-    CtorIndex])])])])],MapField (App "Var" (List [App "UnQual" (List [
-    App "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])])
-    ])]))]))]),App "Nothing" (List [])]))])]),MapCtor (App "QualStmt"
-    (List [App "Generator" (List [App "PVar" (List [App "Ident" (List
-    [Concat (List [String "t",ShowInt CtorIndex])])]),App "InfixApp" (
-    List [Application (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [Concat (List [String "alts",ShowInt CtorArity])])])
-    ]),App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "rs"])])]),App "Var" (List [App "UnQual" (List [App "Ident" (List
-    [String "d"])])])]),App "QVarOp" (List [App "UnQual" (List [App
-    "Ident" (List [String "const"])])]),App "RecConstr" (List [App
-    "UnQual" (List [App "Ident" (List [CtorName])]),List []])])])]))])
-    ]),App "Nothing" (List [])])]])])])]
+    List [Instance ["Serial"] "Serial" (App "Just" (List [List [App
+    "InsDecl" (List [App "()" (List []),App "PatBind" (List [App "()"
+    (List []),App "PVar" (List [App "()" (List []),App "Ident" (List [
+    App "()" (List []),String "series"])]),App "UnGuardedRhs" (List [
+    App "()" (List []),Fold (App "InfixApp" (List [App "()" (List []),
+    Tail,App "QVarOp" (List [App "()" (List []),App "UnQual" (List [
+    App "()" (List []),App "Symbol" (List [App "()" (List []),String
+    "\\/"])])]),Head])) (Reverse (MapCtor (App "App" (List [App "()" (
+    List []),App "Var" (List [App "()" (List []),App "UnQual" (List [
+    App "()" (List []),App "Ident" (List [App "()" (List []),Concat (
+    List [String "cons",ShowInt CtorArity])])])]),App "Con" (List [App
+    "()" (List []),App "UnQual" (List [App "()" (List []),App "Ident"
+    (List [App "()" (List []),CtorName])])])]))))]),App "Nothing" (
+    List [])])]),App "InsDecl" (List [App "()" (List []),App "FunBind"
+    (List [App "()" (List []),List [App "Match" (List [App "()" (List
+    []),App "Ident" (List [App "()" (List []),String "coseries"]),List
+    [App "PVar" (List [App "()" (List []),App "Ident" (List [App "()"
+    (List []),String "rs"])]),App "PVar" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),String "d"])])],App
+    "UnGuardedRhs" (List [App "()" (List []),App "ListComp" (List [App
+    "()" (List []),App "Lambda" (List [App "()" (List []),List [App
+    "PVar" (List [App "()" (List []),App "Ident" (List [App "()" (List
+    []),String "t"])])],App "Case" (List [App "()" (List []),App "Var"
+    (List [App "()" (List []),App "UnQual" (List [App "()" (List []),
+    App "Ident" (List [App "()" (List []),String "t"])])]),MapCtor (
+    App "Alt" (List [App "()" (List []),App "PApp" (List [App "()" (
+    List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),CtorName])]),MapField (App "PVar" (List [App
+    "()" (List []),App "Ident" (List [App "()" (List []),Concat (List
+    [String "x",ShowInt FieldIndex])])]))]),App "UnGuardedRhs" (List [
+    App "()" (List []),Application (Concat (List [List [App "Var" (
+    List [App "()" (List []),App "UnQual" (List [App "()" (List []),
+    App "Ident" (List [App "()" (List []),Concat (List [String "t",
+    ShowInt CtorIndex])])])])],MapField (App "Var" (List [App "()" (
+    List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),Concat (List [String "x",ShowInt FieldIndex])]
+    )])]))]))]),App "Nothing" (List [])]))])]),MapCtor (App "QualStmt"
+    (List [App "()" (List []),App "Generator" (List [App "()" (List []
+    ),App "PVar" (List [App "()" (List []),App "Ident" (List [App "()"
+    (List []),Concat (List [String "t",ShowInt CtorIndex])])]),App
+    "InfixApp" (List [App "()" (List []),Application (List [App "Var"
+    (List [App "()" (List []),App "UnQual" (List [App "()" (List []),
+    App "Ident" (List [App "()" (List []),Concat (List [String "alts",
+    ShowInt CtorArity])])])]),App "Var" (List [App "()" (List []),App
+    "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
+    List []),String "rs"])])]),App "Var" (List [App "()" (List []),App
+    "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
+    List []),String "d"])])])]),App "QVarOp" (List [App "()" (List [])
+    ,App "UnQual" (List [App "()" (List []),App "Ident" (List [App
+    "()" (List []),String "const"])])]),App "RecConstr" (List [App
+    "()" (List []),App "UnQual" (List [App "()" (List []),App "Ident"
+    (List [App "()" (List []),CtorName])]),List []])])])]))])]),App
+    "Nothing" (List [])])]])])]]))]
 -- GENERATED STOP

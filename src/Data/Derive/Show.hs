@@ -45,17 +45,24 @@ import Data.Derive.Internal.Derivation
 
 makeShow :: Derivation
 makeShow = derivationCustomDSL "Show" custom $
-    List [Instance ["Show"] "Show" (List [App "InsDecl" (List [App
-    "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List [
-    String "showsPrec"]),List [App "PVar" (List [App "Ident" (List [
-    String "p"])]),App "PParen" (List [App "PApp" (List [App "UnQual"
-    (List [App "Ident" (List [CtorName])]),MapField (App "PVar" (List
-    [App "Ident" (List [Concat (List [String "x",ShowInt FieldIndex])]
-    )]))])])],App "Nothing" (List []),App "UnGuardedRhs" (List [App
-    "SpliceExp" (List [App "ParenSplice" (List [App "App" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String "show"]
-    )])]),App "Lit" (List [App "Int" (List [CtorIndex])])])])])]),App
-    "Nothing" (List [])]))])])])]
+    List [Instance ["Show"] "Show" (App "Just" (List [List [App
+    "InsDecl" (List [App "()" (List []),App "FunBind" (List [App "()"
+    (List []),MapCtor (App "Match" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),String "showsPrec"]),List [App
+    "PVar" (List [App "()" (List []),App "Ident" (List [App "()" (List
+    []),String "p"])]),App "PParen" (List [App "()" (List []),App
+    "PApp" (List [App "()" (List []),App "UnQual" (List [App "()" (
+    List []),App "Ident" (List [App "()" (List []),CtorName])]),
+    MapField (App "PVar" (List [App "()" (List []),App "Ident" (List [
+    App "()" (List []),Concat (List [String "x",ShowInt FieldIndex])])
+    ]))])])],App "UnGuardedRhs" (List [App "()" (List []),App
+    "SpliceExp" (List [App "()" (List []),App "ParenSplice" (List [App
+    "()" (List []),App "App" (List [App "()" (List []),App "Var" (List
+    [App "()" (List []),App "UnQual" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),String "show"])])]),App "Lit" (
+    List [App "()" (List []),App "Int" (List [App "()" (List []),
+    CtorIndex,ShowInt CtorIndex])])])])])]),App "Nothing" (List [])]))
+    ])])]]))]
 -- GENERATED STOP
 
 -- Left is a literal string, Right is a variable

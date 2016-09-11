@@ -2,6 +2,7 @@
 
 module Data.Derive.DSL.Derive(derive) where
 
+import Control.Arrow
 import Data.Derive.DSL.HSE
 import Data.Derive.DSL.DSL
 import Data.Derive.DSL.Apply
@@ -24,17 +25,31 @@ derive x = [simplifyDSL y | Guess y <- guess $ toOutput x]
 
 
 guess :: Output -> [Guess]
-guess (OApp "InstDecl" [OApp "Nothing" [], OList [], OList ctxt,name,typ,bod])
-    | OApp "UnQual" [OApp "Ident" [OString name]] <- name
-    , OList [OApp "TyParen" [OApp "TyApp"
-        [OApp "TyCon" [OApp "UnQual" [OApp "Ident" [OString nam]]]
-        ,OApp "TyVar" [OApp "Ident" [OString var]]]]] <- typ
+guess (OApp "InstDecl" [_,OApp "Nothing" [],rule,decls])
+    | OApp "IRule" [_, OApp "Nothing" [], ctx, ihead] <- unparen rule
+    , (name, types) <- unInstHead ihead
+    , OApp "UnQual" [_, OApp "Ident" [_, OString name]] <- name
+    , [OApp "TyParen" [_,OApp "TyApp"
+        [_,OApp "TyCon" [_,OApp "UnQual" [_,OApp "Ident" [_,OString nam]]]
+        ,OApp "TyVar" [_,OApp "Ident" [_,OString var]]]]] <- types
     , nam == dataName sample
-    , ctxt <- [x | OApp "ClassA" [OApp "UnQual" [OApp "Ident" [OString x]],_] <- map unparenA ctxt]
-    = [Guess $ Instance ctxt name y | Guess y <- guess bod]
+    = [Guess $ Instance (unContext ctx) name y | Guess y <- guess decls]
     where
-        unparenA (OApp "ParenA" [x]) = unparenA x
-        unparenA x = x
+        unContext (OApp "Just" [x])
+            | OApp "CxSingle" [_,x] <- x = unClass x
+            | OApp "CxTuple" [_,OList xs] <- x = concatMap unClass xs
+        unContext x = []
+
+        unClass (OApp "ClassA" [_,OApp "UnQual" [_,OApp "Ident" [_,OString x]],_]) = [x]
+        unClass _ = []
+
+        unInstHead (OApp "IHCon" [_,  name]) = (name, [])
+        unInstHead (OApp "IHInfix" [_, ty, name]) = (name, [ty])
+        unInstHead (OApp "IHParen" [_, x]) = unInstHead x
+        unInstHead (OApp "IHApp" [_, hd, ty]) = second (++[ty]) $ unInstHead hd
+
+        unparen (OApp p [_, x]) | "Paren" `isInfixOf` p = unparen x
+        unparen x = x
 
 guess (OList xs) = guessList xs
 guess o@(OApp op xs) = gssFold o ++ gssApp o ++ map (lift (App op)) (guessList xs)
@@ -93,22 +108,22 @@ guessList xs = mapMaybe sames $ map diffs $ sequence $ map guess xs
         diffs [] = []
 
 
-gssFold o@(OApp op [x,m,y]) = f True (x : follow True y) ++ f False (y : follow False x)
+gssFold o@(OApp op [pre,x,m,y]) = f True (x : follow True y) ++ f False (y : follow False x)
     where
-        follow dir (OApp op2 [a,m2,b]) | op == op2 && m == m2 = a2 : follow dir b2
+        follow dir (OApp op2 [pre2,a,m2,b]) | op == op2 && pre == pre2 && m == m2 = a2 : follow dir b2
             where (a2,b2) = if dir then (a,b) else (b,a)
         follow dir x = [x]
 
         f dir xs | length xs <= 2 = []
-        f dir xs = map (lift g) $ guess $ OList xs
-            where g = Fold (App op $ List [h,fromOut m,t])
+        f dir xs | pre:_ <- [d | Guess d <- guess pre] = map (lift $ g pre) $ guess $ OList xs
+            where g pre = Fold (App op $ List [pre,h,fromOut m,t])
                   (h,t) = if dir then (Head,Tail) else (Tail,Head)
 
 gssFold _ = []
 
 
-gssApp (OApp "App" [OApp "App" [x,y],z]) = map (lift Application) $ guess $ OList $ fromApp x ++ [y,z]
-    where fromApp (OApp "App" [x,y]) = fromApp x ++ [y]
+gssApp (OApp "App" [_,OApp "App" [_,x,y],z]) = map (lift Application) $ guess $ OList $ fromApp x ++ [y,z]
+    where fromApp (OApp "App" [_,x,y]) = fromApp x ++ [y]
           fromApp x = [x]
 gssApp _ = []
     

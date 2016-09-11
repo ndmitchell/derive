@@ -17,7 +17,7 @@ dslSYB = syb
 
 
 syb :: Data a => DSL -> Maybe a
-syb = dsimple & dlistAny & dapp -- & derr
+syb = dsimple & dlistAny & dapp -- & (\x -> error $ "Failed to generate for SYB, " ++ show x)
 
 lift :: (Data a, Data b) => (DSL -> Maybe b) -> (DSL -> Maybe a)
 lift f = maybe Nothing id . cast . f
@@ -66,14 +66,14 @@ dsimple :: Data a => DSL -> Maybe a
 dsimple = lift dinstance & lift dstring & lift dapplication & lift dmapctor & lift dsingle
 
 
-dinstance :: DSL -> Maybe Decl
+dinstance :: DSL -> Maybe (Decl ())
 dinstance x = do
     Instance _ name bod <- return x
     bod <- syb bod
-    return $ InstDecl sl Nothing []
-        [ClassA (UnQual $ Ident "Data") [TyVar $ Ident "d_type"]]
-        (UnQual $ Ident name) [TyVar $ Ident "d_type"]
-        bod
+    let ctx = ClassA () (UnQual () $ Ident () "Data") [TyVar () $ Ident () "d_type"]
+    let rule = IRule () Nothing (Just (CxSingle () ctx))
+                (IHApp () (IHCon () (UnQual () $ Ident () name)) (TyVar () $ Ident () "d_type"))
+    return $ InstDecl () Nothing rule bod
 
 
 dstring :: DSL -> Maybe String
@@ -82,29 +82,29 @@ dstring x = do
     return x
 
 
-dmapctor :: DSL -> Maybe Exp
+dmapctor :: DSL -> Maybe (Exp ())
 dmapctor x = do
-    App "List" (List [MapCtor x]) <- return x
+    App "List" (List [_, MapCtor x]) <- return x
     x <- syb x
-    return $ ListComp x [QualStmt $ Generator sl (PVar $ Ident "d_ctor")
-        (H.App (v "d_dataCtors") (Paren $ ExpTypeSig sl (v "undefined") (TyVar $ Ident "d_type")))]
+    return $ ListComp () x [QualStmt () $ Generator () (PVar () $ Ident () "d_ctor")
+        (H.App () (v "d_dataCtors") (Paren () $ ExpTypeSig () (v "undefined") (TyVar () $ Ident () "d_type")))]
 
 
-dsingle :: DSL -> Maybe Exp
-dsingle (App "Lit" (List [App "Int" (List [CtorArity])])) = Just $ Paren $ H.App (v "d_ctorArity") (v "d_ctor")
-dsingle (App "Lit" (List [App "Int" (List [CtorIndex])])) = Just $ Paren $ H.App (v "d_ctorIndex") (v "d_ctor")
-dsingle (App "RecConstr" (List [App "UnQual" (List [App "Ident" (List [CtorName])]),List []])) = Just $ Paren $
-    ExpTypeSig sl (H.App (v "d_ctorValue") (v "d_ctor")) (TyVar $ Ident "d_type")
+dsingle :: DSL -> Maybe (Exp ())
+dsingle (App "Lit" (List [App "()" (List []),App "Int" (List [App "()" (List []),CtorArity,ShowInt CtorArity])])) = Just $ Paren () $ H.App () (v "d_ctorArity") (v "d_ctor")
+dsingle (App "Lit" (List [App "()" (List []),App "Int" (List [App "()" (List []),CtorIndex,ShowInt CtorIndex])])) = Just $ Paren () $ H.App () (v "d_ctorIndex") (v "d_ctor")
+dsingle (App "RecConstr" (List [_, App "UnQual" (List [_, App "Ident" (List [_, CtorName])]),List []])) = Just $ Paren () $
+    ExpTypeSig () (H.App () (v "d_ctorValue") (v "d_ctor")) (TyVar () $ Ident () "d_type")
 dsingle _ = Nothing
 
 
-dapplication :: DSL -> Maybe Exp
+dapplication :: DSL -> Maybe (Exp ())
 dapplication x = do
     Application (List xs) <- return x
     syb $ f xs
     where
-        f (x:y:z) = f (App "App" (List [x,y]) : z)
+        f (x:y:z) = f (App "App" (List [App "()" $ List [],x,y]) : z)
         f [x] = x
 
 
-v = Var . UnQual . Ident
+v = Var () . UnQual () . Ident ()

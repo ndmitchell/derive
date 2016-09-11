@@ -28,13 +28,13 @@ exclude = ["ArbitraryOld","UniplateDirect","Ref","Serial","Binary","Typeable"]
 priority = ["Eq"]
 
 
-listType :: Decl
-listType = DataDecl sl DataType [] (Ident "[]") [UnkindedVar $ Ident "a"]
-    [QualConDecl sl [] [] (ConDecl (Ident "[]") [])
-    ,QualConDecl sl [] [] (ConDecl (Ident "Cons")
-        [TyVar (Ident "a")
-        ,TyApp (TyCon (UnQual (Ident "List"))) (TyVar (Ident "a"))])]
-    []
+listType :: Decl ()
+listType = DataDecl () (DataType ()) Nothing (DHApp () (DHead () (Ident () "[]")) (UnkindedVar () $ Ident () "a"))
+    [QualConDecl () Nothing Nothing (ConDecl () (Ident () "[]") [])
+    ,QualConDecl () Nothing Nothing (ConDecl () (Ident () "Cons")
+        [TyVar () (Ident () "a")
+        ,TyApp () (TyCon () (UnQual () (Ident () "List"))) (TyVar () (Ident () "a"))])]
+    Nothing
 
 
 -- test each derivation
@@ -62,14 +62,14 @@ test = do
     when (res /= ExitSuccess) $ error "Failed to typecheck results"
 
 
-testFile :: [(String,Decl)] -> Derivation -> IO ()
+testFile :: [(String,Decl ())] -> Derivation -> IO ()
 testFile types (Derivation name op) = do
     putStrLn $ "Testing " ++ name
     src <- readSrc $ "Data/Derive/" ++ name ++ ".hs"
     forM_ (srcTest src) $ \(typ,res) -> do
         let d = if tyRoot typ /= name then tyRoot typ else tyRoot $ head $ snd $ fromTyApps $ fromTyParen typ
         let grab x = fromMaybe (error $ "Error in tests, couldn't resolve type: " ++ x) $ lookup x types
-        let Right r = op typ grab (ModuleName "Example", grab d)
+        let Right r = op typ grab (ModuleName () "Example", grab d)
         when (not $ r `outEq` res) $
             error $ "Results don't match!\nExpected:\n" ++ showOut res ++ "\nGot:\n" ++ showOut r ++ "\n\n" ++ detailedNeq res r
 
