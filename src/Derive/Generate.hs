@@ -12,7 +12,7 @@ import Data.Char
 import Data.List
 
 
-evil = words "TTypeable Uniplate Data"
+evil = words "TTypeable Uniplate"
 
 -- generate extra information for each derivation
 generate :: IO ()
