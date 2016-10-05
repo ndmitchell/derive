@@ -41,6 +41,7 @@ fromTyParens = transform fromTyParen
 
 tyRoot = prettyPrint . fst . fromTyApps . fromTyParen
 
+isTyFun :: Type () -> Bool
 isTyFun TyFun{} = True
 isTyFun _ = False
 
@@ -76,7 +77,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
             | x ~= "id" && op ~= "." = y
             | y ~= "id" && op ~= "." = x
         fExp (InfixApp _ (Lit _ (String _ x _)) op (Lit _ (String _ y _))) | op ~= "++" = Lit () $ String () (x ++ y) (show $ x ++ y)
-        fExp (App _ (App _ (App _ flp f) x) y) | flp ~= "flip" = fExp $ appP (fExp $ appP f y) x        
+        fExp (App _ (App _ (App _ flp f) x) y) | flp ~= "flip" = fExp $ appP (fExp $ appP f y) x
         fExp (App _ (Paren _ x@App{}) y) = fExp $ App () x y
         fExp (App _ (Paren _ (InfixApp _ x op y)) z) | op ~= "." = fExp $ appP x $ fExp $ appP y z
         fExp (App _ op x) | op ~= "id" = x
@@ -157,7 +158,7 @@ simplify = transformBi fDecl . transformBi fMatch . transformBi fPat . transform
         fBinds a y = a y
 
         subst from to = transformBi $ \x -> if x == from then to else x
-        once x y = length (filter (== x) (universeBi y)) <= 1  
+        once x y = length (filter (== x) (universeBi y)) <= 1
 
         minPat o ps = transformBi f ps
             where
@@ -312,4 +313,3 @@ declName :: Decl () -> String
 declName (DataDecl _ _ _ name _ _) = prettyPrint $ fst $ fromDeclHead name
 declName (GDataDecl _ _ _ name _ _ _) = prettyPrint $ fst $ fromDeclHead name
 declName (TypeDecl _ name _) = prettyPrint $ fst $ fromDeclHead name
-

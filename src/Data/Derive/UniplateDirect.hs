@@ -94,33 +94,38 @@ makeUniplateDirect = derivationParams "UniplateDirect" $ \args grab (_,ty) -> si
     let known = map (declName &&& id) knownCtors
         grab2 x = fromMaybe (grab x) $ lookup x known
     in case args of
-        _ | not $ null [() | TyVar _ <- universeBi args] -> error "UniplateDirect only accepts monomorphic types"
+        _ | not $ null [() | TyVar () _ <- universeBi args] -> error "UniplateDirect only accepts monomorphic types"
         [] -> make True grab2 x x
-            where x = tyApps (tyCon $ dataDeclName ty) $ replicate (dataDeclArity ty) $ TyCon $ Special UnitCon
+            where x = tyApps (tyCon $ dataDeclName ty) $ replicate (dataDeclArity ty) $ TyCon () $ Special () (UnitCon ())
         [x] -> make True grab2 x x
         [x,y] -> make False grab2 x y
         _ -> error $ "UniplateDirect requires exactly one or two arguments, got " ++ show (length args)
-        
 
-make :: Bool -> (String -> DataDecl) -> Type -> Type -> Either String [Decl]
-make uni grab from to = Right [InstDecl sl Nothing [] [] (UnQual $ Ident $ if uni then "Uniplate" else "Biplate") (from : [to | not uni])
-        [InsDecl $ InlineSig sl True AlwaysActive (qname $ if uni then "uniplate" else "biplate"), InsDecl ms]]
+-- alwaysActive :: Activation ()
+-- alwaysActive = ActiveFrom () 0
+
+make :: Bool -> (String -> DataDecl) -> Type () -> Type () -> Either String [Decl ()]
+make uni grab from to =
+    Right [InstDecl () Nothing instRule
+        (Just [InsDecl () $ InlineSig () True Nothing (qname $ if uni then "uniplate" else "biplate"), InsDecl () ms])]
     where
+        headName = (UnQual () $ Ident () $ if uni then "Uniplate" else "Biplate")
+        instRule = IRule () Nothing Nothing (foldr (flip (IHApp ())) (IHCon () headName) (from : [to | not uni]))
         ty = grab $ tyRoot from
-        match pat bod = Match sl (Ident $ if uni then "uniplate" else "biplate") [pat] Nothing (UnGuardedRhs bod) Nothing
+        match pat bod = Match () (Ident () $ if uni then "uniplate" else "biplate") [pat] (UnGuardedRhs () bod) Nothing
         ms = if uni || from /= to
-             then FunBind $ map (uncurry match) (catMaybes bods) ++ [match (pVar "x") (var "plate" `App` var "x") | any isNothing bods]
-             else PatBind sl (pVar "biplate") (UnGuardedRhs $ var "plateSelf") Nothing
+             then FunBind () $ map (uncurry match) (catMaybes bods) ++ [match (pVar "x") (App () (var "plate") (var "x")) | any isNothing bods]
+             else PatBind () (pVar "biplate") (UnGuardedRhs () $ var "plateSelf") Nothing
         bods = run (fromTyParens to) $ mapM (make1 grab) $ substData from ty
 
 
-make1 :: (String -> DataDecl) -> (String,[Type]) -> S (Maybe (Pat, Exp))
+make1 :: (String -> DataDecl) -> (String,[Type ()]) -> S (Maybe (Pat (), Exp ()))
 make1 grab (name,tys) = do
     ops <- mapM (fmap show . operator grab) tys
     let vars = ['x':show i | i <- [1..length tys]]
-        pat = PParen $ PApp (qname name) $ map pVar vars
+        pat = PParen () $ PApp () (qname name) $ map pVar vars
         (good,bad) = span ((==) "|-" . fst) $ zip ops $ map var vars
-        bod = foldl (\x (y,z) -> InfixApp x (QVarOp $ UnQual $ Symbol y) z) (App (var "plate") $ paren $ apps (con name) (map snd good)) bad
+        bod = foldl (\x (y,z) -> InfixApp () x (QVarOp () $ UnQual () $ Symbol () y) z) (App () (var "plate") $ paren $ apps (con name) (map snd good)) bad
     return $ if all (== "|-") ops then Nothing else Just (pat,bod)
 
 
@@ -143,12 +148,12 @@ ansJoin [] = Miss
 ansJoin _ = Try
 
 
-type S a = State (Map.Map Type Ans) a
+type S a = State (Map.Map (Type ()) Ans) a
 
-run :: Type -> S a -> a
+run :: Type () -> S a -> a
 run to act = evalState act (Map.singleton to Hit)
 
-operator :: (String -> DataDecl) -> Type -> S Ans
+operator :: (String -> DataDecl) -> Type () -> S Ans
 operator grab from = do
     mp <- get
     case Map.lookup from mp of
@@ -165,7 +170,7 @@ operator grab from = do
                 else put s >> fix ans2
 
 
-operator2 :: (String -> DataDecl) -> Type -> S Ans
+operator2 :: (String -> DataDecl) -> Type () -> S Ans
 operator2 grab from
     | isTyFun from = return Try
     | Just from2 <- fromTyList from = fmap ansList $ operator grab from2
@@ -174,27 +179,34 @@ operator2 grab from
         Right ctrs -> fmap ansJoin $ mapM (operator grab) $ concatMap snd ctrs
 
 
-subst :: Type -> Decl -> Either Type [(String,[Type])]
+subst :: Type () -> Decl () -> Either (Type ()) [(String,[Type ()])]
 subst ty x@TypeDecl{} = Left $ substType ty x
 subst ty x = Right $ substData ty x
 
-substData :: Type -> Decl -> [(String,[Type])]
+substData :: Type () -> Decl () -> [(String,[Type ()])]
 substData ty dat = [(ctorDeclName x, map (fromTyParens . transform f . snd) $ ctorDeclFields x) | x <- dataDeclCtors dat]
     where
         rep = zip (dataDeclVars dat) (snd $ fromTyApps $ fromTyParen ty)
-        f (TyVar x) = fromMaybe (TyVar x) $ lookup (prettyPrint x) rep
+        f (TyVar () x) = fromMaybe (TyVar () x) $ lookup (prettyPrint x) rep
         f x = x
 
-substType :: Type -> Decl -> Type
-substType ty (TypeDecl _ _ vars d) = fromTyParens $ transform f d
+substType :: Type () -> Decl () -> Type ()
+substType ty (TypeDecl () dhead d) = fromTyParens $ transform f d
     where
+        vars = collect dhead
         rep = zip (map prettyPrint vars) (snd $ fromTyApps ty)
-        f (TyVar x) = fromMaybe (TyVar x) $ lookup (prettyPrint x) rep
+        f (TyVar () x) = fromMaybe (TyVar () x) $ lookup (prettyPrint x) rep
         f x = x
+        collect (DHead () _) = []
+        collect (DHInfix () bind _) = [bind]
+        collect (DHParen () h) = collect h
+        collect (DHApp () h bind) = bind : collect h
 
+clearAnn :: Functor f => f a -> f ()
+clearAnn = fmap (const ())
 
-knownCtors :: [Decl]
-knownCtors = map (fromParseResult . parseDecl)
+knownCtors :: [Decl ()]
+knownCtors = map (fromParseResult . fmap clearAnn . parseDecl)
     ["data Int = Int"
     ,"data Bool = Bool"
     ,"data Char = Char"
@@ -210,11 +222,12 @@ knownCtors = map (fromParseResult . parseDecl)
     listCtor :
     map tupleDefn (0:[2..32])
 
-listCtor = DataDecl sl  DataType [] (Ident "[]") [UnkindedVar $ Ident "a"]
-    [QualConDecl sl [] [] $ ConDecl (Ident "[]") []
-    ,QualConDecl sl [] [] $ ConDecl (Ident "(:)") [tyVar "a", TyList $ tyVar "a"]] []
+listCtor = DataDecl ()  (DataType ()) Nothing (DHApp () (DHead () $ Ident () "[]") (UnkindedVar () $ Ident () "a"))
+    [QualConDecl () Nothing Nothing $ ConDecl () (Ident () "[]") []
+    ,QualConDecl () Nothing Nothing $ ConDecl () (Ident () "(:)") [tyVar "a", TyList () $ tyVar "a"]] Nothing
 
-tupleDefn :: Int -> Decl
-tupleDefn n = DataDecl sl DataType [] (Ident s) (map (UnkindedVar . Ident) vars) [QualConDecl sl [] [] $ ConDecl (Ident s) (map tyVar vars)] []
+tupleDefn :: Int -> Decl ()
+tupleDefn n = DataDecl () (DataType ()) Nothing dhead [QualConDecl () Nothing Nothing $ ConDecl () (Ident () s) (map tyVar vars)] Nothing
     where s = "(" ++ replicate (n - 1) ',' ++ ")"
           vars = ['v':show i | i <- [1..n]]
+          dhead = foldr (flip (DHApp ())) (DHead () $ Ident () s) (map (UnkindedVar () . Ident ()) vars)
