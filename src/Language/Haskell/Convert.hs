@@ -307,13 +307,13 @@ instance Convert TH.Kind (HS.Kind ()) where
 #endif
 
 #if __GLASGOW_HASKELL__ < 709
-instance Convert TH.Pred HS.Asst where
-    conv (ClassP x y) = ClassA (UnQual $ c x) $ c y
-    conv (TH.EqualP x y) = HS.EqualP (c x) $ c y
+instance Convert TH.Pred (HS.Asst ()) where
+    conv (ClassP x y) = ClassA () (UnQual () $ c x) $ c y
+    conv (TH.EqualP x y) = HS.EqualP () (c x) $ c y
 
-instance Convert HS.Asst TH.Pred where
-    conv (ClassA x y) = ClassP (c x) $ c y
-    conv (HS.EqualP x y) = TH.EqualP (c x) $ c y
+instance Convert (HS.Asst ()) TH.Pred where
+    conv (ClassA _ x y) = ClassP (c x) $ c y
+    conv (HS.EqualP _ x y) = TH.EqualP (c x) $ c y
 #endif
 
 instance Convert (HS.TyVarBind ()) TH.TyVarBndr where
