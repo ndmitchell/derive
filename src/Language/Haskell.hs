@@ -1,4 +1,4 @@
-
+{-# LANGUAGE PatternGuards #-}
 module Language.Haskell(module Language.Haskell, module Language.Haskell.Exts) where
 
 import Language.Haskell.Exts hiding (var,app,binds,paren,FieldDecl)
