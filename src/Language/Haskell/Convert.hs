@@ -39,11 +39,11 @@ instance Convert a b => Convert [a] [b] where
 instance Convert TH.Dec (HS.Decl ()) where
     conv x = case x of
 #if __GLASGOW_HASKELL__ >= 800
-        DataD cxt n vs _ con ds -> f DataType cxt n vs con ds
-        NewtypeD cxt n vs _ con ds -> f NewType cxt n vs [con] ds
+        DataD cxt n vs _ con ds -> f (DataType ()) cxt n vs con ds
+        NewtypeD cxt n vs _ con ds -> f (NewType ()) cxt n vs [con] ds
         where
-            f :: DataOrNew -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> unused -> HS.Decl
-            f t cxt n vs con _ = DataDecl () t (c cxt) (dh (c n) (c vs)) (c con) Nothing
+            f :: DataOrNew () -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> unused -> HS.Decl ()
+            f t cxt n vs con _ = DataDecl () t (Just $ c cxt) (dh (c n) (c vs)) (c con) Nothing
 #else
         DataD cxt n vs con ds -> f (DataType ()) cxt n vs con ds
         NewtypeD cxt n vs con ds -> f (NewType ()) cxt n vs [con] ds
@@ -86,9 +86,9 @@ instance Convert TH.Con (HS.ConDecl ()) where
 
 instance Convert TH.StrictType (HS.Type ()) where
 #if __GLASGOW_HASKELL__ >= 800
-    conv (Bang SourceUnpack SourceStrict, x) = TyBang UnpackedTy $ TyBang BangedTy $ c x
-    conv (Bang SourceUnpack _, x) = TyBang UnpackedTy $ c x
-    conv (Bang _ SourceStrict, x) = TyBang BangedTy $ c x
+    conv (Bang SourceUnpack SourceStrict, x) = TyBang () (BangedTy ()) (Unpack ()) $ c x
+    conv (Bang SourceUnpack _, x) = TyBang () (NoStrictAnnot ()) (Unpack ()) $ c x
+    conv (Bang _ SourceStrict, x) = TyBang () (BangedTy ()) (NoUnpack ()) $ c x
     conv (Bang _ _, x) = c x
 #else
     conv (IsStrict, x) = TyBang () (BangedTy ()) (NoUnpack ()) $ c x
@@ -126,10 +126,10 @@ instance Convert (HS.Decl ()) TH.Dec where
     conv (TypeSig _ [nam] typ) = SigD (c nam) (c $ foralls typ)
 #if __GLASGOW_HASKELL__ >= 800
     --  ! certainly BROKEN because it ignores contexts
-    conv (DataDecl _ DataType ctx nam typ cs ds) =
+    conv (DataDecl _ DataType{} ctx (fromDeclHead -> (nam, typ)) cs ds) =
       DataD (c ctx) (c nam) (c typ) Nothing (c cs) [] -- (c (map fst ds))
-    conv (DataDecl _ NewType ctx nam typ [con] ds) =
-      NewtypeD (c ctx) (c nam) (c typ) Nothing (c con) [] -- (c (map fst ds)) 
+    conv (DataDecl _ NewType{} ctx (fromDeclHead -> (nam, typ)) [con] ds) =
+      NewtypeD (c ctx) (c nam) (c typ) Nothing (c con) [] -- (c (map fst ds))
 #else
     conv (DataDecl _ DataType{} ctx (fromDeclHead -> (nam, typ)) cs ds) =
       DataD (c ctx) (c nam) (c typ) (c cs) []
@@ -151,7 +151,7 @@ instance Convert (HSE.FieldDecl ()) [TH.VarStrictType] where
 
 instance Convert (HS.Type ()) TH.StrictType where
 #if __GLASGOW_HASKELL__ >= 800
-    conv (TyBang BangedTy t) = (Bang NoSourceUnpackedness SourceStrict, c t)
+    conv (TyBang _ BangedTy{} _ t) = (Bang NoSourceUnpackedness SourceStrict, c t)
 #else
     conv (TyBang _ BangedTy{} _ t) = (IsStrict, c t)
 #if __GLASGOW_HASKELL__ >= 704
@@ -219,7 +219,7 @@ instance Convert (HS.Exp ()) TH.Exp where
     conv (List _ x) = ListE (c x)
     conv (ExpTypeSig _ x y) = SigE (c x) (c y)
     conv (RecConstr _ x y) = RecConE (c x) (c y)
-    conv (RecUpdate _ x y) = RecUpdE (c x) (c y) 
+    conv (RecUpdate _ x y) = RecUpdE (c x) (c y)
     -- Work around bug 3395, convert to do notation instead
     conv (ListComp _ x y) = CompE $ c $ y ++ [QualStmt () $ Qualifier () x]
 
@@ -307,13 +307,13 @@ instance Convert TH.Kind (HS.Kind ()) where
 #endif
 
 #if __GLASGOW_HASKELL__ < 709
-instance Convert TH.Pred HS.Asst where
-    conv (ClassP x y) = ClassA (UnQual $ c x) $ c y
-    conv (TH.EqualP x y) = HS.EqualP (c x) $ c y
+instance Convert TH.Pred (HS.Asst ()) where
+    conv (ClassP x y) = ClassA () (UnQual () $ c x) $ c y
+    conv (TH.EqualP x y) = HS.EqualP () (c x) $ c y
 
-instance Convert HS.Asst TH.Pred where
-    conv (ClassA x y) = ClassP (c x) $ c y
-    conv (HS.EqualP x y) = TH.EqualP (c x) $ c y
+instance Convert (HS.Asst ()) TH.Pred where
+    conv (ClassA _ x y) = ClassP (c x) $ c y
+    conv (HS.EqualP _ x y) = TH.EqualP (c x) $ c y
 #endif
 
 instance Convert (HS.TyVarBind ()) TH.TyVarBndr where

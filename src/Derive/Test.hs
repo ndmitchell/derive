@@ -25,7 +25,7 @@ overlaps =
 exclude = ["ArbitraryOld","UniplateDirect","Ref","Serial","Binary","Typeable"]
 
 -- These must be first and in every set
-priority = ["Eq"]
+priority = []
 
 
 listType :: Decl ()

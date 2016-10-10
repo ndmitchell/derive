@@ -83,11 +83,20 @@ makeUniplateTypeable = derivationCustomDSL "UniplateTypeable" custom $
     CtorName])])])])]]))]),App "Nothing" (List [])]))])])]])])]
 -- GENERATED STOP
 
-
-custom (_,d) [InstDecl x1 x2 x3 _ x5 _ x7] = [InstDecl x1 x2 x3 x4 x5 x6 x7]
+-- InstDecl SrcLoc (Maybe Overlap) [TyVarBind] Context QName [Type] [InstDecl]
+-- InstDecl l (Maybe (Overlap l)) (InstRule l) (Maybe [InstDecl l])
+custom x [InstDecl () x2 (IParen () rule) mbDecl] = custom x [InstDecl () x2 rule mbDecl]
+custom (_,d) [InstDecl () x2 (IRule () x3 _ ihead) x7] = [InstDecl () x2 (IRule () x3 x4 iheadOut) x7]
     where
+        (_x6, x5) = collect [] ihead
         vars = dataDeclVars d
-        dd = (if null vars then id else TyParen) $ tyApps (tyCon $ dataDeclName d) (map tyVar vars)
-        x4 = concatMap f vars ++ [ClassA (qname x) [tyVar "to"] | x <- ["Typeable","Uniplate"]]
+        dd = (if null vars then id else TyParen ()) $ tyApps (tyCon $ dataDeclName d) (map tyVar vars)
+        x4 = Just $ CxTuple () $
+          concatMap f vars ++ [ClassA () (qname x) [tyVar "to"] | x <- ["Typeable","Uniplate"]]
         x6 = [dd, tyVar "to"]
-        f v = [ClassA (qname "Typeable") [tyVar v], ClassA (qname "PlateAll") [tyVar v, tyVar "to"]]
+        iheadOut = foldr (flip (IHApp ())) (IHCon () x5) x6
+        f v = [ClassA () (qname "Typeable") [tyVar v], ClassA () (qname "PlateAll") [tyVar v, tyVar "to"]]
+        collect acc (IHCon () qname) = (acc, qname)
+        collect acc (IHInfix () arg qname) = (arg:acc, qname)
+        collect acc (IHParen () ih) = collect acc ih
+        collect acc (IHApp () ih arg) = collect (arg:acc) ih
