@@ -3,7 +3,7 @@ build-type:     Default
 name:           derive
 version:        2.5.26
 build-type:     Simple
-copyright:      Neil Mitchell 2006-2016
+copyright:      Neil Mitchell 2006-2017
 author:         Neil Mitchell <ndmitchell@gmail.com>
 maintainer:     Neil Mitchell <ndmitchell@gmail.com>
 homepage:       https://github.com/ndmitchell/derive#readme
