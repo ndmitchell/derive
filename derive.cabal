@@ -36,7 +36,7 @@ library
         base == 4.*,
         filepath, syb, template-haskell, containers, pretty,
         directory, process, bytestring,
-        haskell-src-exts >= 1.17 && < 1.18,
+        haskell-src-exts >= 1.18 && < 1.19,
         transformers >= 0.2,
         uniplate >= 1.5 && < 1.7
 
@@ -68,16 +68,11 @@ library
         Data.Derive.Binary
         Data.Derive.BinaryDefer
         Data.Derive.Bounded
-        Data.Derive.Data
         Data.Derive.DataAbstract
         Data.Derive.Default
-        Data.Derive.Enum
         Data.Derive.EnumCyclic
-        Data.Derive.Eq
         Data.Derive.Fold
-        Data.Derive.Foldable
         Data.Derive.From
-        Data.Derive.Functor
         Data.Derive.Has
         Data.Derive.Is
         Data.Derive.JSON
@@ -85,15 +80,10 @@ library
         Data.Derive.Lens
         Data.Derive.Monoid
         Data.Derive.NFData
-        Data.Derive.Ord
-        Data.Derive.Read
         Data.Derive.Ref
         Data.Derive.Serial
         Data.Derive.Serialize
         Data.Derive.Set
-        Data.Derive.Show
-        Data.Derive.Traversable
-        Data.Derive.Typeable
         Data.Derive.UniplateDirect
         Data.Derive.UniplateTypeable
         Data.Derive.Update

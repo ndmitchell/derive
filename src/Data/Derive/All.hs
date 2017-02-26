@@ -11,16 +11,11 @@ import Data.Derive.Arities             as D
 import Data.Derive.Binary              as D
 import Data.Derive.BinaryDefer         as D
 import Data.Derive.Bounded             as D
-import Data.Derive.Data                as D
 import Data.Derive.DataAbstract        as D
 import Data.Derive.Default             as D
-import Data.Derive.Enum                as D
 import Data.Derive.EnumCyclic          as D
-import Data.Derive.Eq                  as D
 import Data.Derive.Fold                as D
-import Data.Derive.Foldable            as D
 import Data.Derive.From                as D
-import Data.Derive.Functor             as D
 import Data.Derive.Has                 as D
 import Data.Derive.Is                  as D
 import Data.Derive.JSON                as D
@@ -28,18 +23,13 @@ import Data.Derive.LazySet             as D
 import Data.Derive.Lens                as D
 import Data.Derive.Monoid              as D
 import Data.Derive.NFData              as D
-import Data.Derive.Ord                 as D
-import Data.Derive.Read                as D
 import Data.Derive.Ref                 as D
 import Data.Derive.Serial              as D
 import Data.Derive.Serialize           as D
 import Data.Derive.Set                 as D
-import Data.Derive.Show                as D
-import Data.Derive.Traversable         as D
-import Data.Derive.Typeable            as D
 import Data.Derive.UniplateDirect      as D
 import Data.Derive.UniplateTypeable    as D
 import Data.Derive.Update              as D
 derivations :: [Derivation]
-derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeData,makeDataAbstract,makeDefault,makeEnum,makeEnumCyclic,makeEq,makeFold,makeFoldable,makeFrom,makeFunctor,makeHas,makeIs,makeJSON,makeLazySet,makeLens,makeMonoid,makeNFData,makeOrd,makeRead,makeRef,makeSerial,makeSerialize,makeSet,makeShow,makeTraversable,makeTypeable,makeUniplateDirect,makeUniplateTypeable,makeUpdate]
+derivations = [makeArbitrary,makeArbitraryOld,makeArities,makeBinary,makeBinaryDefer,makeBounded,makeDataAbstract,makeDefault,makeEnumCyclic,makeFold,makeFrom,makeHas,makeIs,makeJSON,makeLazySet,makeLens,makeMonoid,makeNFData,makeRef,makeSerial,makeSerialize,makeSet,makeUniplateDirect,makeUniplateTypeable,makeUpdate]
 -- GENERATED STOP

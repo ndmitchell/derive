@@ -35,16 +35,11 @@ Data.Derive is not limited to any prebuild set of derivations, see later for how
 * **[Binary](http://hackage.haskell.org/packages/archive/binary/latest/doc/html/Data-Binary.html#t%3ABinary)** - from the library [binary](http://hackage.haskell.org/package/binary)
 * **[BinaryDefer](http://hackage.haskell.org/packages/archive/binarydefer/latest/doc/html/Data-Binary-Defer.html#t%3ABinaryDefer)** - from the library [binarydefer](http://hackage.haskell.org/package/binarydefer)
 * **[Bounded](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Prelude.html#t%3ABounded)** - from the library [base](http://hackage.haskell.org/package/base)
-* **[Data](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Data.html#t%3AData)** - from the library [base](http://hackage.haskell.org/package/base)
 * **[DataAbstract](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Data.html#t%3ADataAbstract)** - from the library [base](http://hackage.haskell.org/package/base)
 * **[Default](http://hackage.haskell.org/packages/archive/derive/latest/doc/html/Data-Derive-Class-Default.html#t%3ADefault)** - from the library [derive](http://hackage.haskell.org/package/derive)
-* **[Enum](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Prelude.html#t%3AEnum)** - from the library [base](http://hackage.haskell.org/package/base)
 * **[EnumCyclic](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Prelude.html#t%3AEnum)** - from the library [base](http://hackage.haskell.org/package/base)
-* **[Eq](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Prelude.html#t%3AEq)** - from the library [base](http://hackage.haskell.org/package/base)
 * **[Fold](http://hackage.haskell.org/packages/archive/derive/latest/doc/html/Data-Derive-Fold.html)**
-* **[Foldable](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Foldable.html#t%3AFoldable)** - from the library [base](http://hackage.haskell.org/package/base)
 * **[From](http://hackage.haskell.org/packages/archive/derive/latest/doc/html/Data-Derive-From.html)**
-* **[Functor](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Prelude.html#t%3AFunctor)** - from the library [base](http://hackage.haskell.org/package/base)
 * **[Has](http://hackage.haskell.org/packages/archive/derive/latest/doc/html/Data-Derive-Has.html)**
 * **[Is](http://hackage.haskell.org/packages/archive/derive/latest/doc/html/Data-Derive-Is.html)**
 * **[JSON](http://hackage.haskell.org/packages/archive/json/latest/doc/html/Text-JSON.html#t%3AJSON)** - from the library [json](http://hackage.haskell.org/package/json)
@@ -52,15 +47,10 @@ Data.Derive is not limited to any prebuild set of derivations, see later for how
 * **[Lens](http://hackage.haskell.org/packages/archive/data/lens/doc/html/Data-Lens-Common.html#t%3ALens)** - from the library [data-lens](http://hackage.haskell.org/package/data-lens)
 * **[Monoid](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Monoid.html#t%3AMonoid)** - from the library [base](http://hackage.haskell.org/package/base)
 * **[NFData](http://hackage.haskell.org/packages/archive/deepseq/latest/doc/html/Control-DeepSeq.html#t%3ANFData)** - from the library [deepseq](http://hackage.haskell.org/package/deepseq)
-* **[Ord](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Prelude.html#t%3AOrd)** - from the library [base](http://hackage.haskell.org/package/base)
-* **[Read](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Prelude.html#t%3ARead)** - from the library [base](http://hackage.haskell.org/package/base)
 * **[Ref](http://hackage.haskell.org/packages/archive/derive/latest/doc/html/Data-Derive-Ref.html)**
 * **[Serial](http://hackage.haskell.org/packages/archive/smallcheck/latest/doc/html/Test-SmallCheck.html#t%3ASerial)** - from the library [smallcheck](http://hackage.haskell.org/package/smallcheck)
 * **[Serialize](http://hackage.haskell.org/packages/archive/cereal/latest/doc/html/Data-Serialize.html#t%3ASerialize)** - from the library [cereal](http://hackage.haskell.org/package/cereal)
 * **[Set](http://hackage.haskell.org/packages/archive/derive/latest/doc/html/Data-Derive-Set.html)**
-* **[Show](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Prelude.html#t%3AShow)** - from the library [base](http://hackage.haskell.org/package/base)
-* **[Traversable](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Traversable.html#t%3ATraversable)** - from the library [base](http://hackage.haskell.org/package/base)
-* **[Typeable](http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Typeable.html#t%3ATypeable)** - from the library [base](http://hackage.haskell.org/package/base)
 * **[UniplateDirect](http://hackage.haskell.org/packages/archive/uniplate/latest/doc/html/Data-Generics-Uniplate-Direct.html#t%3AUniplateDirect)** - from the library [uniplate](http://hackage.haskell.org/package/uniplate)
 * **[UniplateTypeable](http://hackage.haskell.org/packages/archive/uniplate/latest/doc/html/Data-Generics-Uniplate-Typeable.html#t%3AUniplateTypeable)** - from the library [uniplate](http://hackage.haskell.org/package/uniplate)
 * **[Update](http://hackage.haskell.org/packages/archive/derive/latest/doc/html/Data-Derive-Update.html)**

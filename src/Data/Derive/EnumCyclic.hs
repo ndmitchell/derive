@@ -31,75 +31,122 @@ makeEnumCyclic :: Derivation
 makeEnumCyclic = derivationDSL "EnumCyclic" dslEnumCyclic
 
 dslEnumCyclic =
-    List [Instance [] "Enum" (List [App "InsDecl" (List [App "FunBind"
-    (List [Concat (List [MapCtor (App "Match" (List [App "Ident" (List
-    [String "toEnum"]),List [App "PLit" (List [App "Signless" (List []
-    ),App "Int" (List [CtorIndex])])],App "Nothing" (List []),App
-    "UnGuardedRhs" (List [App "RecConstr" (List [App "UnQual" (List [
-    App "Ident" (List [CtorName])]),List []])]),App "Nothing" (List []
-    )])),List [App "Match" (List [App "Ident" (List [String "toEnum"])
-    ,List [App "PVar" (List [App "Ident" (List [String "n"])])],App
-    "Nothing" (List []),App "UnGuardedRhs" (List [App "InfixApp" (List
-    [App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "error"])])]),App "QVarOp" (List [App "UnQual" (List [App "Symbol"
-    (List [String "$"])])]),Fold (App "InfixApp" (List [Head,App
-    "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [String
-    "++"])])]),Tail])) (List [App "Lit" (List [App "String" (List [
-    String "toEnum "])]),App "App" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "show"])])]),App "Var" (
-    List [App "UnQual" (List [App "Ident" (List [String "n"])])])]),
-    App "Lit" (List [App "String" (List [Concat (List [String
+    List [Instance [] "Enum" (App "Just" (List [List [App "InsDecl" (
+    List [App "()" (List []),App "FunBind" (List [App "()" (List []),
+    Concat (List [MapCtor (App "Match" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),String "toEnum"]),List [App
+    "PLit" (List [App "()" (List []),App "Signless" (List [App "()" (
+    List [])]),App "Int" (List [App "()" (List []),CtorIndex,ShowInt
+    CtorIndex])])],App "UnGuardedRhs" (List [App "()" (List []),App
+    "RecConstr" (List [App "()" (List []),App "UnQual" (List [App "()"
+    (List []),App "Ident" (List [App "()" (List []),CtorName])]),List
+    []])]),App "Nothing" (List [])])),List [App "Match" (List [App
+    "()" (List []),App "Ident" (List [App "()" (List []),String
+    "toEnum"]),List [App "PVar" (List [App "()" (List []),App "Ident"
+    (List [App "()" (List []),String "n"])])],App "UnGuardedRhs" (List
+    [App "()" (List []),App "InfixApp" (List [App "()" (List []),App
+    "Var" (List [App "()" (List []),App "UnQual" (List [App "()" (List
+    []),App "Ident" (List [App "()" (List []),String "error"])])]),App
+    "QVarOp" (List [App "()" (List []),App "UnQual" (List [App "()" (
+    List []),App "Symbol" (List [App "()" (List []),String "$"])])]),
+    Fold (App "InfixApp" (List [App "()" (List []),Head,App "QVarOp" (
+    List [App "()" (List []),App "UnQual" (List [App "()" (List []),
+    App "Symbol" (List [App "()" (List []),String "++"])])]),Tail])) (
+    List [App "Lit" (List [App "()" (List []),App "String" (List [App
+    "()" (List []),String "toEnum ",String "toEnum "])]),App "App" (
+    List [App "()" (List []),App "Var" (List [App "()" (List []),App
+    "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
+    List []),String "show"])])]),App "Var" (List [App "()" (List []),
+    App "UnQual" (List [App "()" (List []),App "Ident" (List [App "()"
+    (List []),String "n"])])])]),App "Lit" (List [App "()" (List []),
+    App "String" (List [App "()" (List []),Concat (List [String
+    ", not defined for ",DataName]),Concat (List [String
     ", not defined for ",DataName])])])])])]),App "Nothing" (List [])]
-    )]])])]),App "InsDecl" (List [App "FunBind" (List [MapCtor (App
-    "Match" (List [App "Ident" (List [String "fromEnum"]),List [App
-    "PParen" (List [App "PRec" (List [App "UnQual" (List [App "Ident"
-    (List [CtorName])]),List []])])],App "Nothing" (List []),App
-    "UnGuardedRhs" (List [App "Lit" (List [App "Int" (List [CtorIndex]
-    )])]),App "Nothing" (List [])]))])]),App "InsDecl" (List [App
-    "FunBind" (List [List [App "Match" (List [App "Ident" (List [
-    String "succ"]),List [App "PVar" (List [App "Ident" (List [String
-    "a"])])],App "Nothing" (List []),App "UnGuardedRhs" (List [App
-    "If" (List [App "InfixApp" (List [App "Var" (List [App "UnQual" (
-    List [App "Ident" (List [String "b"])])]),App "QVarOp" (List [App
-    "UnQual" (List [App "Symbol" (List [String "=="])])]),App "App" (
-    List [App "Var" (List [App "UnQual" (List [App "Ident" (List [
-    String "length"])])]),App "List" (List [MapCtor (App "RecConstr" (
-    List [App "UnQual" (List [App "Ident" (List [CtorName])]),List []]
-    ))])])]),App "App" (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "toEnum"])])]),App "Lit" (List [App "Int" (
-    List [Int 0])])]),App "App" (List [App "Var" (List [App "UnQual" (
-    List [App "Ident" (List [String "toEnum"])])]),App "Paren" (List [
-    App "InfixApp" (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "b"])])]),App "QVarOp" (List [App "UnQual" (
-    List [App "Symbol" (List [String "+"])])]),App "Lit" (List [App
-    "Int" (List [Int 1])])])])])])]),App "Just" (List [App "BDecls" (
-    List [List [App "PatBind" (List [App "PVar" (List [App "Ident" (
-    List [String "b"])]),App "UnGuardedRhs" (List [App "App" (List [
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "fromEnum"])])]),App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "a"])])])])]),App "Nothing" (List [])])]])])])]])]),
-    App "InsDecl" (List [App "FunBind" (List [List [App "Match" (List
-    [App "Ident" (List [String "pred"]),List [App "PVar" (List [App
-    "Ident" (List [String "a"])])],App "Nothing" (List []),App
-    "UnGuardedRhs" (List [App "If" (List [App "InfixApp" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String "b"])])
-    ]),App "QVarOp" (List [App "UnQual" (List [App "Symbol" (List [
-    String "=="])])]),App "Lit" (List [App "Int" (List [Int 0])])]),
-    App "App" (List [App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "toEnum"])])]),App "Paren" (List [App "App" (List [
-    App "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "length"])])]),App "List" (List [MapCtor (App "RecConstr" (List [
-    App "UnQual" (List [App "Ident" (List [CtorName])]),List []]))])])
-    ])]),App "App" (List [App "Var" (List [App "UnQual" (List [App
-    "Ident" (List [String "toEnum"])])]),App "Paren" (List [App
-    "InfixApp" (List [App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "b"])])]),App "QVarOp" (List [App "UnQual" (List [
-    App "Symbol" (List [String "-"])])]),App "Lit" (List [App "Int" (
-    List [Int 1])])])])])])]),App "Just" (List [App "BDecls" (List [
-    List [App "PatBind" (List [App "PVar" (List [App "Ident" (List [
-    String "b"])]),App "UnGuardedRhs" (List [App "App" (List [App
-    "Var" (List [App "UnQual" (List [App "Ident" (List [String
-    "fromEnum"])])]),App "Var" (List [App "UnQual" (List [App "Ident"
-    (List [String "a"])])])])]),App "Nothing" (List [])])]])])])]])])]
-    )]
+    )]])])]),App "InsDecl" (List [App "()" (List []),App "FunBind" (
+    List [App "()" (List []),MapCtor (App "Match" (List [App "()" (
+    List []),App "Ident" (List [App "()" (List []),String "fromEnum"])
+    ,List [App "PParen" (List [App "()" (List []),App "PRec" (List [
+    App "()" (List []),App "UnQual" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),CtorName])]),List []])])],App
+    "UnGuardedRhs" (List [App "()" (List []),App "Lit" (List [App "()"
+    (List []),App "Int" (List [App "()" (List []),CtorIndex,ShowInt
+    CtorIndex])])]),App "Nothing" (List [])]))])]),App "InsDecl" (List
+    [App "()" (List []),App "FunBind" (List [App "()" (List []),List [
+    App "Match" (List [App "()" (List []),App "Ident" (List [App "()"
+    (List []),String "succ"]),List [App "PVar" (List [App "()" (List [
+    ]),App "Ident" (List [App "()" (List []),String "a"])])],App
+    "UnGuardedRhs" (List [App "()" (List []),App "If" (List [App "()"
+    (List []),App "InfixApp" (List [App "()" (List []),App "Var" (List
+    [App "()" (List []),App "UnQual" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),String "b"])])]),App "QVarOp" (
+    List [App "()" (List []),App "UnQual" (List [App "()" (List []),
+    App "Symbol" (List [App "()" (List []),String "=="])])]),App "App"
+    (List [App "()" (List []),App "Var" (List [App "()" (List []),App
+    "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
+    List []),String "length"])])]),App "List" (List [App "()" (List []
+    ),MapCtor (App "RecConstr" (List [App "()" (List []),App "UnQual"
+    (List [App "()" (List []),App "Ident" (List [App "()" (List []),
+    CtorName])]),List []]))])])]),App "App" (List [App "()" (List []),
+    App "Var" (List [App "()" (List []),App "UnQual" (List [App "()" (
+    List []),App "Ident" (List [App "()" (List []),String "toEnum"])])
+    ]),App "Lit" (List [App "()" (List []),App "Int" (List [App "()" (
+    List []),Int 0,ShowInt (Int 0)])])]),App "App" (List [App "()" (
+    List []),App "Var" (List [App "()" (List []),App "UnQual" (List [
+    App "()" (List []),App "Ident" (List [App "()" (List []),String
+    "toEnum"])])]),App "Paren" (List [App "()" (List []),App
+    "InfixApp" (List [App "()" (List []),App "Var" (List [App "()" (
+    List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),String "b"])])]),App "QVarOp" (List [App "()"
+    (List []),App "UnQual" (List [App "()" (List []),App "Symbol" (
+    List [App "()" (List []),String "+"])])]),App "Lit" (List [App
+    "()" (List []),App "Int" (List [App "()" (List []),Int 1,ShowInt (
+    Int 1)])])])])])])]),App "Just" (List [App "BDecls" (List [App
+    "()" (List []),List [App "PatBind" (List [App "()" (List []),App
+    "PVar" (List [App "()" (List []),App "Ident" (List [App "()" (List
+    []),String "b"])]),App "UnGuardedRhs" (List [App "()" (List []),
+    App "App" (List [App "()" (List []),App "Var" (List [App "()" (
+    List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),String "fromEnum"])])]),App "Var" (List [App
+    "()" (List []),App "UnQual" (List [App "()" (List []),App "Ident"
+    (List [App "()" (List []),String "a"])])])])]),App "Nothing" (List
+    [])])]])])])]])]),App "InsDecl" (List [App "()" (List []),App
+    "FunBind" (List [App "()" (List []),List [App "Match" (List [App
+    "()" (List []),App "Ident" (List [App "()" (List []),String "pred"
+    ]),List [App "PVar" (List [App "()" (List []),App "Ident" (List [
+    App "()" (List []),String "a"])])],App "UnGuardedRhs" (List [App
+    "()" (List []),App "If" (List [App "()" (List []),App "InfixApp" (
+    List [App "()" (List []),App "Var" (List [App "()" (List []),App
+    "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
+    List []),String "b"])])]),App "QVarOp" (List [App "()" (List []),
+    App "UnQual" (List [App "()" (List []),App "Symbol" (List [App
+    "()" (List []),String "=="])])]),App "Lit" (List [App "()" (List [
+    ]),App "Int" (List [App "()" (List []),Int 0,ShowInt (Int 0)])])])
+    ,App "App" (List [App "()" (List []),App "Var" (List [App "()" (
+    List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),String "toEnum"])])]),App "Paren" (List [App
+    "()" (List []),App "App" (List [App "()" (List []),App "Var" (List
+    [App "()" (List []),App "UnQual" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),String "length"])])]),App "List"
+    (List [App "()" (List []),MapCtor (App "RecConstr" (List [App "()"
+    (List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),CtorName])]),List []]))])])])]),App "App" (
+    List [App "()" (List []),App "Var" (List [App "()" (List []),App
+    "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
+    List []),String "toEnum"])])]),App "Paren" (List [App "()" (List [
+    ]),App "InfixApp" (List [App "()" (List []),App "Var" (List [App
+    "()" (List []),App "UnQual" (List [App "()" (List []),App "Ident"
+    (List [App "()" (List []),String "b"])])]),App "QVarOp" (List [App
+    "()" (List []),App "UnQual" (List [App "()" (List []),App "Symbol"
+    (List [App "()" (List []),String "-"])])]),App "Lit" (List [App
+    "()" (List []),App "Int" (List [App "()" (List []),Int 1,ShowInt (
+    Int 1)])])])])])])]),App "Just" (List [App "BDecls" (List [App
+    "()" (List []),List [App "PatBind" (List [App "()" (List []),App
+    "PVar" (List [App "()" (List []),App "Ident" (List [App "()" (List
+    []),String "b"])]),App "UnGuardedRhs" (List [App "()" (List []),
+    App "App" (List [App "()" (List []),App "Var" (List [App "()" (
+    List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),String "fromEnum"])])]),App "Var" (List [App
+    "()" (List []),App "UnQual" (List [App "()" (List []),App "Ident"
+    (List [App "()" (List []),String "a"])])])])]),App "Nothing" (List
+    [])])]])])])]])])]]))]
 -- GENERATED STOP

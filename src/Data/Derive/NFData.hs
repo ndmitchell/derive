@@ -18,18 +18,25 @@ makeNFData :: Derivation
 makeNFData = derivationDSL "NFData" dslNFData
 
 dslNFData =
-    List [Instance ["NFData"] "NFData" (List [App "InsDecl" (List [App
-    "FunBind" (List [MapCtor (App "Match" (List [App "Ident" (List [
-    String "rnf"]),List [App "PParen" (List [App "PApp" (List [App
-    "UnQual" (List [App "Ident" (List [CtorName])]),MapField (App
-    "PVar" (List [App "Ident" (List [Concat (List [String "x",ShowInt
-    FieldIndex])])]))])])],App "Nothing" (List []),App "UnGuardedRhs"
-    (List [Fold (App "InfixApp" (List [Head,App "QVarOp" (List [App
-    "UnQual" (List [App "Ident" (List [String "seq"])])]),Tail])) (
-    Concat (List [MapField (App "App" (List [App "Var" (List [App
-    "UnQual" (List [App "Ident" (List [String "rnf"])])]),App "Var" (
-    List [App "UnQual" (List [App "Ident" (List [Concat (List [String
-    "x",ShowInt FieldIndex])])])])])),List [App "Con" (List [App
-    "Special" (List [App "UnitCon" (List [])])])]]))]),App "Nothing" (
-    List [])]))])])])]
+    List [Instance ["NFData"] "NFData" (App "Just" (List [List [App
+    "InsDecl" (List [App "()" (List []),App "FunBind" (List [App "()"
+    (List []),MapCtor (App "Match" (List [App "()" (List []),App
+    "Ident" (List [App "()" (List []),String "rnf"]),List [App
+    "PParen" (List [App "()" (List []),App "PApp" (List [App "()" (
+    List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
+    [App "()" (List []),CtorName])]),MapField (App "PVar" (List [App
+    "()" (List []),App "Ident" (List [App "()" (List []),Concat (List
+    [String "x",ShowInt FieldIndex])])]))])])],App "UnGuardedRhs" (
+    List [App "()" (List []),Fold (App "InfixApp" (List [App "()" (
+    List []),Head,App "QVarOp" (List [App "()" (List []),App "UnQual"
+    (List [App "()" (List []),App "Ident" (List [App "()" (List []),
+    String "seq"])])]),Tail])) (Concat (List [MapField (App "App" (
+    List [App "()" (List []),App "Var" (List [App "()" (List []),App
+    "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
+    List []),String "rnf"])])]),App "Var" (List [App "()" (List []),
+    App "UnQual" (List [App "()" (List []),App "Ident" (List [App "()"
+    (List []),Concat (List [String "x",ShowInt FieldIndex])])])])])),
+    List [App "Con" (List [App "()" (List []),App "Special" (List [App
+    "()" (List []),App "UnitCon" (List [App "()" (List [])])])])]]))])
+    ,App "Nothing" (List [])]))])])]]))]
 -- GENERATED STOP

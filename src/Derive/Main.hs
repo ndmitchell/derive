@@ -37,11 +37,12 @@ mainFile derivations flags file = do
     src <- return $ unlines $ filter (not . isPrefixOf "#") $ lines src
     let parse = fromParseResult . parseFileContentsWithMode defaultParseMode{parseFilename=file,extensions=defaultExtensions}
         real = parse src
-        mine = parse $ uncomment src
+        mine = parse $ uncomment src :: Module SrcSpanInfo
     flags <- return $ foldl addFlags flags
-        [(sl,words x) | OptionsPragma sl (Just (UnknownTool "DERIVE")) x <- modulePragmas mine]
-    let res = performDerive derivations mine $ wantDerive flags real mine
-    writeDerive file (moduleName mine) flags res
+        [(getPointLoc sl,words x) | OptionsPragma sl (Just (UnknownTool "DERIVE")) x <- modulePragmas mine]
+    let blur = fmap (const ())
+    let res = performDerive derivations (blur mine :: Module ()) $ wantDerive flags (blur real) (blur mine)
+    writeDerive file (moduleName $ blur mine) flags res
 
 
 uncomment :: String -> String

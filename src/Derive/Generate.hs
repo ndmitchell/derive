@@ -54,10 +54,10 @@ generateFile file = do
             ]) ++
             map (replicate 4 ' ' ++) (wrap 66 $ show dsl)
 
-
         let inst = dynamicDSL dsl
             instFile = takeDirectory file </> "Instance" </> name <.> "hs"
         b <- doesFileExist instFile
+
         if not (srcCustom src) && isJust inst then do
             writeGenerated instFile $
                 ["{-# LANGUAGE FlexibleInstances, UndecidableInstances, ScopedTypeVariables #-}"] ++
@@ -82,7 +82,7 @@ instUrl name (Just x) = "http://hackage.haskell.org/packages/archive/" ++ pkgNam
         pkgName = a
         pkgVersion = if null b then "latest" else tail b
         modu = reps '.' '-' $ prettyPrint $ importModule x
-        nam = case importSpecs x of Just (False,IAbs _ y:_) -> prettyPrint y ; _ -> name
+        nam = case importSpecs x of Just (ImportSpecList _ False (IAbs _ _ y:_)) -> prettyPrint y ; _ -> name
 
 
 wrap :: Int -> String -> [String]
@@ -102,7 +102,7 @@ wrap n = f . lexemes
 lexemes :: String -> [String]
 lexemes [] = []
 lexemes x = a : lexemes b
-    where (a,b) = lexeme x 
+    where (a,b) = lexeme x
 
 
 lexeme :: String -> (String, String)

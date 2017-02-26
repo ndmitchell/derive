@@ -22,12 +22,12 @@ makeIs :: Derivation
 makeIs = derivationCustom "Is" $ \(_,d) -> Right $ concatMap (makeIsCtor d) $ dataDeclCtors d
 
 
-makeIsCtor :: DataDecl -> CtorDecl -> [Decl]
+makeIsCtor :: DataDecl -> CtorDecl -> [Decl ()]
 makeIsCtor d c = if not $ isIdent $ ctorDeclName c then [] else
-        [TypeSig sl [name nam] (dataDeclType d `TyFun` tyCon "Bool")
-        ,FunBind $ match : [defMatch | length (dataDeclCtors d) > 1]]
+        [TypeSig () [name nam] (TyFun () (dataDeclType d) (tyCon "Bool"))
+        ,FunBind () $ match : [defMatch | length (dataDeclCtors d) > 1]]
     where
         nam = "is" ++ ctorDeclName c
         
-        match = Match sl (name nam) [PParen $ PRec (qname $ ctorDeclName c) []] Nothing (UnGuardedRhs $ con "True") Nothing
-        defMatch = Match sl (name nam) [PWildCard] Nothing (UnGuardedRhs $ con "False") Nothing
+        match = Match () (name nam) [PParen () $ PRec () (qname $ ctorDeclName c) []] (UnGuardedRhs () $ con "True") Nothing
+        defMatch = Match () (name nam) [PWildCard ()] (UnGuardedRhs () $ con "False") Nothing

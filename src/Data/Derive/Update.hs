@@ -34,14 +34,14 @@ makeUpdate :: Derivation
 makeUpdate = derivationCustom "Update" $ \(_,d) -> Right $ concatMap (makeUpdateField d) $ dataDeclFields d
 
 
-makeUpdateField :: DataDecl -> String -> [Decl]
+makeUpdateField :: DataDecl -> String -> [Decl ()]
 makeUpdateField d field =
-        [TypeSig sl [name upd] (TyParen (TyFun typF typF) `TyFun` typR)
-        ,bind upd [pVar "f",pVar "x"] $ RecUpdate (var "x") [FieldUpdate (qname field) (App (var "f") (Paren $ App (var field) (var "x")))]
-        ,TypeSig sl [name set] (typF `TyFun` typR)
-        ,bind set [pVar "v",pVar "x"] $ RecUpdate (var "x") [FieldUpdate (qname field) (var "v")]]
+        [TypeSig () [name upd] (TyFun () (TyParen () (TyFun () typF typF)) typR)
+        ,bind upd [pVar "f",pVar "x"] $ RecUpdate () (var "x") [FieldUpdate () (qname field) (App () (var "f") (Paren () $ App () (var field) (var "x")))]
+        ,TypeSig () [name set] (TyFun () typF typR)
+        ,bind set [pVar "v",pVar "x"] $ RecUpdate () (var "x") [FieldUpdate () (qname field) (var "v")]]
     where
         set = field ++ "_s"
         upd = field ++ "_u"
-        typR = dataDeclType d `TyFun` dataDeclType d
+        typR = TyFun () (dataDeclType d) (dataDeclType d)
         typF = fromJust $ lookup field $ concatMap ctorDeclFields $ dataDeclCtors d
