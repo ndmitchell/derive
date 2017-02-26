@@ -1,5 +1,6 @@
 Changelog for Derive
 
+2.6
     Remove lots of derivations that didn't seem useful (Eq, Show etc)
     Change to use annotated Haskell syntax trees
     Require haskell-src-exts-1.18
