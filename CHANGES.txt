@@ -1,7 +1,8 @@
 Changelog for Derive
 
+    #19, more upgrade bug fixes
 2.6.1
-    Allow haskell-src-exts-1.19
+    #19, allow haskell-src-exts-1.19
 2.6
     Remove lots of derivations that didn't seem useful (Eq, Show etc)
     Change to use annotated Haskell syntax trees

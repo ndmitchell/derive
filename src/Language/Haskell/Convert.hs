@@ -5,6 +5,7 @@ module Language.Haskell.Convert(Convert, convert) where
 
 import Language.Haskell as HS
 import qualified Language.Haskell.Exts as HSE(FieldDecl(..))
+import Language.Haskell.TH.Compat
 import Language.Haskell.TH.Syntax as TH
 import Control.Exception
 import Data.Typeable
@@ -117,10 +118,9 @@ instance Convert TH.Type (HS.Asst ()) where
     conv (AppT x y) = case c x of
         ClassA _ a b -> ClassA () a (b ++ [c y])
 
-
-
 instance Convert (HS.Decl ()) TH.Dec where
--- NEIL    conv (InstDecl _ _ _ cxt nam typ ds) = instanceD (c cxt) (c $ tyApp (TyCon nam) typ) [c d | InsDecl d <- ds]
+    conv (InstDecl _ _ (fromIParen -> IRule _ _ cxt (fromInstHead -> (nam,typ))) ds) =
+        instanceD (c cxt) (c $ tyApp (TyCon () nam) typ) [c d | InsDecl _ d <- fromMaybe [] ds]
     conv (FunBind _ ms@(HS.Match _ nam _ _ _:_)) = FunD (c nam) (c ms)
     conv (PatBind _ p bod ds) = ValD (c p) (c bod) (c ds)
     conv (TypeSig _ [nam] typ) = SigD (c nam) (c $ foralls typ)
