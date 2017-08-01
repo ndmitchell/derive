@@ -22,17 +22,23 @@ instanceD = InstanceD
 #endif
 
 dataDefinitionTypeArgs :: Dec -> [Name]
-#if __GLASGOW_HASKELL__ >= 800
+#if __GLASGOW_HASKELL__ >= 802
+dataDefinitionTypeArgs (DataD _ _ _ _ _ deriv_clauses) =
+  deriv_clauses >>= from_deriv_clause
+dataDefinitionTypeArgs (NewtypeD _ _ _ _ _ deriv_clauses) =
+  deriv_clauses >>= from_deriv_clause
+
+from_deriv_clause :: DerivClause -> [Name]
+from_deriv_clause (DerivClause _ cxt) = map from_cxt cxt
+#elif __GLASGOW_HASKELL__ >= 800
 dataDefinitionTypeArgs (DataD _cx name _ _ _ cxt) = map from_cxt cxt
 dataDefinitionTypeArgs (NewtypeD cx name _ _ _ cxt) = map from_cxt cxt
-#else    
-#if __GLASGOW_HASKELL__ >= 612
+#elif __GLASGOW_HASKELL__ >= 612
 dataDefinitionTypeArgs (DataD _cx name _ _ args) = args
 dataDefinitionTypeArgs (NewtypeD cx name _ _ args) = args
 #else
 dataDefinitionTypeArgs (DataD _cx name args cons _derv) = args
 dataDefinitionTypeArgs (NewtypeD cx name args con derv) = args
-#endif
 #endif
 
 from_cxt :: Type -> Name
