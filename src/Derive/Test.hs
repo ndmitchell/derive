@@ -34,7 +34,7 @@ listType = DataDecl () (DataType ()) Nothing (DHApp () (DHead () (Ident () "[]")
     ,QualConDecl () Nothing Nothing (ConDecl () (Ident () "Cons")
         [TyVar () (Ident () "a")
         ,TyApp () (TyCon () (UnQual () (Ident () "List"))) (TyVar () (Ident () "a"))])]
-    Nothing
+    []
 
 
 -- test each derivation

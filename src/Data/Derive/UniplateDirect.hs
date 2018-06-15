@@ -224,10 +224,10 @@ knownCtors = map (fromParseResult . fmap clearAnn . parseDecl)
 
 listCtor = DataDecl ()  (DataType ()) Nothing (DHApp () (DHead () $ Ident () "[]") (UnkindedVar () $ Ident () "a"))
     [QualConDecl () Nothing Nothing $ ConDecl () (Ident () "[]") []
-    ,QualConDecl () Nothing Nothing $ ConDecl () (Ident () "(:)") [tyVar "a", TyList () $ tyVar "a"]] Nothing
+    ,QualConDecl () Nothing Nothing $ ConDecl () (Ident () "(:)") [tyVar "a", TyList () $ tyVar "a"]] []
 
 tupleDefn :: Int -> Decl ()
-tupleDefn n = DataDecl () (DataType ()) Nothing dhead [QualConDecl () Nothing Nothing $ ConDecl () (Ident () s) (map tyVar vars)] Nothing
+tupleDefn n = DataDecl () (DataType ()) Nothing dhead [QualConDecl () Nothing Nothing $ ConDecl () (Ident () s) (map tyVar vars)] []
     where s = "(" ++ replicate (n - 1) ',' ++ ")"
           vars = ['v':show i | i <- [1..n]]
           dhead = foldr (flip (DHApp ())) (DHead () $ Ident () s) (map (UnkindedVar () . Ident ()) vars)
