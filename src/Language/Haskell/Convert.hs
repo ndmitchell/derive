@@ -44,13 +44,13 @@ instance Convert TH.Dec (HS.Decl ()) where
         NewtypeD cxt n vs _ con ds -> f (NewType ()) cxt n vs [con] ds
         where
             f :: DataOrNew () -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> unused -> HS.Decl ()
-            f t cxt n vs con _ = DataDecl () t (Just $ c cxt) (dh (c n) (c vs)) (c con) Nothing
+            f t cxt n vs con _ = DataDecl () t (Just $ c cxt) (dh (c n) (c vs)) (c con) []
 #else
         DataD cxt n vs con ds -> f (DataType ()) cxt n vs con ds
         NewtypeD cxt n vs con ds -> f (NewType ()) cxt n vs [con] ds
         where
             f :: DataOrNew () -> Cxt -> TH.Name -> [TyVarBndr] -> [Con] -> [TH.Name] -> HS.Decl ()
-            f t cxt n vs con ds = DataDecl () t (Just $ c cxt) (dh (c n) (c vs)) (c con) Nothing
+            f t cxt n vs con ds = DataDecl () t (Just $ c cxt) (dh (c n) (c vs)) (c con) []
 #endif
 
             dh name [] = DHead () name

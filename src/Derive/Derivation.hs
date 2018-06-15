@@ -31,15 +31,17 @@ wantDeriveAnnotation real mine = moduleDerives mine \\ moduleDerives real
 
 
 moduleDerives :: Module () -> [Type ()]
-moduleDerives = concatMap f . moduleDecls 
+moduleDerives = concatMap f . moduleDecls
     where
         f (DataDecl _ _ _ (fromDeclHead -> (name, vars)) _ deriv) = g name vars deriv
         f (GDataDecl _ _ _ (fromDeclHead -> (name, vars)) _ _ deriv) = g name vars deriv
-        f (DerivDecl _ _ (fromIParen -> IRule _ _ _ (fromInstHead -> (name, args)))) = [TyCon () name `tyApps` args]
+        f (DerivDecl _ _ _ (fromIParen -> IRule _ _ _ (fromInstHead -> (name, args)))) = [TyCon () name `tyApps` args]
         f _ = []
 
-        g name vars deriv = [TyCon () a `tyApps` (b:bs) | IRule _ _ _ (fromInstHead -> (a,bs)) <- map fromIParen $ maybe [] (\(Deriving _ xs) -> xs) deriv]
+        g name vars deriv = [TyCon () a `tyApps` (b:bs) | IRule _ _ _ (fromInstHead -> (a,bs)) <- map fromIParen $ f deriv]
             where b = TyCon () (UnQual () name) `tyApps` map (tyVar . prettyPrint) vars
+                  f [Deriving _ _ xs] = xs
+                  f _ = []
 
 
 ---------------------------------------------------------------------
@@ -85,7 +87,7 @@ writeDerive :: FilePath -> ModuleName () -> [Flag] -> [String] -> IO ()
 writeDerive file modu flags xs = do
     -- force the output first, ensure that we don't crash half way through
     () <- length (concat xs) `seq` return ()
-    
+
     let append = Append `elem` flags
     let output = [x | Output x <- flags]
 

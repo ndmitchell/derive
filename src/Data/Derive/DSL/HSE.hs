@@ -23,7 +23,7 @@ list = Input "List" 1 [Ctor "Nil" 0 0, Ctor "Cons" 1 2]
 
 -- data Sample a = First | Second a a | Third a
 sample :: Input
-sample = DataDecl () (DataType ()) Nothing (DHApp () (DHead () $ name "Sample") (tyVarBind "a")) ctrs Nothing
+sample = DataDecl () (DataType ()) Nothing (DHApp () (DHead () $ name "Sample") (tyVarBind "a")) ctrs []
     where
         ctrs = [ctr "First" 0, ctr "Second" 2, ctr "Third" 1]
         ctr s i = QualConDecl () Nothing Nothing $ ConDecl () (name s) $ replicate i $ tyVar "a"
@@ -90,7 +90,7 @@ fromOutput (OList xs) = res
           f [] = fromConstr $ readCon dat "[]"
           f (x:xs) = fromConstrB (g x (f xs `asTypeOf` res)) $ readCon dat "(:)"
           dat = dataTypeOf res
-          
+
           g :: (Data a, Data b) => Output -> a -> b
           g x xs = r2 where r2 = if typeOf r2 == typeOf xs then coerce xs else fromOutput x
 
