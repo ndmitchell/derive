@@ -4,8 +4,8 @@ name:           derive
 version:        2.6.3
 build-type:     Simple
 copyright:      Neil Mitchell 2006-2017
-author:         Neil Mitchell <ndmitchell@gmail.com>
-maintainer:     Neil Mitchell <ndmitchell@gmail.com>
+author:         Neil Mitchell <ndmitchell@gmail.com> and others
+maintainer:     None
 homepage:       https://github.com/ndmitchell/derive#readme
 bug-reports:    https://github.com/ndmitchell/derive/issues
 license:        BSD3
