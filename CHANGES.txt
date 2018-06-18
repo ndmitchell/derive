@@ -1,5 +1,5 @@
-Changelog for Derive
-
+2.6.4
+    Rewrite for haskell-src-exts == 1.20.*
     #27, disable a few more extensions by default (sync with the HLint list)
 2.6.3
     #24, support GHC 8.2
