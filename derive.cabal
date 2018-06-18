@@ -1,8 +1,7 @@
-cabal-version:  >= 1.18
-build-type:     Default
+cabal-version:  1.18
+build-type:     Simple
 name:           derive
 version:        2.6.4
-build-type:     Simple
 copyright:      Neil Mitchell 2006-2017
 author:         Neil Mitchell <ndmitchell@gmail.com> and others
 maintainer:     None
