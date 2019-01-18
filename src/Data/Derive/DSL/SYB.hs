@@ -27,13 +27,13 @@ lift f = maybe Nothing id . cast . f
 
 dlistAny :: forall a . Data a => DSL -> Maybe a
 dlistAny x | isNothing con = Nothing
-           | otherwise = res 
+           | otherwise = res
     where
         con = readConstr dat "(:)"
         val = fromConstr (fromJust con) :: a
-        
+
         dat = dataTypeOf (undefined :: a)
-        
+
         res = gmapQi 0 f val
 
         f :: Data d => d -> Maybe a
@@ -56,10 +56,14 @@ dapp x = do
         f :: forall b . Data b => State (Bool,[DSL]) b
         f = if typeOf (undefined :: b) == typeOf sl then return $ coerce sl
             else do
-                (b,x:xs) <- get
-                case syb x of
-                    Nothing -> do put (False,xs) ; return undefined
-                    Just y -> do put (b,xs) ; return y
+                (b,l) <- get
+                case l of
+                    x:xs ->
+                        case syb x of
+                            Nothing -> do put (False,xs) ; return undefined
+                            Just y -> do put (b,xs) ; return y
+                    [] ->
+                        error "dapp: null"
 
 
 dsimple :: Data a => DSL -> Maybe a
