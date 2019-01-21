@@ -99,7 +99,10 @@ fromOutput (OApp str args) = res
           res = evalState (fromConstrM f $ readCon dat str) args
           f :: Data a => State [Output] a
           f = res where res = if typeOf (fromState res) == typeOf sl then return $ coerce sl else
-                              do x:xs <- get; put xs; return $ fromOutput x
+                              do l <- get
+                                 case l of
+                                     x:xs -> do put xs; return $ fromOutput x
+                                     [] -> error "fromOutput: null"
 
 fromOutput (OString x) = coerce x
 fromOutput (OInt x) = coerce x
