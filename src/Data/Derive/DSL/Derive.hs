@@ -40,7 +40,7 @@ guess (OApp "InstDecl" [_,OApp "Nothing" [],rule,decls])
             | OApp "CxTuple" [_,OList xs] <- x = concatMap unClass xs
         unContext x = []
 
-        unClass (OApp "ClassA" [_,OApp "UnQual" [_,OApp "Ident" [_,OString x]],_]) = [x]
+        unClass (OApp "TypeA" [_,OApp "UnQual" [_,OApp "Ident" [_,OString x]],_]) = [x]
         unClass _ = []
 
         unInstHead (OApp "IHCon" [_,  name]) = (name, [])

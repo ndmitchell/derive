@@ -36,7 +36,7 @@ applyEnv dsl env@(Env input ctor field fold) = f dsl
             ,f body]
         where
             context = Just $ CxTuple ()
-                [ClassA () (UnQual () $ Ident () c) [TyVar () $ Ident () v]
+                [TypeA () $ TyVar () $ Ident () v
                 | let seen = [x | TyVar () (Ident () x) <- universeBi $ concatMap ctorDeclFields $ dataCtors input]
                 , v <- dataDeclVarsStar input `intersect` seen
                 , c <- ctx]

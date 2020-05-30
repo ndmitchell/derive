@@ -72,7 +72,7 @@ dslMonoid =
     "PWildCard" (List [App "()" (List [])]),App "PWildCard" (List [App
     "()" (List [])])],App "GuardedRhss" (List [App "()" (List []),List
     [App "GuardedRhs" (List [App "()" (List []),List [App "Qualifier"
-    (List [App "()" (List []),App "InfixApp" (List [App "()" (List [])
+    (List [App "()" (List []),App "TypeApp" (List [App "()" (List [])
     ,App "App" (List [App "()" (List []),App "Var" (List [App "()" (
     List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
     [App "()" (List []),String "length"])])]),App "List" (List [App

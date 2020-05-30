@@ -114,9 +114,9 @@ instance Convert TH.Type (HS.Type ()) where
         x -> TyApp () x $ c y
 
 instance Convert TH.Type (HS.Asst ()) where
-    conv (ConT x) = ClassA () (UnQual () $ c x) []
+    conv (ConT x) = TypeA () (UnQual () $ c x) []
     conv (AppT x y) = case c x of
-        ClassA _ a b -> ClassA () a (b ++ [c y])
+        TypeA _ a b -> TypeA () a (b ++ [c y])
 
 instance Convert (HS.Decl ()) TH.Dec where
     conv (InstDecl _ _ (fromIParen -> IRule _ _ cxt (fromInstHead -> (nam,typ))) ds) =
@@ -171,8 +171,8 @@ instance Convert ([HS.Name ()],HS.Type ()) [TH.VarStrictType] where
      where (s,t) = c bt
 
 instance Convert (HS.Asst ()) TH.Type where
-    conv (InfixA _ x y z) = c $ ClassA () y [x,z]
-    conv (ClassA _ x y) = appT (ConT $ c x) (c y)
+    conv (TypeA _ x y z) = c $ TypeA () y [x,z]
+    conv (TypeA _ x y) = appT (ConT $ c x) (c y)
 
 instance Convert (HS.Type ()) TH.Type where
     conv (TyCon _ (Special _ ListCon{})) = ListT
@@ -203,7 +203,7 @@ instance Convert (HS.Exp ()) TH.Exp where
     conv (Lit _ x) = LitE (c x)
     conv (App _ x y) = AppE (c x) (c y)
     conv (Paren _ x) = c x
-    conv (InfixApp _ x y z) = InfixE (Just $ c x) (c y) (Just $ c z)
+    conv (TypeApp _ x y z) = InfixE (Just $ c x) (c y) (Just $ c z)
     conv (LeftSection _ x y) = InfixE (Just $ c x) (c y) Nothing
     conv (RightSection _ y z) = InfixE Nothing (c y) (Just $ c z)
     conv (Lambda _ x y) = LamE (c x) (c y)
@@ -298,21 +298,21 @@ instance Convert TH.TyVarBndr (HS.TyVarBind ()) where
 
 #if __GLASGOW_HASKELL__ < 706
 instance Convert (TH.Kind ()) HS.Kind where
-    conv StarK = KindStar
-    conv (ArrowK x y) = KindFn (c x) $ c y
+    conv StarK = TyStar
+    conv (ArrowK x y) = TyFun (c x) $ c y
 #else
 instance Convert TH.Kind (HS.Kind ()) where
-    conv StarT = KindStar ()
-    conv (AppT (AppT ArrowT x) y) = KindFn () (c x) (c y)
+    conv StarT = TyStar ()
+    conv (AppT (AppT ArrowT x) y) = TyFun () (c x) (c y)
 #endif
 
 #if __GLASGOW_HASKELL__ < 709
 instance Convert TH.Pred (HS.Asst ()) where
-    conv (ClassP x y) = ClassA () (UnQual () $ c x) $ c y
+    conv (ClassP x y) = TypeA () (UnQual () $ c x) $ c y
     conv (TH.EqualP x y) = HS.EqualP () (c x) $ c y
 
 instance Convert (HS.Asst ()) TH.Pred where
-    conv (ClassA _ x y) = ClassP (c x) $ c y
+    conv (TypeA _ x y) = ClassP (c x) $ c y
     conv (HS.EqualP _ x y) = TH.EqualP (c x) $ c y
 #endif
 
@@ -322,11 +322,11 @@ instance Convert (HS.TyVarBind ()) TH.TyVarBndr where
 
 #if __GLASGOW_HASKELL__ < 706
 instance Convert (HS.Kind ()) TH.Kind where
-    conv (KindStar _) = StarK
-    conv (KindFn _ x y) = ArrowK (c x) $ c y
+    conv (TyStar _) = StarK
+    conv (TyFun _ x y) = ArrowK (c x) $ c y
 #else
 instance Convert (HS.Kind ()) TH.Kind where
-    conv KindStar{} = StarT
-    conv (KindFn _ x y) = AppT (AppT ArrowT (c x)) (c y)
+    conv TyStar{} = StarT
+    conv (TyFun _ x y) = AppT (AppT ArrowT (c x)) (c y)
 #endif
 #endif

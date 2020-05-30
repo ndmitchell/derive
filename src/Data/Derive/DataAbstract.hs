@@ -76,4 +76,4 @@ makeDataAbstract = derivationCustomDSL "DataAbstract" custom $
 custom = customContext context
 
 context :: FullDataDecl -> Context () -> Context ()
-context d _ = CxTuple () [ClassA () (qname t) [tyVar x] | x <- dataDeclVars $ snd d, t <- ["Typeable","Data"]]
+context d _ = CxTuple () [TypeA () $ tyVar x | x <- dataDeclVars $ snd d, t <- ["Typeable","Data"]]

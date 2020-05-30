@@ -108,7 +108,7 @@ traversalInstance tt nameBase dat bodyM = -- [simplify $ InstDecl () Nothing [] 
         instHead = foldr (flip (IHApp ())) (IHCon () nam) args
         (body, required) = runWriter (sequence bodyM)
         ctx  = CxTuple ()
-               [ ClassA () (qname $ className p) (tyVar n : vars tyVar 's' (p - 1))
+               [ TypeA () (qname $ className p) (tyVar n : vars tyVar 's' (p - 1))
                | RequiredInstance n p <- S.toList required
                ]
         vrs  = vars tyVar 't' (dataDeclArity dat)

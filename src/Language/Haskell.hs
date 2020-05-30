@@ -283,7 +283,7 @@ dataDeclVars (DataDecl _ _ _ hd _ _) = map f $ snd $ fromDeclHead hd
 dataDeclVarsStar :: DataDecl -> [String]
 dataDeclVarsStar (DataDecl _ _ _ hd _ _) = mapMaybe f $ snd $ fromDeclHead hd
     where f (UnkindedVar _ x) = Just $ prettyPrint x
-          f (KindedVar _ x (KindStar _)) = Just $ prettyPrint x
+          f (KindedVar _ x (TyStar _)) = Just $ prettyPrint x
           f _ = Nothing
 
 dataDeclArity :: DataDecl -> Int

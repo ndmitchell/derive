@@ -74,7 +74,7 @@ dinstance :: DSL -> Maybe (Decl ())
 dinstance x = do
     Instance _ name bod <- return x
     bod <- syb bod
-    let ctx = ClassA () (UnQual () $ Ident () "Data") [TyVar () $ Ident () "d_type"]
+    let ctx = TypeA () $ TyVar () $ Ident () "d_type"
     let rule = IRule () Nothing (Just (CxSingle () ctx))
                 (IHApp () (IHCon () (UnQual () $ Ident () name)) (TyVar () $ Ident () "d_type"))
     return $ InstDecl () Nothing rule bod

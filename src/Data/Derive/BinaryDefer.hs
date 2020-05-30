@@ -54,7 +54,7 @@ dslBinaryDefer =
     List [App "()" (List []),App "UnitCon" (List [App "()" (List [])])
     ])]),App "Var" (List [App "()" (List []),App "UnQual" (List [App
     "()" (List []),App "Ident" (List [App "()" (List []),Concat (List
-    [String "x",ShowInt FieldIndex])])])])]))])]),App "InfixApp" (List
+    [String "x",ShowInt FieldIndex])])])])]))])]),App "TypeApp" (List
     [App "()" (List []),App "App" (List [App "()" (List []),App "Var"
     (List [App "()" (List []),App "UnQual" (List [App "()" (List []),
     App "Ident" (List [App "()" (List []),String "unit"])])]),App
@@ -68,7 +68,7 @@ dslBinaryDefer =
     App "Symbol" (List [App "()" (List []),String "<<!"])])]),App
     "Var" (List [App "()" (List []),App "UnQual" (List [App "()" (List
     []),App "Ident" (List [App "()" (List []),String "o"])])])]),Fold
-    (App "InfixApp" (List [App "()" (List []),Tail,App "QVarOp" (List
+    (App "TypeApp" (List [App "()" (List []),Tail,App "QVarOp" (List
     [App "()" (List []),App "UnQual" (List [App "()" (List []),App
     "Symbol" (List [App "()" (List []),String "<<"])])]),Head])) (
     Concat (List [Reverse (MapField (App "Var" (List [App "()" (List [

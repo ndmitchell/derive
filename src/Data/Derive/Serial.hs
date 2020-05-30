@@ -32,7 +32,7 @@ dslSerial =
     "InsDecl" (List [App "()" (List []),App "PatBind" (List [App "()"
     (List []),App "PVar" (List [App "()" (List []),App "Ident" (List [
     App "()" (List []),String "series"])]),App "UnGuardedRhs" (List [
-    App "()" (List []),Fold (App "InfixApp" (List [App "()" (List []),
+    App "()" (List []),Fold (App "TypeApp" (List [App "()" (List []),
     Tail,App "QVarOp" (List [App "()" (List []),App "UnQual" (List [
     App "()" (List []),App "Symbol" (List [App "()" (List []),String
     "\\/"])])]),Head])) (Reverse (MapCtor (App "App" (List [App "()" (
@@ -68,7 +68,7 @@ dslSerial =
     (List [App "()" (List []),App "Generator" (List [App "()" (List []
     ),App "PVar" (List [App "()" (List []),App "Ident" (List [App "()"
     (List []),Concat (List [String "t",ShowInt CtorIndex])])]),App
-    "InfixApp" (List [App "()" (List []),Application (List [App "Var"
+    "TypeApp" (List [App "()" (List []),Application (List [App "Var"
     (List [App "()" (List []),App "UnQual" (List [App "()" (List []),
     App "Ident" (List [App "()" (List []),Concat (List [String "alts",
     ShowInt CtorArity])])])]),App "Var" (List [App "()" (List []),App

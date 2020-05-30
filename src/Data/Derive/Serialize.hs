@@ -86,7 +86,7 @@ dslSerialize =
     "BDecls" (List [App "()" (List []),List [App "PatBind" (List [App
     "()" (List []),App "PVar" (List [App "()" (List []),App "Ident" (
     List [App "()" (List []),String "useTag"])]),App "UnGuardedRhs" (
-    List [App "()" (List []),App "InfixApp" (List [App "()" (List []),
+    List [App "()" (List []),App "TypeApp" (List [App "()" (List []),
     App "App" (List [App "()" (List []),App "Var" (List [App "()" (
     List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
     [App "()" (List []),String "length"])])]),App "List" (List [App
@@ -155,7 +155,7 @@ dslSerialize =
     "()" (List []),List [App "PatBind" (List [App "()" (List []),App
     "PVar" (List [App "()" (List []),App "Ident" (List [App "()" (List
     []),String "useTag"])]),App "UnGuardedRhs" (List [App "()" (List [
-    ]),App "InfixApp" (List [App "()" (List []),App "App" (List [App
+    ]),App "TypeApp" (List [App "()" (List []),App "App" (List [App
     "()" (List []),App "Var" (List [App "()" (List []),App "UnQual" (
     List [App "()" (List []),App "Ident" (List [App "()" (List []),
     String "length"])])]),App "List" (List [App "()" (List []),MapCtor
