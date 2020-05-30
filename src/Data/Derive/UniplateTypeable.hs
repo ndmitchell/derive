@@ -35,19 +35,19 @@ makeUniplateTypeable = derivationCustomDSL "UniplateTypeable" custom $
     List [App "InstDecl" (List [App "()" (List []),App "Nothing" (List
     []),App "IRule" (List [App "()" (List []),App "Nothing" (List []),
     App "Just" (List [App "CxTuple" (List [App "()" (List []),List [
-    App "ClassA" (List [App "()" (List []),App "UnQual" (List [App
+    App "TypeA" (List [App "()" (List []),App "UnQual" (List [App
     "()" (List []),App "Ident" (List [App "()" (List []),String
     "Typeable"])]),List [App "TyVar" (List [App "()" (List []),App
-    "Ident" (List [App "()" (List []),String "a"])])]]),App "ClassA" (
+    "Ident" (List [App "()" (List []),String "a"])])]]),App "TypeA" (
     List [App "()" (List []),App "UnQual" (List [App "()" (List []),
     App "Ident" (List [App "()" (List []),String "PlateAll"])]),List [
     App "TyVar" (List [App "()" (List []),App "Ident" (List [App "()"
     (List []),String "a"])]),App "TyVar" (List [App "()" (List []),App
-    "Ident" (List [App "()" (List []),String "to"])])]]),App "ClassA"
+    "Ident" (List [App "()" (List []),String "to"])])]]),App "TypeA"
     (List [App "()" (List []),App "UnQual" (List [App "()" (List []),
     App "Ident" (List [App "()" (List []),String "Uniplate"])]),List [
     App "TyVar" (List [App "()" (List []),App "Ident" (List [App "()"
-    (List []),String "to"])])]]),App "ClassA" (List [App "()" (List []
+    (List []),String "to"])])]]),App "TypeA" (List [App "()" (List []
     ),App "UnQual" (List [App "()" (List []),App "Ident" (List [App
     "()" (List []),String "Typeable"])]),List [App "TyVar" (List [App
     "()" (List []),App "Ident" (List [App "()" (List []),String "to"])
@@ -69,7 +69,7 @@ makeUniplateTypeable = derivationCustomDSL "UniplateTypeable" custom $
     [App "()" (List []),CtorName])]),MapField (App "PVar" (List [App
     "()" (List []),App "Ident" (List [App "()" (List []),Concat (List
     [String "x",ShowInt FieldIndex])])]))])])],App "UnGuardedRhs" (
-    List [App "()" (List []),Fold (App "InfixApp" (List [App "()" (
+    List [App "()" (List []),Fold (App "TypeApp" (List [App "()" (
     List []),Tail,App "QVarOp" (List [App "()" (List []),App "UnQual"
     (List [App "()" (List []),App "Symbol" (List [App "()" (List []),
     String "|+"])])]),Head])) (Concat (List [Reverse (MapField (App
@@ -92,10 +92,10 @@ custom (_,d) [InstDecl () x2 (IRule () x3 _ ihead) x7] = [InstDecl () x2 (IRule 
         vars = dataDeclVars d
         dd = (if null vars then id else TyParen ()) $ tyApps (tyCon $ dataDeclName d) (map tyVar vars)
         x4 = Just $ CxTuple () $
-          concatMap f vars ++ [ClassA () (qname x) [tyVar "to"] | x <- ["Typeable","Uniplate"]]
+          concatMap f vars ++ [TypeA () $ tyVar "to" | x <- ["Typeable","Uniplate"]]
         x6 = [dd, tyVar "to"]
         iheadOut = foldr (flip (IHApp ())) (IHCon () x5) x6
-        f v = [ClassA () (qname "Typeable") [tyVar v], ClassA () (qname "PlateAll") [tyVar v, tyVar "to"]]
+        f v = [TypeA () $ tyVar v, TypeA () (qname "PlateAll") [tyVar v, tyVar "to"]]
         collect acc (IHCon () qname) = (acc, qname)
         collect acc (IHInfix () arg qname) = (arg:acc, qname)
         collect acc (IHParen () ih) = collect acc ih

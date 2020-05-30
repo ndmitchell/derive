@@ -48,7 +48,7 @@ makeArbitrary = derivationCustomDSL "Arbitrary" custom $
     [App "()" (List []),Int 0,ShowInt (Int 0)])]),App "TyCon" (List [
     App "()" (List []),App "UnQual" (List [App "()" (List []),App
     "Ident" (List [App "()" (List []),String "Int"])])])]),App
-    "InfixApp" (List [App "()" (List []),App "App" (List [App "()" (
+    "TypeApp" (List [App "()" (List []),App "App" (List [App "()" (
     List []),App "Var" (List [App "()" (List []),App "UnQual" (List [
     App "()" (List []),App "Ident" (List [App "()" (List []),String
     "length"])])]),App "List" (List [App "()" (List []),MapCtor (App
@@ -100,7 +100,7 @@ custom = customContext context
 context :: FullDataDecl -> Context () -> Context ()
 context (_,d) _ = CxTuple () $ nub $ concatMap (f True . snd) $ concatMap ctorDeclFields $ dataDeclCtors d
     where
-        f b (TyVar _ x) = [ClassA () (qname $ b ? "Arbitrary" $ "CoArbitrary") [TyVar () x]]
+        f b (TyVar _ x) = [TypeA () $ TyVar () x]
         f b (TyFun _ x y) = f (not b) x ++ f b y
         f b x = concatMap (f b) (children x)
 

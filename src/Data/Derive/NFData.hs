@@ -27,7 +27,7 @@ dslNFData =
     [App "()" (List []),CtorName])]),MapField (App "PVar" (List [App
     "()" (List []),App "Ident" (List [App "()" (List []),Concat (List
     [String "x",ShowInt FieldIndex])])]))])])],App "UnGuardedRhs" (
-    List [App "()" (List []),Fold (App "InfixApp" (List [App "()" (
+    List [App "()" (List []),Fold (App "TypeApp" (List [App "()" (
     List []),Head,App "QVarOp" (List [App "()" (List []),App "UnQual"
     (List [App "()" (List []),App "Ident" (List [App "()" (List []),
     String "seq"])])]),Tail])) (Concat (List [MapField (App "App" (

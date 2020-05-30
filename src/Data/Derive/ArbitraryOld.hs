@@ -41,7 +41,7 @@ dslArbitraryOld =
     [App "()" (List []),String "choose"])])]),App "Tuple" (List [App
     "()" (List []),App "Boxed" (List []),List [App "Lit" (List [App
     "()" (List []),App "Int" (List [App "()" (List []),Int 0,ShowInt (
-    Int 0)])]),App "InfixApp" (List [App "()" (List []),App "App" (
+    Int 0)])]),App "TypeApp" (List [App "()" (List []),App "App" (
     List [App "()" (List []),App "Var" (List [App "()" (List []),App
     "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
     List []),String "length"])])]),App "List" (List [App "()" (List []

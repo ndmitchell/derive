@@ -44,12 +44,12 @@ dslEnumCyclic =
     "()" (List []),App "Ident" (List [App "()" (List []),String
     "toEnum"]),List [App "PVar" (List [App "()" (List []),App "Ident"
     (List [App "()" (List []),String "n"])])],App "UnGuardedRhs" (List
-    [App "()" (List []),App "InfixApp" (List [App "()" (List []),App
+    [App "()" (List []),App "TypeApp" (List [App "()" (List []),App
     "Var" (List [App "()" (List []),App "UnQual" (List [App "()" (List
     []),App "Ident" (List [App "()" (List []),String "error"])])]),App
     "QVarOp" (List [App "()" (List []),App "UnQual" (List [App "()" (
     List []),App "Symbol" (List [App "()" (List []),String "$"])])]),
-    Fold (App "InfixApp" (List [App "()" (List []),Head,App "QVarOp" (
+    Fold (App "TypeApp" (List [App "()" (List []),Head,App "QVarOp" (
     List [App "()" (List []),App "UnQual" (List [App "()" (List []),
     App "Symbol" (List [App "()" (List []),String "++"])])]),Tail])) (
     List [App "Lit" (List [App "()" (List []),App "String" (List [App
@@ -76,7 +76,7 @@ dslEnumCyclic =
     (List []),String "succ"]),List [App "PVar" (List [App "()" (List [
     ]),App "Ident" (List [App "()" (List []),String "a"])])],App
     "UnGuardedRhs" (List [App "()" (List []),App "If" (List [App "()"
-    (List []),App "InfixApp" (List [App "()" (List []),App "Var" (List
+    (List []),App "TypeApp" (List [App "()" (List []),App "Var" (List
     [App "()" (List []),App "UnQual" (List [App "()" (List []),App
     "Ident" (List [App "()" (List []),String "b"])])]),App "QVarOp" (
     List [App "()" (List []),App "UnQual" (List [App "()" (List []),
@@ -94,7 +94,7 @@ dslEnumCyclic =
     List []),App "Var" (List [App "()" (List []),App "UnQual" (List [
     App "()" (List []),App "Ident" (List [App "()" (List []),String
     "toEnum"])])]),App "Paren" (List [App "()" (List []),App
-    "InfixApp" (List [App "()" (List []),App "Var" (List [App "()" (
+    "TypeApp" (List [App "()" (List []),App "Var" (List [App "()" (
     List []),App "UnQual" (List [App "()" (List []),App "Ident" (List
     [App "()" (List []),String "b"])])]),App "QVarOp" (List [App "()"
     (List []),App "UnQual" (List [App "()" (List []),App "Symbol" (
@@ -114,7 +114,7 @@ dslEnumCyclic =
     "()" (List []),App "Ident" (List [App "()" (List []),String "pred"
     ]),List [App "PVar" (List [App "()" (List []),App "Ident" (List [
     App "()" (List []),String "a"])])],App "UnGuardedRhs" (List [App
-    "()" (List []),App "If" (List [App "()" (List []),App "InfixApp" (
+    "()" (List []),App "If" (List [App "()" (List []),App "TypeApp" (
     List [App "()" (List []),App "Var" (List [App "()" (List []),App
     "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
     List []),String "b"])])]),App "QVarOp" (List [App "()" (List []),
@@ -133,7 +133,7 @@ dslEnumCyclic =
     List [App "()" (List []),App "Var" (List [App "()" (List []),App
     "UnQual" (List [App "()" (List []),App "Ident" (List [App "()" (
     List []),String "toEnum"])])]),App "Paren" (List [App "()" (List [
-    ]),App "InfixApp" (List [App "()" (List []),App "Var" (List [App
+    ]),App "TypeApp" (List [App "()" (List []),App "Var" (List [App
     "()" (List []),App "UnQual" (List [App "()" (List []),App "Ident"
     (List [App "()" (List []),String "b"])])]),App "QVarOp" (List [App
     "()" (List []),App "UnQual" (List [App "()" (List []),App "Symbol"
